@@ -9,7 +9,20 @@
         android:id="@+id/nav_home"
         android:name="com.example.opene_dope.ui.home.HomeFragment"
         android:label="@string/menu_home"
-        tools:layout="@layout/fragment_home" />
+        tools:layout="@layout/fragment_home" >
+        <action
+            android:id="@+id/action_nav_home_to_settingsFragment"
+            app:destination="@id/nav_settings" />
+        <action
+            android:id="@+id/action_nav_home_to_nav_manage"
+            app:destination="@id/nav_manage" />
+        <action
+            android:id="@+id/action_nav_home_to_nav_gallery"
+            app:destination="@id/nav_gallery" />
+        <action
+            android:id="@+id/action_nav_home_to_nav_settings"
+            app:destination="@id/nav_settings" />
+    </fragment>
 
     <fragment
         android:id="@+id/nav_gallery"
@@ -22,4 +35,10 @@
         android:name="com.example.opene_dope.ui.manage.ManageFragment"
         android:label="@string/menu_manage"
         tools:layout="@layout/fragment_manage" />
+
+    <fragment
+        android:id="@+id/nav_settings"
+        android:name="com.example.opene_dope.ui.settings.SettingsFragment"
+        android:label="@string/menu_settings"
+        tools:layout="@layout/fragment_settings" />
 </navigation>

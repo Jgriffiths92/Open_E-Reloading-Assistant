@@ -5,11 +5,10 @@
     <string name="nav_header_title">Android Studio</string>
     <string name="nav_header_subtitle">android.studio@android.com</string>
     <string name="nav_header_desc">Navigation header</string>
-    <string name="action_settings">Settings</string>
+    <string name="menu_settings">Settings</string>
 
     <string name="menu_home">Home</string>
     <string name="menu_gallery">Saved Cards</string>
     <string name="menu_manage">Manage Data</string>
-    <string name="manage_data">Manage Data</string>
     <string name="open_e_dope">Open E-Dope</string>
 </resources>

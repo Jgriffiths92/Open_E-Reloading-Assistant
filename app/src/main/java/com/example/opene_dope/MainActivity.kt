@@ -3,7 +3,6 @@ package com.example.opene_dope
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.navigation.findNavController
@@ -57,8 +56,10 @@ class MainActivity : AppCompatActivity() {
         return when(item.itemId) {
             R.id.action_settings -> {
                 // Handle the settings action
-                // Code to be executed when the add button is clicked
-                Toast.makeText(this, "Settings Page Should Load", Toast.LENGTH_SHORT).show()
+                val navController = findNavController(R.id.nav_host_fragment_content_main)
+                // Navigate to the settings fragment
+                navController.navigate(R.id.nav_settings)
+
                 return true
             }
             else -> super.onOptionsItemSelected(item)
