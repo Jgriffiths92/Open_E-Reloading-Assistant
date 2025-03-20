@@ -3,6 +3,7 @@ package com.example.opene_dope
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.navigation.findNavController
@@ -54,17 +55,24 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when(item.itemId) {
-            R.id.action_settings -> {
+             R.id.action_settings -> {
                 // Handle the settings action
                 val navController = findNavController(R.id.nav_host_fragment_content_main)
                 // Navigate to the settings fragment
                 navController.navigate(R.id.nav_settings)
-
                 return true
+            }
+            R.id.show_hide_lead -> {
+                // Handle the settings action
+                Toast.makeText(this, "This will Show/Hide the Lead column of the data table", Toast.LENGTH_SHORT).show()
+                return true
+//                TO DO make the Show/Hide Lead button display Show or Hide depending on the current state
             }
             else -> super.onOptionsItemSelected(item)
         }
+
     }
+
     override fun onSupportNavigateUp(): Boolean {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()

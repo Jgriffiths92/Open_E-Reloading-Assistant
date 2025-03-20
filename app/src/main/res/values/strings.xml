@@ -13,4 +13,5 @@
     <string name="open_e_dope">Open E-Dope</string>
     <string name="stage_name">Stage Name</string>
     <string name="stage_notes_n_eg_shoot_to_move_hit_to_move_n_etc">stage notes \n Eg. Shoot to Move/Hit to Move \n ETC.</string>
+    <string name="show_hide_lead">Show/Hide Lead</string>
 </resources>
