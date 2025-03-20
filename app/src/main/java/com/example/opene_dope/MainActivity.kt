@@ -19,6 +19,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
+    private var isLeadVisible = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,6 +51,12 @@ class MainActivity : AppCompatActivity() {
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
         menuInflater.inflate(R.menu.main, menu)
+        // Update the menu item text
+        val showHideLeadMenuItem = menu.findItem(R.id.show_hide_lead)
+        if(isLeadVisible){
+            showHideLeadMenuItem.title = "Hide Lead"
+        }else{
+            showHideLeadMenuItem.title = "Show Lead" }
         return true
     }
 
@@ -63,10 +70,15 @@ class MainActivity : AppCompatActivity() {
                 return true
             }
             R.id.show_hide_lead -> {
-                // Handle the settings action
-                Toast.makeText(this, "This will Show/Hide the Lead column of the data table", Toast.LENGTH_SHORT).show()
+                isLeadVisible = !isLeadVisible
+                if (isLeadVisible){
+                    Toast.makeText(this, "Lead column is now visible", Toast.LENGTH_SHORT).show()
+                }else {
+                    Toast.makeText(this, "Lead column is now hidden", Toast.LENGTH_SHORT).show()
+                }
+                invalidateOptionsMenu()
                 return true
-//                TO DO make the Show/Hide Lead button display Show or Hide depending on the current state
+
             }
             else -> super.onOptionsItemSelected(item)
         }
