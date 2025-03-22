@@ -4,17 +4,60 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:visibility="visible"
     tools:context=".ui.settings.SettingsFragment">
 
     <TextView
         android:id="@+id/text_settings"
-        android:layout_width="364dp"
-        android:layout_height="696dp"
+        android:layout_width="320dp"
+        android:layout_height="57dp"
+        android:layout_marginTop="16dp"
+        android:gravity="center"
         android:textAlignment="center"
         android:textSize="20sp"
-        android:gravity="center"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.494"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.constraintlayout.widget.Barrier
+        android:layout_width="330dp"
+        android:layout_height="10dp"
+        app:barrierDirection="top" />
+
+    <Switch
+        android:id="@+id/Vertical_Orientation_Switch"
+        android:layout_width="350dp"
+        android:layout_height="60dp"
+        android:text="@string/vertical_display_orientation"
+        android:textOff="@string/horizontal_display_orientation"
+        android:textOn="@string/vertical_display_orientation"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/text_settings"
+        tools:checked="true"
+        tools:ignore="UseSwitchCompatOrMaterialXml,VisualLintButtonSize" />
+
+    <TextView
+        android:id="@+id/screen_size"
+        android:layout_width="223dp"
+        android:layout_height="24dp"
+        android:text="@string/screen_size"
+        android:textAlignment="center"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/Vertical_Orientation_Switch"
+        tools:ignore="TextSizeCheck" />
+
+    <Spinner
+        android:id="@+id/settings_screen_size_spinner"
+        android:layout_width="409dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="28dp"
+        android:minHeight="48dp"
+        android:saveEnabled="true"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/screen_size" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

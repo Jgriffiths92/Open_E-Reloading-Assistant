@@ -15,4 +15,8 @@
     <string name="stage_notes_n_eg_shoot_to_move_hit_to_move_n_etc">stage notes \n Eg. Shoot to Move/Hit to Move \n ETC.</string>
     <string name="show_hide_lead">Show/Hide Lead</string>
     <string name="event_name">Event Name</string>
+    <string name="vertical_display_orientation">Vertical Display Orientation</string>
+    <string name="horizontal_display_orientation">Horizontal Display Orientation</string>
+    <string name="screen_size">Screen Size</string>
+
 </resources>
