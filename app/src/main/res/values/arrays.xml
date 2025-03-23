@@ -5,4 +5,11 @@
         <item>2.9 Inch</item>
         <item>3.7 Inch</item>
     </string-array>
+
+    <string-array name="screen_colour_options">
+    <item>Black &amp; White </item>
+    <item>Tri-Colour Red</item>
+    <item>Tri-Colour Yellow</item>
+    <item>Four Colour</item>
+    </string-array>/>
 </resources>
