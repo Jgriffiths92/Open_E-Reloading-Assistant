@@ -17,6 +17,6 @@
     <string name="event_name">Event Name</string>
     <string name="vertical_display_orientation">Vertical Display Orientation</string>
     <string name="horizontal_display_orientation">Horizontal Display Orientation</string>
-    <string name="screen_size">Screen Size</string>
+    <string name="screen_size">Screen Options</string>
 
 </resources>
