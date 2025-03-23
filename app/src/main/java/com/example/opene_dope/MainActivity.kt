@@ -19,6 +19,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
     private var isLeadVisible = false
+    private var isWindHold1Visible = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,7 +52,14 @@ class MainActivity : AppCompatActivity() {
             showHideLeadMenuItem.title = "Hide Lead"
         }else{
             showHideLeadMenuItem.title = "Show Lead" }
+
+        val showHideWindHoldMenuItem = menu.findItem(R.id.show_1_or_2_wind_values)
+        if(isWindHold1Visible){
+            showHideWindHoldMenuItem.title = "Show 2 Wind Holds"
+        }else{
+            showHideWindHoldMenuItem.title = "Show 1 Wind Hold" }
         return true
+
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -74,6 +82,17 @@ class MainActivity : AppCompatActivity() {
                 return true
 
             }
+            R.id.show_1_or_2_wind_values->{
+                isWindHold1Visible = !isWindHold1Visible
+                if (isWindHold1Visible){
+                    Toast.makeText(this, "Show 1 wind hold", Toast.LENGTH_SHORT).show()
+                }else {
+                    Toast.makeText(this, "Show 2 wind holds", Toast.LENGTH_SHORT).show()
+                }
+                invalidateOptionsMenu()
+                return true
+            }
+
             else -> super.onOptionsItemSelected(item)
         }
 

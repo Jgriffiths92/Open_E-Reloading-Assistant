@@ -18,5 +18,6 @@
     <string name="vertical_display_orientation">Vertical Display Orientation</string>
     <string name="horizontal_display_orientation">Horizontal Display Orientation</string>
     <string name="screen_size">Screen Options</string>
+    <string name="show_1_wind_hold">Show 1 wind hold</string>
 
 </resources>
