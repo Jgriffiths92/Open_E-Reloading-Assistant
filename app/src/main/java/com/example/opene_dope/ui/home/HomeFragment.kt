@@ -48,7 +48,7 @@ class HomeFragment : Fragment() {
             layout.addView(title)
 
             val spinner = Spinner(requireContext())
-            val spinnerItems = arrayOf("Create New Event...", "Event 1", "Event 2", "Event 3") // Replace with your items
+            val spinnerItems = arrayOf("Create New Event", "Event 1", "Event 2", "Event 3") // Replace with your items
             val editText = EditText(requireContext())
             editText.hint = "Event Title"
             editText.visibility = GONE
@@ -58,7 +58,7 @@ class HomeFragment : Fragment() {
             spinner.adapter = spinnerAdapter
             spinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
                 override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
-                    if (spinnerItems[position] == "Create New Event...") {
+                    if (spinnerItems[position] == "New Event") {
                         editText.visibility = View.VISIBLE
                     } else {
                         editText.visibility = GONE
