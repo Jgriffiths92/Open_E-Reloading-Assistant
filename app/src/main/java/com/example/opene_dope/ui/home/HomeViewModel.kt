@@ -7,18 +7,32 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
+data class TableRow(val target: String, val range: String, val elevation: String, val wind1: String, val wind2: String, val lead: String)
+data class TableData(val rows: List<TableRow>)
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _text = MutableLiveData<String>().apply {
-        value = loadCsvData(application.applicationContext)
+        value = loadCsvData(application.applicationContext).toString()
     }
 
     private val _intent = MutableLiveData<Intent?>().apply {
         value = null
     }
+    private val _tableData = MutableLiveData<TableData>().apply {
+        viewModelScope.launch {
+            value = loadCsvData(application.applicationContext)
+        }
+
+    }
+
+    val tableData: LiveData<TableData> = _tableData
+
+
     val intent: LiveData<Intent?> = _intent
 
     fun onIntent(intent: Intent) {
@@ -45,15 +59,15 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      * line by line, appending each line to a StringBuilder. Finally, it returns the entire
      * content of the file as a single String.
      *
-     * @param context The application context, needed to access the resources.
+     * @param this@loadCsvData The application context, needed to access the resources.
      * @return A String containing the content of the CSV file (excluding the first five lines),
      *         or an error message if there was a problem reading the file.
      * @throws Exception if an error occurs while reading the file. Errors are logged to the console.
-     */
-    private fun loadCsvData(context: Context): String {
+     */ // Modified to populate TableData
+    private fun Context.loadCsvData(): String {
         val stringBuilder = StringBuilder()
         try {
-            val inputStream = context.resources.openRawResource(com.example.opene_dope.R.raw.rc)
+            val inputStream = resources.openRawResource(com.example.opene_dope.R.raw.rc)
             val reader = BufferedReader(InputStreamReader(inputStream))
 
             // Skip the first five lines using a loop
@@ -86,4 +100,47 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
         return stringBuilder.toString()
     }
+
+    // Helper function to populate TableData
+    private fun loadCsvData(context: Context): TableData {
+        val tableRows = mutableListOf<TableRow>()
+        try {
+            val inputStream = context.resources.openRawResource(com.example.opene_dope.R.raw.rc)
+            val reader = BufferedReader(InputStreamReader(inputStream))
+
+            // Skip the first five lines
+            repeat(5) {
+                reader.readLine()
+            }
+
+            var line: String? = reader.readLine()
+            while (line != null) {
+                val values = line.split(",")
+                if (values.size >= 14) {
+                    val row = TableRow(
+                        values[0], // Target ID Value
+                        values[1], // Range Value
+                        values[2], // Elevation Value
+                        values[3], // Wind 1 Value
+                        values[4], // Wind 2 Value
+                        values[5]  // Lead Value
+                    )
+                    tableRows.add(row)
+                }
+                line = reader.readLine()
+            }
+            reader.close()
+        } catch (e: Exception) {
+            Log.e("HomeViewModel", "Error reading CSV", e)
+            // Handle the error by adding an error row
+            val errorRow = TableRow("Error", "Error", "Error", "Error", "Error", "Error")
+            tableRows.add(errorRow)
+
+        }
+        return TableData(tableRows)
+    }
 }
+
+
+
+
