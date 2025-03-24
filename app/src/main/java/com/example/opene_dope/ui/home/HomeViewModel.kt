@@ -43,22 +43,18 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             var line: String? = reader.readLine()
             while (line != null) {
                 val values = line.split(",")
-                if (values.size >= 6) {
-                    val targetId = values[0]
-                    val range = values[1]
-                    val elevation = values[2]
-                    val wind1 = values[3]
-                    val wind2 = values[4]
-                    val lead = values[5]
+                if (values.size >= 14) {
+                    val modifiedLine = listOf(
+                        values[0], // keep Target ID Value
+                        values[1], // keep Range Value
+                        values[2], // keep Elevation Value
+                        values[3], // keep Wind 1 Value
+                        values[4], // keep Wind 2 Value
+                        values[5], // keep Lead Value
 
-                    val formattedLine = "Target ID: $targetId, " +
-                            "Range: $range, " +
-                            "Elevation: $elevation, " +
-                            "Wind 1: $wind1, " +
-                            "Wind 2: $wind2, " +
-                            "Lead: $lead"
 
-                    stringBuilder.append(formattedLine).append("\n")
+                    ).joinToString("|")
+                    stringBuilder.append(modifiedLine).append("\n")
                 }
                 line = reader.readLine()
             }
