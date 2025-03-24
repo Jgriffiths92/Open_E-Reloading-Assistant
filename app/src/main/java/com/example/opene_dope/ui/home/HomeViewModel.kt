@@ -2,6 +2,7 @@ package com.example.opene_dope.ui.home
 
 import android.app.Application
 import android.content.Context
+import android.content.Intent
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
@@ -14,7 +15,27 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val _text = MutableLiveData<String>().apply {
         value = loadCsvData(application.applicationContext)
     }
-    val text: LiveData<String> = _text
+
+    private val _intent = MutableLiveData<Intent?>().apply {
+        value = null
+    }
+    val intent: LiveData<Intent?> = _intent
+
+    fun onIntent(intent: Intent) {
+        Log.d("HomeViewModel", "Intent received: $intent")
+        if(intent.action == Intent.ACTION_SEND) {
+            if ("text/plain" == intent.type) {
+                val text = intent.getStringExtra(Intent.EXTRA_TEXT)
+                _text.value = text ?: "No data received"
+            }
+        } else {
+            _intent.value = intent
+            // reset the intent after processing
+            _intent.value = null
+        }
+    }
+
+   val text: LiveData<String> = _text
 
     /**
      * Loads data from a CSV file located in the raw resources directory.
