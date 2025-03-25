@@ -88,6 +88,7 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(this, "Show 1 wind hold", Toast.LENGTH_SHORT).show()
                 }else {
                     Toast.makeText(this, "Show 2 wind holds", Toast.LENGTH_SHORT).show()
+
                 }
                 invalidateOptionsMenu()
                 return true
