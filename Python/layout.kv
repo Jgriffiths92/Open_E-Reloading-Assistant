@@ -1,0 +1,102 @@
+#:import MDNavigationLayout kivymd.uix.navigationdrawer.MDNavigationLayout
+#:import MDNavigationDrawer kivymd.uix.navigationdrawer.MDNavigationDrawer
+#:import MDNavigationDrawerMenu kivymd.uix.navigationdrawer.MDNavigationDrawerMenu
+#:import MDNavigationDrawerItem kivymd.uix.navigationdrawer.MDNavigationDrawerItem
+#:import MDBoxLayout kivymd.uix.boxlayout.MDBoxLayout
+#:import MDTopAppBar kivymd.uix.toolbar.MDTopAppBar
+
+MDNavigationLayout:
+    ScreenManager:
+        id: screen_manager
+        HomeScreen:
+            id: home_screen
+            name: "home"
+        SavedCardsScreen:
+            name: "saved_cards"
+        ManageDataScreen:
+            name: "manage_data"
+
+    MDNavigationDrawer:
+        id: drawer
+        MDNavigationDrawerMenu:
+            MDBoxLayout:
+                orientation: "vertical"
+                size_hint_y: None
+                height: "180dp"
+                padding: "10dp"
+
+                Image:
+                    source: "logo.png"
+                    size_hint: None, None
+                    size: "80dp", "80dp"
+                    pos_hint: {"center_x": 0.5}
+
+                MDLabel:
+                    text: "Open E-Dope"
+                    theme_text_color: "Custom"
+                    text_color: 0, 0, 0, 1
+                    halign: "center"
+
+            MDNavigationDrawerItem:
+                text: "Home"
+                icon: "home"
+                on_release:
+                    screen_manager.current = "home"
+                    app.root.ids.drawer.set_state("close")
+
+            MDNavigationDrawerItem:
+                text: "Saved Cards"
+                icon: "content-save"
+                on_release:
+                    screen_manager.current = "saved_cards"
+                    app.root.ids.drawer.set_state("close")
+
+            MDNavigationDrawerItem:
+                text: "Manage Data"
+                icon: "wrench"
+                on_release:
+                    screen_manager.current = "manage_data"
+                    app.root.ids.drawer.set_state("close")
+
+<HomeScreen>:
+    MDBoxLayout:
+        orientation: "vertical"
+        MDTopAppBar:
+            title: "Home"
+            left_action_items: [["menu", lambda x: app.root.ids.drawer.set_state("open")]]
+            right_action_items: [["dots-vertical", lambda x: app.on_settings_button_press(x)]]
+            md_bg_color: 0.678, 0.0, 0.969, 1
+        BoxLayout:
+            id: table_container  # Placeholder for the table
+            orientation: "vertical"
+            size_hint: 1, 1
+            padding: "10dp"
+        MDFloatingActionButton:
+            icon: "content-save"
+            md_bg_color: 0.0, 0.969, 0.565, 1
+            pos_hint: {"x": 0.9, "y": 0.1}  # Position in the bottom-right corner
+            on_release: app.on_fab_press()
+
+<SavedCardsScreen>:
+    MDBoxLayout:
+        orientation: "vertical"
+        MDTopAppBar:
+            title: "Saved Cards"
+            left_action_items: [["menu", lambda x: app.root.ids.drawer.set_state("open")]]
+            right_action_items: [["dots-vertical", lambda x: app.on_settings_button_press(x)]]
+            md_bg_color: 0.678, 0.0, 0.969, 1
+        MDLabel:
+            text: "Saved Cards Screen"
+            halign: "center"
+
+<ManageDataScreen>:
+    MDBoxLayout:
+        orientation: "vertical"
+        MDTopAppBar:
+            title: "Manage Data"
+            left_action_items: [["menu", lambda x: app.root.ids.drawer.set_state("open")]]
+            right_action_items: [["dots-vertical", lambda x: app.on_settings_button_press(x)]]
+            md_bg_color: 0.678, 0.0, 0.969, 1
+        MDLabel:
+            text: "Manage Data Screen"
+            halign: "center"
