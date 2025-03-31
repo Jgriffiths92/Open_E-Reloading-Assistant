@@ -53,7 +53,11 @@ class MainApp(MDApp):
         with open(file_path, mode="r", encoding="utf-8") as csv_file:
             reader = csv.reader(csv_file)  # Use csv.reader to read the file
             next(reader, None)  # Skip the first row (headers), if present
-            for row in reader:
+            for index, row in enumerate(reader, start=1):
+            # Skip lines 3 and 4 (index 2 and 3 in zero-based indexing)
+                if index in [2, 3, 4]:
+                    continue
+
                 # Skip empty rows
                 if not row:
                     continue
