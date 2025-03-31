@@ -55,7 +55,7 @@ class MainApp(MDApp):
             next(reader, None)  # Skip the first row (headers), if present
             for index, row in enumerate(reader, start=1):
             # Skip lines 3 and 4 (index 2 and 3 in zero-based indexing)
-                if index in [2, 3, 4]:
+                if index in [2, 3]:
                     continue
 
                 # Skip empty rows
