@@ -69,10 +69,14 @@ MDNavigationLayout:
         MDTextField:
             id: stage_name_field
             hint_text: "Stage Name"
-            mode: "rectangle"
-            size_hint_x: 0.8
-            pos_hint: {"center_x": 0.5, "center_y": 0.9}
+            hint_text_mode: "on_focus"
             multiline: False
+            halign: "center"
+            size_hint_y: None            
+            size_hint_x: 0.8
+            pos_hint: {"center_x": 0.5, "center_y": 0.5}
+            on_text_validate: app.on_stage_name_entered(self.text)
+
               # Table container for displaying the CSV data
         BoxLayout:
             id: table_container  # Placeholder for the table
