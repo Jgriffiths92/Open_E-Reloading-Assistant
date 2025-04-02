@@ -4,7 +4,7 @@
 #:import MDNavigationDrawerItem kivymd.uix.navigationdrawer.MDNavigationDrawerItem
 #:import MDBoxLayout kivymd.uix.boxlayout.MDBoxLayout
 #:import MDTopAppBar kivymd.uix.toolbar.MDTopAppBar
-
+#:import MDTextField kivymd.uix.textfield.MDTextField
 MDNavigationLayout:
     ScreenManager:
         id: screen_manager
@@ -65,12 +65,21 @@ MDNavigationLayout:
             title: "Home"
             left_action_items: [["menu", lambda x: app.root.ids.drawer.set_state("open")]]
             right_action_items: [["dots-vertical", lambda x: app.on_settings_button_press(x)]]
-            md_bg_color: 0.678, 0.0, 0.969, 1
+            md_bg_color: 0.678, 0.0, 0.969, 1  
+        MDTextField:
+            id: stage_name_field
+            hint_text: "Stage Name"
+            mode: "rectangle"
+            size_hint_x: 0.8
+            pos_hint: {"center_x": 0.5, "center_y": 0.9}
+            multiline: False
+              # Table container for displaying the CSV data
         BoxLayout:
             id: table_container  # Placeholder for the table
             orientation: "vertical"
             size_hint: 1, 1
             padding: "10dp"
+
         MDFloatingActionButton:
             icon: "content-save"
             md_bg_color: 0.0, 0.969, 0.565, 1
