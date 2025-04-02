@@ -66,6 +66,7 @@ MDNavigationLayout:
             left_action_items: [["menu", lambda x: app.root.ids.drawer.set_state("open")]]
             right_action_items: [["dots-vertical", lambda x: app.on_settings_button_press(x)]]
             md_bg_color: 0.678, 0.0, 0.969, 1  
+        # Stage Name Text Field
         MDTextField:
             id: stage_name_field
             hint_text: "Stage Name"
@@ -83,6 +84,17 @@ MDNavigationLayout:
             orientation: "vertical"
             size_hint: 1, 1
             padding: "10dp"
+        # Stage Notes Text Field 
+        MDTextField:
+            id: stage_notes_field
+            hint_text: "Stage Notes shoot to move/hit to move ect..."
+            hint_text_mode: "on_focus"
+            multiline: True
+            halign: "center"
+            size_hint_y: None            
+            size_hint_x: 0.8
+            pos_hint: {"center_x": 0.5, "center_y": 0.5}
+            on_text_validate: app.on_stage_name_entered(self.text)
 
         MDFloatingActionButton:
             icon: "content-save"
