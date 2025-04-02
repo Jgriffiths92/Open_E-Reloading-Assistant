@@ -23,8 +23,9 @@ class MainApp(MDApp):
     def build(self):
         return Builder.load_file("layout.kv")
     
-    global show_lead, show_2_wind_holds
+    global show_lead, show_range, show_2_wind_holds
     show_lead = True
+    show_range = True
     show_2_wind_holds = True
        
     def on_fab_press(self):
@@ -110,7 +111,7 @@ class MainApp(MDApp):
         table_container.add_widget(table_label)
         
     def on_settings_button_press(self, instance):
-        global show_lead, show_2_wind_holds
+        global show_lead, show_range, show_2_wind_holds
 
         # Dismiss the existing menu if it exists
         if hasattr(self, "menu") and self.menu:
@@ -121,7 +122,11 @@ class MainApp(MDApp):
             lead_menu = {"text": "Hide Lead", "on_release": lambda: self.menu_callback("Hide Lead")}
         else:
             lead_menu = {"text": "Show Lead", "on_release": lambda: self.menu_callback("Show Lead")}
-
+        # Update the "Show Range" menu item dynamically
+        if show_range:
+            range_menu = {"text": "Hide Range", "on_release": lambda: self.menu_callback("Hide Range")}
+        else:
+            range_menu = {"text": "Show Range", "on_release": lambda: self.menu_callback("Show Range")}
         # Update the "Show 2 Wind Holds" menu item dynamically
         if show_2_wind_holds:
             wind_holds_menu = {"text": "Show 1 Wind Hold", "on_release": lambda: self.menu_callback("Show 1 Wind Hold")}
@@ -132,6 +137,7 @@ class MainApp(MDApp):
         menu_items = [
             {"text": "Settings", "on_release": lambda: self.menu_callback("Settings")},
             lead_menu,
+            range_menu,
             wind_holds_menu,
         ]
 
@@ -144,14 +150,17 @@ class MainApp(MDApp):
         self.menu.open()
 
     def menu_callback(self, option):
-        global show_lead, show_2_wind_holds
+        global show_lead, show_range, show_2_wind_holds
 
         # Handle the selected option
         if option == "Hide Lead":
             show_lead = False
         elif option == "Show Lead":
             show_lead = True
-
+        if option == "Hide Range":
+            show_range = False
+        elif option == "Show Range":
+            show_range = True
         if option == "Show 1 Wind Hold":
             show_2_wind_holds = False
         elif option == "Show 2 Wind Holds":
@@ -177,7 +186,8 @@ class MainApp(MDApp):
             filtered_row = {}
             # Add columns in the static order
             filtered_row["Target"] = row.get("Target", "")
-            filtered_row["Range"] = row.get("Range", "")
+            if show_range:
+                filtered_row["Range"] = row.get("Range", "")
             filtered_row["Elv"] = row.get("Elv", "")
             filtered_row["Wnd1"] = row.get("Wnd1", "")
             if show_2_wind_holds:
