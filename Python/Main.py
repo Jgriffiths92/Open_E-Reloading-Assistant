@@ -24,8 +24,8 @@ class MainApp(MDApp):
         return Builder.load_file("layout.kv")
     
     global show_lead, show_range, show_2_wind_holds
-    show_lead = True
-    show_range = True
+    show_lead = False
+    show_range = False
     show_2_wind_holds = True
        
     def on_fab_press(self):
