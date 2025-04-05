@@ -8,6 +8,8 @@ from plyer import filechooser
 from kivy.uix.label import Label
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.snackbar import Snackbar
+from kivymd.uix.dialog import MDDialog
+from kivymd.uix.button import MDRaisedButton
 import os
 #change color of the filechooser
 Builder.load_string('''
@@ -84,6 +86,8 @@ class ManageDataScreen(Screen):
     pass
 
 class MainApp(MDApp):
+    dialog = None  # Store the dialog instance
+
     def build(self):
         return Builder.load_file("layout.kv")
     
@@ -258,6 +262,30 @@ class MainApp(MDApp):
                 filtered_row["Lead"] = row.get("Lead", "")
             filtered_data.append(filtered_row)
         return filtered_data
+
+    def on_fab_press(self):
+        # Create the dialog if it doesn't already exist
+        if not self.dialog:
+            self.dialog = MDDialog(
+                title="Save Data",
+                text="Do you want to save the current data?",
+                buttons=[
+                    MDRaisedButton(
+                        text="CANCEL",
+                        on_release=lambda x: self.dialog.dismiss()
+                    ),
+                    MDRaisedButton(
+                        text="SAVE",
+                        on_release=self.save_data
+                    ),
+                ],
+            )
+        self.dialog.open()
+
+    def save_data(self, *args):
+        # Add your save logic here
+        print("Data saved!")
+        self.dialog.dismiss()
 
 
 if __name__ == "__main__":
