@@ -39,6 +39,7 @@ class MainApp(MDApp):
                 self.current_data = data  # Store the original data
                 filtered_data = self.filter_table_data(data)  # Filter the data
                 self.display_table(filtered_data)  # Display the filtered data
+                self.root.ids.screen_manager.current = "home"  # Navigate back to the HomeScreen
             except Exception as e:
                 print(f"Error reading file: {str(e)}")  # Print the error message
         else:
