@@ -8,6 +8,7 @@ from plyer import filechooser
 from kivy.uix.label import Label
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.snackbar import Snackbar
+import os
 
 # Define Screens
 class HomeScreen(Screen):
@@ -27,6 +28,11 @@ class MainApp(MDApp):
     show_lead = False
     show_range = False
     show_2_wind_holds = True
+
+    def open_file_chooser(self):
+        # Specify the starting directory
+        start_directory = os.path.join(os.getcwd(), "assets\CSV")
+        filechooser.open_file(on_selection=self.on_file_selected, path=start_directory)
        
     def on_fab_press(self):
         # Open the native file chooser with a filter for CSV files

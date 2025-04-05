@@ -110,6 +110,7 @@ MDNavigationLayout:
             left_action_items: [["menu", lambda x: app.root.ids.drawer.set_state("open")]]
             right_action_items: [["dots-vertical", lambda x: app.on_settings_button_press(x)]]
             md_bg_color: 0.678, 0.0, 0.969, 1
+
         MDTextField:
             id: search_field
             hint_text: "Search Cards"
@@ -119,6 +120,12 @@ MDNavigationLayout:
             size_hint_x: 0.8
             pos_hint: {"center_x": 0.5, "center_y": 0.5}
             on_text_validate: app.on_search_entered(self.text)
+
+        MDRaisedButton:
+            text: "Open File Chooser"
+            pos_hint: {"center_x": 0.5, "center_y": 0.5}
+            on_release: app.open_file_chooser()
+
         MDLabel:
             text: "Saved Cards Screen"
             halign: "center"
