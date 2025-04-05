@@ -121,14 +121,12 @@ MDNavigationLayout:
             pos_hint: {"center_x": 0.5, "center_y": 0.5}
             on_text_validate: app.on_search_entered(self.text)
 
-        MDRaisedButton:
-            text: "Open File Chooser"
+        FileChooserListView:
+            id: filechooser
+            path: "assets\CSV"  # Set the desired directory path here
+            on_selection: app.on_file_selected(self.selection)
+            size_hint_y: 0.8  # Adjust the height as needed
             pos_hint: {"center_x": 0.5, "center_y": 0.5}
-            on_release: app.open_file_chooser()
-
-        MDLabel:
-            text: "Saved Cards Screen"
-            halign: "center"
 
 <ManageDataScreen>:
     MDBoxLayout:

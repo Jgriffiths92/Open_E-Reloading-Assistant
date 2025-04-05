@@ -29,15 +29,7 @@ class MainApp(MDApp):
     show_range = False
     show_2_wind_holds = True
 
-    def open_file_chooser(self):
-        # Specify the starting directory
-        start_directory = os.path.join(os.getcwd(), "assets\CSV")
-        filechooser.open_file(on_selection=self.on_file_selected, path=start_directory)
-       
-    def on_fab_press(self):
-        # Open the native file chooser with a filter for CSV files
-        filechooser.open_file(on_selection=self.on_file_selected, filters=["*.csv"])
-
+   
     def on_file_selected(self, selection):
         if selection:
             # Handle the selected file
