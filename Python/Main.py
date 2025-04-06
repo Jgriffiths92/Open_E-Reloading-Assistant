@@ -286,6 +286,19 @@ class MainApp(MDApp):
         # Add your save logic here
         print("Data saved!")
         self.dialog.dismiss()
+# search functionality below
+    def on_search_entered(self, search_text):
+        """Filter the FileChooserListView based on the search input."""
+        try:
+            filechooser = self.root.ids.saved_cards_screen.ids.filechooser
+            if search_text:
+                # Update the filter to match files containing the search text
+                filechooser.filters = [lambda folder, filename: search_text.lower() in filename.lower()]
+            else:
+                # Reset the filter to show all files
+                filechooser.filters = []
+        except Exception as e:
+            print(f"Error in search functionality: {e}")
 
 
 if __name__ == "__main__":

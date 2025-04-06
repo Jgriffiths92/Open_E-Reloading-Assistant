@@ -119,11 +119,11 @@ MDNavigationLayout:
             size_hint_y: None            
             size_hint_x: 0.8
             pos_hint: {"center_x": 0.5, "center_y": 0.5}
-            on_text_validate: app.on_search_entered(self.text)
+            on_text: app.on_search_entered(self.text)  # Call the method on text change
 
         FileChooserListView:
-            id: filechooser
-            rootpath: "assets\CSV"  # Set the desired directory path here
+            id: file_chooser
+            rootpath: "assets/CSV"  # Set the desired directory path here
             on_selection: app.on_file_selected(self.selection)
             size_hint_y: 0.8  # Adjust the height as needed
             pos_hint: {"center_x": 0.5, "center_y": 0.5}
