@@ -81,23 +81,26 @@ MDNavigationLayout:
             pos_hint: {"center_x": 0.5, "center_y": 0.5}
             on_text_validate: app.on_stage_name_entered(self.text)
 
-              # Table container for displaying the CSV data
+        # Table container for displaying the CSV data
         BoxLayout:
             id: table_container  # Placeholder for the table
             orientation: "vertical"
             size_hint: 1, 1
             padding: "10dp"
-        # Stage Notes Text Field 
+
+        # Stage Notes Text Field
         MDTextField:
             id: stage_notes_field
-            hint_text: "Stage Notes shoot to move/hit to move ect..."
+            hint_text: "Stage Notes (e.g., shoot to move/hit to move)"
             hint_text_mode: "on_focus"
             multiline: True
             halign: "center"
-            size_hint_y: None            
+            size_hint_y: None
+            height: dp(96)  # Limit height to 2 lines (48dp per line)
             size_hint_x: 0.8
             pos_hint: {"center_x": 0.5, "center_y": 0.5}
-            on_text_validate: app.on_stage_name_entered(self.text)
+            on_text: app.limit_stage_notes(self)  # Call a method to enforce the line limit
+            on_text_validate: app.on_stage_notes_entered(self.text)
 
         MDFloatingActionButton:
             icon: "content-save"

@@ -293,6 +293,17 @@ class MainApp(MDApp):
         return filtered_data
 
     def on_fab_press(self):
+        """Handle the floating action button press."""
+        # Save the stage name
+        stage_name_field = self.root.ids.home_screen.ids.stage_name_field
+        global stage_name
+        stage_name = stage_name_field.text
+
+        # Save the stage notes
+        stage_notes_field = self.root.ids.home_screen.ids.stage_notes_field
+        global stage_notes
+        stage_notes = stage_notes_field.text
+
         # Create the dialog if it doesn't already exist
         if not self.dialog:
             self.dialog = MDDialog(
@@ -328,7 +339,17 @@ class MainApp(MDApp):
                 filechooser.filters = []
         except Exception as e:
             print(f"Error in search functionality: {e}")
-
+    
+    def limit_stage_notes(self, text_field):
+        """Limit the stage notes to 2 lines."""
+        max_lines = 2
+        lines = text_field.text.split("\n")
+        if len(lines) > max_lines:
+            # Trim the text to the first 2 lines
+            text_field.text = "\n".join(lines[:max_lines])
+            text_field.cursor = (len(text_field.text), 0)  # Reset the cursor position
+    
+            
 
 if __name__ == "__main__":
     MainApp().run()
