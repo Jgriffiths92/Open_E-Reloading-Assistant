@@ -1,4 +1,5 @@
 import csv
+import itertools
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivymd.app import MDApp
@@ -89,7 +90,17 @@ class MainApp(MDApp):
     dialog = None  # Store the dialog instance
 
     def build(self):
-        return Builder.load_file("layout.kv")
+        # Load the KV file
+        root = Builder.load_file("layout.kv")
+
+        # Dynamically set the rootpath for the FileChooserListView
+        saved_cards_screen = root.ids.screen_manager.get_screen("saved_cards")
+        csv_directory = os.path.join(os.path.dirname(__file__), "assets", "CSV")
+        if not os.path.exists(csv_directory):
+            os.makedirs(csv_directory)  # Create the directory if it doesn't exist
+        saved_cards_screen.ids.filechooser.rootpath = csv_directory
+
+        return root
     
     global show_lead, show_range, show_2_wind_holds
     show_lead = False
@@ -98,45 +109,63 @@ class MainApp(MDApp):
 
    
     def on_file_selected(self, selection):
+        """Handle the file or folder selected in the FileChooserListView."""
         if selection:
-            # Handle the selected file
-            file_path = selection[0]
-            try:
-                data = self.read_csv_to_dict(file_path)
-                self.current_data = data  # Store the original data
-                filtered_data = self.filter_table_data(data)  # Filter the data
-                self.display_table(filtered_data)  # Display the filtered data
-                self.root.ids.screen_manager.current = "home"  # Navigate back to the HomeScreen
-            except Exception as e:
-                print(f"Error reading file: {str(e)}")  # Print the error message
+            selected_path = selection[0]
+            print(f"Selected: {selected_path}")  # Log the selected file or folder
+
+            # Check if the selected file is a CSV
+            if selected_path.endswith(".csv"):
+                try:
+                    # Read the CSV file and convert it to a dictionary
+                    data = self.read_csv_to_dict(selected_path)
+                    self.current_data = data  # Store the data for filtering or other operations
+
+                    # Display the data as a table on the Home Screen
+                    self.display_table(data)
+
+                    # Reset the FileChooserListView to its rootpath
+                    saved_cards_screen = self.root.ids.screen_manager.get_screen("saved_cards")
+                    filechooser = saved_cards_screen.ids.filechooser
+                    filechooser.path = filechooser.rootpath  # Reset to rootpath
+
+                    # Navigate back to the Home Screen
+                    self.root.ids.screen_manager.current = "home"  # Reference the Home Screen by its name in layout.kv
+
+                    print(f"CSV loaded: {os.path.basename(selected_path)}")
+                except Exception as e:
+                    print(f"Error reading CSV: {e}")
+            else:
+                print("Please select a valid CSV file.")
         else:
-            print("No file selected")  # Print a message if no file is selected
+            print("No file selected")
 
     def read_csv_to_dict(self, file_path):
-        """Reads a CSV file and maps it to static column names, ignoring the headers."""
+        """Reads a CSV file and maps it to static column names, ignoring the headers and skipping the first 4 lines."""
         static_columns = ["Target", "Range", "Elv", "Wnd1", "Wnd2", "Lead"]  # Static column names
         data = []
 
-        with open(file_path, mode="r", encoding="utf-8") as csv_file:
-            reader = csv.reader(csv_file)  # Use csv.reader to read the file
-            next(reader, None)  # Skip the first row (headers), if present
-            for index, row in enumerate(reader, start=1):
-            # Skip lines 3 and 4 (index 2 and 3 in zero-based indexing)
-                if index in [2, 3]:
-                    continue
+        try:
+            with open(file_path, mode="r", encoding="utf-8") as csv_file:
+                reader = csv.reader(csv_file)  # Use csv.reader to read the file
+                # Skip the first 4 lines
+                for _ in range(6):
+                    next(reader, None)
+                for index, row in enumerate(reader, start=1):
+                    # Skip empty rows
+                    if not row:
+                        continue
 
-                # Skip empty rows
-                if not row:
-                    continue
-
-                # Map the row to the static column names
-                mapped_row = {static_columns[i]: row[i] if i < len(row) else "" for i in range(len(static_columns))}
-                data.append(mapped_row)
+                    # Map the row to the static column names
+                    mapped_row = {static_columns[i]: row[i] if i < len(row) else "" for i in range(len(static_columns))}
+                    data.append(mapped_row)
+        except Exception as e:
+            print(f"Error reading CSV file: {e}")
 
         return data
 
     def display_table(self, data):
-        """Displays the CSV data as text on the HomeScreen."""
+        """Displays the CSV data as text on the Home Screen."""
         if not data:
             print("No data to display.")
             return
@@ -159,7 +188,7 @@ class MainApp(MDApp):
         for row in data:
             table_text += " | ".join(f"{str(row.get(header, '')):<{column_widths[header]}}" for header in headers) + "\n"  # Add rows
 
-        # Add the text to the table_container in HomeScreen
+        # Add the text to the table_container in Home Screen
         home_screen = self.root.ids.home_screen
         table_container = home_screen.ids.table_container
         table_container.clear_widgets()  # Clear any existing widgets in the container

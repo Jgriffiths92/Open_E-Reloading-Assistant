@@ -5,16 +5,19 @@
 #:import MDBoxLayout kivymd.uix.boxlayout.MDBoxLayout
 #:import MDTopAppBar kivymd.uix.toolbar.MDTopAppBar
 #:import MDTextField kivymd.uix.textfield.MDTextField
+
 MDNavigationLayout:
     ScreenManager:
         id: screen_manager
         HomeScreen:
             id: home_screen
-            name: "home"
+            name: "home"  # Name used to navigate to this screen
         SavedCardsScreen:
-            name: "saved_cards"
+            id: saved_cards_screen
+            name: "saved_cards"  # Name used to navigate to this screen
         ManageDataScreen:
-            name: "manage_data"
+            id: manage_data_screen
+            name: "manage_data"  # Name used to navigate to this screen
 
     MDNavigationDrawer:
         id: drawer
@@ -119,13 +122,14 @@ MDNavigationLayout:
             size_hint_y: None            
             size_hint_x: 0.8
             pos_hint: {"center_x": 0.5, "center_y": 0.5}
-            on_text: app.on_search_entered(self.text)  # Call the method on text change
+            on_text: app.on_search_entered(self.text)
 
         FileChooserListView:
-            id: file_chooser
-            rootpath: "assets/CSV"  # Set the desired directory path here
+            id: filechooser
+            rootpath: ""  # Placeholder, set dynamically in Python
+            filters: []  # Allow all files by default
             on_selection: app.on_file_selected(self.selection)
-            size_hint_y: 0.8  # Adjust the height as needed
+            size_hint_y: 0.8
             pos_hint: {"center_x": 0.5, "center_y": 0.5}
 
 <ManageDataScreen>:
