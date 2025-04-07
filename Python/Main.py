@@ -86,6 +86,9 @@ class SavedCardsScreen(Screen):
 class ManageDataScreen(Screen):
     pass
 
+class SettingsScreen(Screen):
+    pass
+
 class MainApp(MDApp):
     dialog = None  # Store the dialog instance
 
