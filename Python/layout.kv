@@ -21,6 +21,10 @@ MDNavigationLayout:
         SettingsScreen:
             id: settings_screen
             name: "settings"  # Name used to navigate to this screen
+            
+        SettingsScreen:
+            id: settings_screen
+            name: "settings"  # Name used to navigate to this screen
 
     MDNavigationDrawer:
         id: drawer
@@ -148,6 +152,17 @@ MDNavigationLayout:
             md_bg_color: 0.678, 0.0, 0.969, 1
         MDLabel:
             text: "Manage Data Screen"
+            halign: "center"
+
+<SettingsScreen>:
+    name: "settings"
+    MDBoxLayout:
+        orientation: "vertical"
+        MDTopAppBar:
+            title: "Settings"
+            left_action_items: [["arrow-left", lambda x: app.switch_to_home()]]
+        MDLabel:
+            text: "Settings Page"
             halign: "center"
 
 <SettingsScreen>:
