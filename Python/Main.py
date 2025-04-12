@@ -86,6 +86,9 @@ class SavedCardsScreen(Screen):
 class ManageDataScreen(Screen):
     pass
 
+class SettingsScreen(Screen):
+    pass
+
 class MainApp(MDApp):
     dialog = None  # Store the dialog instance
 
@@ -205,7 +208,7 @@ class MainApp(MDApp):
         )
         table_container.add_widget(table_label)
         
-    def on_settings_button_press(self, instance):
+    def on_dots_press(self, instance):
         global show_lead, show_range, show_2_wind_holds
 
         # Dismiss the existing menu if it exists
@@ -260,19 +263,18 @@ class MainApp(MDApp):
             show_2_wind_holds = False
         elif option == "Show 2 Wind Holds":
             show_2_wind_holds = True
+        elif option == "Settings":
+            # Navigate to the settings screen
+            self.root.ids.screen_manager.current = "settings"
+
+            # Close the dots menu
+            if hasattr(self, "menu") and self.menu:
+                self.menu.dismiss()
 
         # Regenerate the table with updated columns
-        home_screen = self.root.ids.home_screen
-        table_container = home_screen.ids.table_container
-        table_container.clear_widgets()  # Clear the current table
-
-        # Filter the data and regenerate the table
         if hasattr(self, "current_data"):  # Check if data is already loaded
             filtered_data = self.filter_table_data(self.current_data)
             self.display_table(filtered_data)
-
-        # Re-run the on_settings_button_press to refresh the menu
-        self.on_settings_button_press(self.menu.caller)
 
     def filter_table_data(self, data):
         """Filters the table data based on the show_lead and show_2_wind_holds flags."""
@@ -326,6 +328,11 @@ class MainApp(MDApp):
         # Add your save logic here
         print("Data saved!")
         self.dialog.dismiss()
+
+    def navigate_to_home(self):
+        """Navigate back to the home screen."""
+        self.root.ids.screen_manager.current = "home"
+
 # search functionality below
     def on_search_entered(self, search_text):
         """Filter the FileChooserListView based on the search input."""

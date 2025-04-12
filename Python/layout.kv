@@ -18,6 +18,9 @@ MDNavigationLayout:
         ManageDataScreen:
             id: manage_data_screen
             name: "manage_data"  # Name used to navigate to this screen
+        SettingsScreen:
+            id: settings_screen
+            name: "settings"  # Name used to navigate to this screen
 
     MDNavigationDrawer:
         id: drawer
@@ -67,7 +70,7 @@ MDNavigationLayout:
         MDTopAppBar:
             title: "Home"
             left_action_items: [["menu", lambda x: app.root.ids.drawer.set_state("open")]]
-            right_action_items: [["dots-vertical", lambda x: app.on_settings_button_press(x)]]
+            right_action_items: [["dots-vertical", lambda x: app.on_dots_press(x)]]
             md_bg_color: 0.678, 0.0, 0.969, 1  
         # Stage Name Text Field
         MDTextField:
@@ -114,7 +117,7 @@ MDNavigationLayout:
         MDTopAppBar:
             title: "Saved Cards"
             left_action_items: [["menu", lambda x: app.root.ids.drawer.set_state("open")]]
-            right_action_items: [["dots-vertical", lambda x: app.on_settings_button_press(x)]]
+            right_action_items: [["dots-vertical", lambda x: app.on_dots_press(x)]]
             md_bg_color: 0.678, 0.0, 0.969, 1
 
         MDTextField:
@@ -141,8 +144,19 @@ MDNavigationLayout:
         MDTopAppBar:
             title: "Manage Data"
             left_action_items: [["menu", lambda x: app.root.ids.drawer.set_state("open")]]
-            right_action_items: [["dots-vertical", lambda x: app.on_settings_button_press(x)]]
+            right_action_items: [["dots-vertical", lambda x: app.on_dots_press(x)]]
             md_bg_color: 0.678, 0.0, 0.969, 1
         MDLabel:
             text: "Manage Data Screen"
+            halign: "center"
+
+<SettingsScreen>:
+    MDBoxLayout:
+        orientation: "vertical"
+        MDTopAppBar:
+            title: "Settings"
+            left_action_items: [["arrow-left", lambda x: app.navigate_to_home()]]  # Navigate back to Home
+            md_bg_color: 0.678, 0.0, 0.969, 1
+        MDLabel:
+            text: "Settings Page"
             halign: "center"
