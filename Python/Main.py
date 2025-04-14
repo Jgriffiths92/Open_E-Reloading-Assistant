@@ -115,6 +115,9 @@ class MainApp(MDApp):
         """Handle the file or folder selected in the FileChooserListView."""
         if selection:
             selected_path = selection[0]
+            # Extract the file name and set it to the stage_name_field
+            file_name = os.path.basename(selected_path)
+            self.root.ids.home_screen.ids.stage_name_field.text = os.path.splitext(file_name)[0]
             print(f"Selected: {selected_path}")  # Log the selected file or folder
 
             # Check if the selected file is a CSV
