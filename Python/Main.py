@@ -161,6 +161,12 @@ class MainApp(MDApp):
                     if not row:
                         continue
 
+                    # Skip footer if it exists (e.g., rows starting with "Stage Notes:")
+                    if row[0].strip().lower() == "stage notes:":
+                        break
+                    if not row:
+                        continue
+
                     # Map the row to the static column names
                     mapped_row = {static_columns[i]: row[i] if i < len(row) else "" for i in range(len(static_columns))}
                     data.append(mapped_row)
