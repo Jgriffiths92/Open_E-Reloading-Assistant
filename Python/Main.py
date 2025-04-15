@@ -355,9 +355,36 @@ class MainApp(MDApp):
 
         # Create the dialog if it doesn't already exist
         if not self.dialog:
+               # Get the list of folders in the assets/CSV directory
+            csv_directory = os.path.join(os.path.dirname(__file__), "assets", "CSV")
+            folders = [f for f in os.listdir(csv_directory) if os.path.isdir(os.path.join(csv_directory, f))]
+
+            # Create menu items for each folder
+            menu_items = [
+                {
+                    "text": folder,
+                    "on_release": lambda x=folder: self.on_folder_selected(x),
+                }
+                for folder in folders
+            ]
+
+            # Create the dropdown menu
             self.dialog = MDDialog(
                 title="Save Data",
-                text="Do you want to save the current data?",
+                text="Do you want to save the current data?\n\nSelect a folder from the dropdown below:",
+                type="custom",
+                content_cls=MDRaisedButton(
+                    text="Select Event",
+                    size_hint=(1, None),
+                    height="48dp",
+                    on_release=lambda x: MDDropdownMenu(
+                        caller=x,
+                        items=menu_items,
+                        width_mult=4,  # Adjust width_mult to match the button width
+                    ).open(),
+                    pos_hint={"center_x": 0.5, "center_y": 0.5},
+                    halign="center",
+                ),
                 buttons=[
                     MDRaisedButton(
                         text="CANCEL",
