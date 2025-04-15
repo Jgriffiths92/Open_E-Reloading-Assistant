@@ -150,7 +150,6 @@ class MainApp(MDApp):
         """Reads a CSV file and maps it to static column names, ignoring the headers and skipping the first 4 lines."""
         static_columns = ["Target", "Range", "Elv", "Wnd1", "Wnd2", "Lead"]  # Static column names
         data = []
-
         try:
             with open(file_path, mode="r", encoding="utf-8") as csv_file:
                 reader = csv.reader(csv_file)  # Use csv.reader to read the file
@@ -334,7 +333,7 @@ class MainApp(MDApp):
                     writer.writerow([])
                     writer.writerow(["Stage Notes:"])
                     writer.writerow([stage_notes])
-                    
+
             except Exception as e:
                 print(f"Error displaying stage notes: {e}")
            
