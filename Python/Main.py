@@ -309,6 +309,36 @@ class MainApp(MDApp):
         global stage_notes
         stage_notes = stage_notes_field.text
 
+        # Add the stage notes as a footer to the CSV
+        if hasattr(self, "current_data") and self.current_data:
+            csv_directory = os.path.join(os.path.dirname(__file__), "assets", "CSV")
+            file_path = os.path.join(csv_directory, f"{stage_name}.csv")
+            try:
+                with open(file_path, mode="w", encoding="utf-8", newline="") as csv_file:
+                    writer = csv.writer(csv_file)
+
+                    # Write the headers
+                    writer.writerow(["Kestrel Ballistics"])
+                    writer.writerow([])
+                    writer.writerow(["Gun Profile:"])
+                    writer.writerow([])
+                    writer.writerow(["Temp: 22 C", "Pressure: 29.63 inHg", "RH: 79%", "Range Unit: Meters", "Hold Unit: MILS", "Wind Speed Unit: MPH", "Target Speed Unit: MPH"])
+                    headers = self.current_data[0].keys()
+                    writer.writerow(headers)
+
+                    # Write the data rows
+                    for row in self.current_data:
+                        writer.writerow(row.values())
+
+                    # Add the stage notes as a footer
+                    writer.writerow([])
+                    writer.writerow(["Stage Notes:"])
+                    writer.writerow([stage_notes])
+
+                print(f"Data saved to {file_path} with stage notes as footer.")
+            except Exception as e:
+                print(f"Error saving data to CSV: {e}")
+
         # Create the dialog if it doesn't already exist
         if not self.dialog:
             self.dialog = MDDialog(
