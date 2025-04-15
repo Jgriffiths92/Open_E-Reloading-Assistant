@@ -334,8 +334,17 @@ class MainApp(MDApp):
                     writer.writerow([])
                     writer.writerow(["Stage Notes:"])
                     writer.writerow([stage_notes])
+                    
+            except Exception as e:
+                print(f"Error displaying stage notes: {e}")
+           
+            try:
+                # If data rows exist, display the stage notes in the text input
+                if hasattr(self, "current_data") and self.current_data:
+                    self.root.ids.home_screen.ids.stage_notes_field.text = stage_notes
 
-                print(f"Data saved to {file_path} with stage notes as footer.")
+                    print(f"Data saved to {file_path} with stage notes as footer.")
+            
             except Exception as e:
                 print(f"Error saving data to CSV: {e}")
 
