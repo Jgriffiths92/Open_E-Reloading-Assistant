@@ -376,7 +376,6 @@ class MainApp(MDApp):
                              {
                                 "text": "New Event...",
                                 "on_release": lambda: (
-                                    setattr(x, "text", "New Event..."),
                                     setattr(self.dialog.content_cls, "text", "New Event..."),
                                     print("New Event selected"),
                                 ),
@@ -385,7 +384,6 @@ class MainApp(MDApp):
                             {
                                 "text": folder,
                                 "on_release": lambda selected_folder=folder: (
-                                    setattr(x, "text", selected_folder),
                                     setattr(self.dialog.content_cls, "text", f"{selected_folder}"),
                                     print(f"Selected folder: {selected_folder}"),
                                 ),
