@@ -312,11 +312,14 @@ class MainApp(MDApp):
         if not self.dialog:
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
             self.dialog_content = SaveDialogContent()
             self.dialog = MDDialog(
                 type="custom",
                 content_cls=self.dialog_content,
 =======
+=======
+>>>>>>> parent of c49683b (added dropdown menu in the save dialogue box still need to implement fully)
 =======
 >>>>>>> parent of c49683b (added dropdown menu in the save dialogue box still need to implement fully)
             self.dialog = MDDialog(
