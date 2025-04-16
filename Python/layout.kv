@@ -18,9 +18,6 @@ MDNavigationLayout:
         ManageDataScreen:
             id: manage_data_screen
             name: "manage_data"  # Name used to navigate to this screen
-        SettingsScreen:
-            id: settings_screen
-            name: "settings"  # Name used to navigate to this screen
             
         SettingsScreen:
             id: settings_screen
@@ -42,6 +39,10 @@ MDNavigationLayout:
                     pos_hint: {"center_x": 0.5}
 
                 MDLabel:
+                    text: "Save Dialog Content"
+                    text: "Do you want to save the current data?"
+                    halign: "center"
+                    theme_text_color: "Primary"
                     text: "Open E-Dope"
                     theme_text_color: "Custom"
                     text_color: 0, 0, 0, 1
@@ -165,3 +166,52 @@ MDNavigationLayout:
         MDLabel:
             text: "Settings Page"
             halign: "center"
+
+<SaveDialogContent>:
+    MDBoxLayout:
+        orientation: "vertical"
+        spacing: "10dp"
+        size_hint_y: None
+        height: dp(200)  # Adjust height to fit all elements
+        padding: "20dp"
+        canvas.before:
+            Color:
+                rgba: 1, 1, 1, 1  # Set the color to white
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        MDLabel:
+            text: "Do you want to save the current data?"
+            halign: "center"
+            theme_text_color: "Primary"
+
+        MDBoxLayout:
+            orientation: "vertical"
+            spacing: "10dp"
+            size_hint_y: None
+            height: dp(48)
+            MDDropDownItem:
+                id: folder_spinner
+                halign: "center"
+                text: "Select Folder"
+                pos_hint: {"center_x": 0.5, "center_y": 0.5}
+                on_release: app.show_folder_dropdown(self)
+
+        MDBoxLayout:
+            orientation: "horizontal"
+            spacing: "10dp"
+            size_hint_y: None
+            height: dp(48)
+
+            MDRaisedButton:
+                text: "Save"
+                md_bg_color: 0.0, 0.969, 0.565, 1
+                pos_hint: {"center_y": 0.5, "right": 1}  # Position on the right
+                on_release: app.on_save_button_press()
+
+            MDRaisedButton:
+                text: "Cancel"
+                md_bg_color: 0.969, 0.0, 0.0, 1
+                pos_hint: {"center_y": 0.5, "right": 1}  # Position on the right
+                on_release: app.dismiss_save_dialog()
