@@ -355,6 +355,7 @@ class MainApp(MDApp):
 
         # Create the dialog if it doesn't already exist
         if not self.dialog:
+<<<<<<< HEAD
                # Get the list of folders in the assets/CSV directory
             csv_directory = os.path.join(os.path.dirname(__file__), "assets", "CSV")
             folders = [f for f in os.listdir(csv_directory) if os.path.isdir(os.path.join(csv_directory, f))]
@@ -369,10 +370,17 @@ class MainApp(MDApp):
             ]
 
             # Create the dropdown menu
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+            self.dialog_content = SaveDialogContent()
+>>>>>>> f07373a951994a08c9ad166c91bf03fa2595ea14
             self.dialog = MDDialog(
                 title="Save Data",
                 text="Do you want to save the current data?\n\nSelect a folder from the dropdown below:",
                 type="custom",
+<<<<<<< HEAD
                 content_cls=MDRaisedButton(
                     text="Select Event",
                     size_hint=(1, None),
@@ -385,6 +393,17 @@ class MainApp(MDApp):
                     pos_hint={"center_x": 0.5, "center_y": 0.5},
                     halign="center",
                 ),
+=======
+                content_cls=self.dialog_content,
+=======
+=======
+>>>>>>> parent of c49683b (added dropdown menu in the save dialogue box still need to implement fully)
+=======
+>>>>>>> parent of c49683b (added dropdown menu in the save dialogue box still need to implement fully)
+            self.dialog = MDDialog(
+                title="Save Data",
+                text="Do you want to save the current data?",
+>>>>>>> f07373a951994a08c9ad166c91bf03fa2595ea14
                 buttons=[
                     MDRaisedButton(
                         text="CANCEL",
@@ -395,6 +414,10 @@ class MainApp(MDApp):
                         on_release=self.save_data
                     ),
                 ],
+<<<<<<< HEAD
+=======
+>>>>>>> parent of c49683b (added dropdown menu in the save dialogue box still need to implement fully)
+>>>>>>> f07373a951994a08c9ad166c91bf03fa2595ea14
             )
         self.dialog.open()
 
