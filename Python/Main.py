@@ -381,9 +381,12 @@ class MainApp(MDApp):
                         caller=x,
                         items=menu_items,
                         width_mult=4,  # Adjust width_mult to match the button width
+                        halign="center",
+                        valign="center",
                     ).open(),
-                    pos_hint={"center_x": 0.5, "center_y": 0.5},
+                    pos_hint={"center_x": 0, "center_y": 1},
                     halign="center",
+                    valign="center",
                 ),
                 buttons=[
                     MDRaisedButton(
