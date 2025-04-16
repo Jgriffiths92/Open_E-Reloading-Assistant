@@ -360,22 +360,6 @@ class MainApp(MDApp):
             csv_directory = os.path.join(os.path.dirname(__file__), "assets", "CSV")
             folders = [f for f in os.listdir(csv_directory) if os.path.isdir(os.path.join(csv_directory, f))]
 
-            # Create menu items for each folder
-            menu_items = [
-                {
-                    "text": folder,
-                    "on_release": lambda x=folder: (print(f"Selected folder: {x}"),),
-                }
-                for folder in folders
-            ]
-            menu_items.insert(
-                0,
-                {
-                    "text": "New Event...",
-                    "on_release": lambda: (print("text1 selected"),),
-                }
-            )
-
             # Create the dropdown menu
             self.dialog = MDDialog(
                 title="Save Data",
@@ -387,7 +371,23 @@ class MainApp(MDApp):
                     height="48dp",
                     on_release=lambda x: MDDropdownMenu(
                         caller=x,
-                        items=menu_items,
+                        items=[
+                             {
+                                "text": "New Event...",
+                                "on_release": lambda: (
+                                    print("New Event selected"),
+                                   
+                                ),
+                            }
+                        ] + [
+                            {
+                                "text": folder,
+                                "on_release": lambda selected_folder=folder: (
+                                    print(f"Selected folder: {selected_folder}"),                            
+                                ),
+                            }
+                            for folder in folders
+                        ] ,
                         width_mult=4,  # Adjust width_mult to match the button width
                         position="center",
                     ).open(),
