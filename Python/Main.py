@@ -10,6 +10,7 @@ from kivy.uix.label import Label
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.snackbar import Snackbar
 from kivymd.uix.dialog import MDDialog
+from kivymd.uix.button import MDFlatButton
 from kivymd.uix.button import MDRaisedButton
 import os
 #change color of the filechooser
@@ -373,7 +374,7 @@ class MainApp(MDApp):
                 title="Save Data",
                 text="Do you want to save the current data?\n\nSelect a folder from the dropdown below:",
                 type="custom",
-                content_cls=MDRaisedButton(
+                content_cls=MDFlatButton(
                     text="Select Event",
                     size_hint=(1, None),
                     height="48dp",
@@ -381,15 +382,13 @@ class MainApp(MDApp):
                         caller=x,
                         items=menu_items,
                         width_mult=4,  # Adjust width_mult to match the button width
-                        halign="center",
-                        valign="center",
                     ).open(),
                     pos_hint={"center_x": 0, "center_y": 1},
                     halign="center",
                     valign="center",
                 ),
                 buttons=[
-                    MDRaisedButton(
+                    MDFlatButton(
                         text="CANCEL",
                         on_release=lambda x: self.dialog.dismiss()
                     ),
