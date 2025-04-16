@@ -371,7 +371,16 @@ class MainApp(MDApp):
             text_field.text = "\n".join(lines[:max_lines])
             text_field.cursor = (len(text_field.text), 0)  # Reset the cursor position
     
-            
+    def show_folder_dropdown(self):
+        """Retrieve the names of folders within the assets/CSV directory."""
+        csv_directory = os.path.join(os.path.dirname(__file__), "assets", "CSV")
+        try:
+        # List only directories within the CSV folder
+            folder_names = [folder for folder in os.listdir(csv_directory) if os.path.isdir(os.path.join(csv_directory, folder))]
+            return folder_names
+        except Exception as e:
+            print(f"Error retrieving folder names: {e}")
+            return []
 
 if __name__ == "__main__":
     MainApp().run()
