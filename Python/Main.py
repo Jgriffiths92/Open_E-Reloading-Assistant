@@ -366,6 +366,7 @@ class MainApp(MDApp):
                 text="Do you want to save the current data?\n\nSelect a folder from the dropdown below:",
                 type="custom",
                 content_cls=MDFlatButton(
+                    id="dropdown_button",
                     text="Select Event",
                     size_hint=(1, None),
                     height="48dp",
@@ -375,6 +376,8 @@ class MainApp(MDApp):
                              {
                                 "text": "New Event...",
                                 "on_release": lambda: (
+                                    setattr(x, "text", "New Event..."),
+                                    setattr(self.dialog.content_cls, "text", "New Event..."),
                                     print("New Event selected"),
                                 ),
                             }
@@ -382,11 +385,13 @@ class MainApp(MDApp):
                             {
                                 "text": folder,
                                 "on_release": lambda selected_folder=folder: (
-                                    print(f"Selected folder: {selected_folder}"),                            
+                                    setattr(x, "text", selected_folder),
+                                    setattr(self.dialog.content_cls, "text", f"{selected_folder}"),
+                                    print(f"Selected folder: {selected_folder}"),
                                 ),
                             }
                             for folder in folders
-                        ] ,
+                        ],
                         width_mult=4,  # Adjust width_mult to match the button width
                         position="center",
                     ).open(),
@@ -405,6 +410,7 @@ class MainApp(MDApp):
                     ),
                 ],
             )
+            
         self.dialog.open()
 
     def save_data(self, *args):
