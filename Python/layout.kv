@@ -113,7 +113,7 @@ MDNavigationLayout:
         MDFloatingActionButton:
             icon: "content-save"
             md_bg_color: 0.0, 0.969, 0.565, 1
-            pos_hint: {"x": 0.9, "y": 0.9}  # Position in the bottom-right corner
+            pos_hint: {"x": 0.9, "y": 0.1}  # Position in the bottom-right corner
             on_release: app.on_fab_press()
 
 <SavedCardsScreen>:
@@ -155,6 +155,16 @@ MDNavigationLayout:
             text: "Manage Data Screen"
             halign: "center"
 
+<SettingsScreen>:
+    name: "settings"
+    MDBoxLayout:
+        orientation: "vertical"
+        MDTopAppBar:
+            title: "Settings"
+            left_action_items: [["arrow-left", lambda x: app.switch_to_home()]]
+        MDLabel:
+            text: "Settings Page"
+            halign: "center"
 
 <SettingsScreen>:
     MDBoxLayout:
@@ -165,6 +175,7 @@ MDNavigationLayout:
             md_bg_color: 0.678, 0.0, 0.969, 1
         MDLabel:
             text: "Settings Page"
+<<<<<<< HEAD
             halign: "center"
 
 <SaveDialogContent>:
@@ -215,3 +226,6 @@ MDNavigationLayout:
                 md_bg_color: 0.969, 0.0, 0.0, 1
                 pos_hint: {"center_y": 0.5, "right": 1}  # Position on the right
                 on_release: app.dismiss_save_dialog()
+=======
+            halign: "center"
+>>>>>>> parent of c49683b (added dropdown menu in the save dialogue box still need to implement fully)

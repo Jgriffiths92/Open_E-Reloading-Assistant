@@ -310,10 +310,26 @@ class MainApp(MDApp):
         """Handle the floating action button press."""
         # Create the dialog if it doesn't already exist
         if not self.dialog:
+<<<<<<< HEAD
             self.dialog_content = SaveDialogContent()
             self.dialog = MDDialog(
                 type="custom",
                 content_cls=self.dialog_content,
+=======
+            self.dialog = MDDialog(
+                title="Save Data",
+                text="Do you want to save the current data?",
+                buttons=[
+                    MDRaisedButton(
+                        text="CANCEL",
+                        on_release=lambda x: self.dialog.dismiss()
+                    ),
+                    MDRaisedButton(
+                        text="SAVE",
+                        on_release=self.save_data
+                    ),
+                ],
+>>>>>>> parent of c49683b (added dropdown menu in the save dialogue box still need to implement fully)
             )
         self.dialog.open()
 
