@@ -364,10 +364,17 @@ class MainApp(MDApp):
             menu_items = [
                 {
                     "text": folder,
-                    "on_release": lambda x=folder: self.on_folder_selected(x),
+                    "on_release": lambda x=folder: (print(f"Selected folder: {x}"),),
                 }
                 for folder in folders
             ]
+            menu_items.insert(
+                0,
+                {
+                    "text": "New Event...",
+                    "on_release": lambda: (print("text1 selected"),),
+                }
+            )
 
             # Create the dropdown menu
             self.dialog = MDDialog(
