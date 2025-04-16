@@ -376,7 +376,6 @@ class MainApp(MDApp):
                                 "text": "New Event...",
                                 "on_release": lambda: (
                                     print("New Event selected"),
-                                   
                                 ),
                             }
                         ] + [
