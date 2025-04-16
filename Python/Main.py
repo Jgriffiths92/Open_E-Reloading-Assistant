@@ -11,7 +11,6 @@ from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.snackbar import Snackbar
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDRaisedButton
-from kivymd.uix.boxlayout import MDBoxLayout
 import os
 #change color of the filechooser
 Builder.load_string('''
@@ -88,9 +87,6 @@ class ManageDataScreen(Screen):
     pass
 
 class SettingsScreen(Screen):
-    pass
-
-class SaveDialogContent(MDBoxLayout):
     pass
 
 class MainApp(MDApp):
@@ -308,40 +304,103 @@ class MainApp(MDApp):
 
     def on_fab_press(self):
         """Handle the floating action button press."""
+        # Save the stage name
+        stage_name_field = self.root.ids.home_screen.ids.stage_name_field
+        global stage_name
+        stage_name = stage_name_field.text
+
+        # Save the stage notes
+        stage_notes_field = self.root.ids.home_screen.ids.stage_notes_field
+        global stage_notes
+        stage_notes = stage_notes_field.text
+
+        # Add the stage notes as a footer to the CSV
+        if hasattr(self, "current_data") and self.current_data:
+            csv_directory = os.path.join(os.path.dirname(__file__), "assets", "CSV")
+            file_path = os.path.join(csv_directory, f"{stage_name}.csv")
+            try:
+                with open(file_path, mode="w", encoding="utf-8", newline="") as csv_file:
+                    writer = csv.writer(csv_file)
+
+                    # Write the headers
+                    writer.writerow(["Kestrel Ballistics"])
+                    writer.writerow([])
+                    writer.writerow(["Gun Profile:"])
+                    writer.writerow([])
+                    writer.writerow(["Temp: 22 C", "Pressure: 29.63 inHg", "RH: 79%", "Range Unit: Meters", "Hold Unit: MILS", "Wind Speed Unit: MPH", "Target Speed Unit: MPH"])
+                    headers = self.current_data[0].keys()
+                    writer.writerow(headers)
+
+                    # Write the data rows
+                    for row in self.current_data:
+                        writer.writerow(row.values())
+
+                    # Add the stage notes as a footer
+                    writer.writerow([])
+                    writer.writerow(["Stage Notes:"])
+                    writer.writerow([stage_notes])
+
+            except Exception as e:
+                print(f"Error displaying stage notes: {e}")
+           
+            try:
+                # If data rows exist, display the stage notes in the text input
+                if hasattr(self, "current_data") and self.current_data:
+                    self.root.ids.home_screen.ids.stage_notes_field.text = stage_notes
+
+                    print(f"Data saved to {file_path} with stage notes as footer.")
+            
+            except Exception as e:
+                print(f"Error saving data to CSV: {e}")
+
         # Create the dialog if it doesn't already exist
         if not self.dialog:
-            self.dialog_content = SaveDialogContent()
+               # Get the list of folders in the assets/CSV directory
+            csv_directory = os.path.join(os.path.dirname(__file__), "assets", "CSV")
+            folders = [f for f in os.listdir(csv_directory) if os.path.isdir(os.path.join(csv_directory, f))]
+
+            # Create menu items for each folder
+            menu_items = [
+                {
+                    "text": folder,
+                    "on_release": lambda x=folder: self.on_folder_selected(x),
+                }
+                for folder in folders
+            ]
+
+            # Create the dropdown menu
             self.dialog = MDDialog(
+                title="Save Data",
+                text="Do you want to save the current data?\n\nSelect a folder from the dropdown below:",
                 type="custom",
-                content_cls=self.dialog_content,
+                content_cls=MDRaisedButton(
+                    text="Select Event",
+                    size_hint=(1, None),
+                    height="48dp",
+                    on_release=lambda x: MDDropdownMenu(
+                        caller=x,
+                        items=menu_items,
+                        width_mult=4,  # Adjust width_mult to match the button width
+                    ).open(),
+                    pos_hint={"center_x": 0.5, "center_y": 0.5},
+                    halign="center",
+                ),
+                buttons=[
+                    MDRaisedButton(
+                        text="CANCEL",
+                        on_release=lambda x: self.dialog.dismiss()
+                    ),
+                    MDRaisedButton(
+                        text="SAVE",
+                        on_release=self.save_data
+                    ),
+                ],
             )
         self.dialog.open()
 
     def save_data(self, *args):
-        """Save the data to the specified folder and file."""
-        folder_name = self.dialog_content.ids.folder_name.text
-        file_name = self.dialog_content.ids.file_name.text
-
-        if not folder_name or not file_name:
-            print("Folder name and file name are required.")
-            return
-
-        # Construct the file path
-        csv_directory = os.path.join(os.path.dirname(__file__), "assets", "CSV", folder_name)
-        os.makedirs(csv_directory, exist_ok=True)
-        file_path = os.path.join(csv_directory, f"{file_name}.csv")
-
-        # Save the data
-        try:
-            with open(file_path, mode="w", encoding="utf-8", newline="") as csv_file:
-                writer = csv.writer(csv_file)
-                writer.writerow(["Stage Name", "Stage Notes"])
-                writer.writerow([self.root.ids.home_screen.ids.stage_name_field.text,
-                                 self.root.ids.home_screen.ids.stage_notes_field.text])
-            print(f"Data saved to {file_path}")
-        except Exception as e:
-            print(f"Error saving data: {e}")
-
+        # Add your save logic here
+        print("Data saved!")
         self.dialog.dismiss()
 
     def navigate_to_home(self):
@@ -371,16 +430,7 @@ class MainApp(MDApp):
             text_field.text = "\n".join(lines[:max_lines])
             text_field.cursor = (len(text_field.text), 0)  # Reset the cursor position
     
-    def show_folder_dropdown(self):
-        """Retrieve the names of folders within the assets/CSV directory."""
-        csv_directory = os.path.join(os.path.dirname(__file__), "assets", "CSV")
-        try:
-        # List only directories within the CSV folder
-            folder_names = [folder for folder in os.listdir(csv_directory) if os.path.isdir(os.path.join(csv_directory, folder))]
-            return folder_names
-        except Exception as e:
-            print(f"Error retrieving folder names: {e}")
-            return []
+            
 
 if __name__ == "__main__":
     MainApp().run()
