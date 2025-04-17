@@ -191,7 +191,7 @@ class MainApp(MDApp):
         return data
 
     def display_table(self, data):
-        """Displays the CSV data as text on the Home Screen."""
+        """Displays the filtered CSV data as text on the Home Screen."""
         if not data:
             print("No data to display.")
             return
@@ -199,19 +199,30 @@ class MainApp(MDApp):
         # Define the static column order
         static_headers = ["Target", "Range", "Elv", "Wnd1", "Wnd2", "Lead"]
 
-        # Filter headers based on the data keys to maintain the order
-        headers = [header for header in static_headers if header in data[0]]
+        # Filter headers based on the show/hide options
+        headers = ["Target", "Elv", "Wnd1"]  # Always include these columns
+        if show_range:
+            headers.insert(1, "Range")  # Insert "Range" after "Target" and before "Elv"
+        if show_2_wind_holds:
+            headers.append("Wnd2")
+        if show_lead:
+            headers.append("Lead")
+
+        # Filter the data rows based on the selected headers
+        filtered_data = [
+            {header: row.get(header, "") for header in headers} for row in data
+        ]
 
         # Calculate the maximum width for each column
         column_widths = {header: len(header) for header in headers}  # Start with header lengths
-        for row in data:
+        for row in filtered_data:
             for header in headers:
                 column_widths[header] = max(column_widths[header], len(str(row.get(header, ""))))
 
         # Format the headers and rows as text
         table_text = " | ".join(f"{header:<{column_widths[header]}}" for header in headers) + "\n"  # Add headers
         table_text += "-" * (sum(column_widths.values()) + len(headers) * 3 - 1) + "\n"  # Add a separator line
-        for row in data:
+        for row in filtered_data:
             table_text += " | ".join(f"{str(row.get(header, '')):<{column_widths[header]}}" for header in headers) + "\n"  # Add rows
 
         # Add the text to the table_container in Home Screen
