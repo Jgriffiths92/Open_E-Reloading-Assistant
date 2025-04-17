@@ -305,7 +305,76 @@ class MainApp(MDApp):
 
     def on_fab_press(self):
         """Handle the floating action button press."""
-        # Save the stage name
+              # Create the dialog if it doesn't already exist
+        if not self.dialog:
+               # Get the list of folders in the assets/CSV directory
+            csv_directory = os.path.join(os.path.dirname(__file__), "assets", "CSV")
+            folders = [f for f in os.listdir(csv_directory) if os.path.isdir(os.path.join(csv_directory, f))]
+
+            # Create the dropdown menu
+            self.dialog = MDDialog(
+                title="Save Data",
+                text="Do you want to save the current data?",
+                type="custom",
+                content_cls=MDFlatButton(
+                    id="dropdown_button",
+                    text="Select Event",
+                    size_hint=(1, None),
+                    height="48dp",
+                    on_release=lambda x: MDDropdownMenu(
+                        # Create a dropdown menu with the list of folders
+                        # and a "New Event..." option
+                        caller=x,
+                        items=[
+                             {
+                                "text": "New Event...",
+                                "on_release": lambda: (
+                                    setattr(self.dialog.content_cls, "text", "New Event..."),
+                                    print("New Event selected"),
+                                ),
+                            }
+                        ] + [
+                            {
+                                "text": folder,
+                                "on_release": lambda selected_folder=folder: (
+                                    setattr(self.dialog.content_cls, "text", f"{selected_folder}"),
+                                    # Store the selected folder
+                                    setattr(self, "selected_folder", selected_folder),
+                                    # Update the save path to include the selected folder
+                                    setattr(self, "save_path", os.path.join(csv_directory, selected_folder)),
+                                    print(f"Selected folder: {selected_folder}")
+                                ),
+                            }
+                            for folder in folders
+                        ],
+                        width_mult=4,  # Adjust width_mult to match the button width
+                        position="center",
+                    ).open(),
+                    pos_hint={"center_x": 0, "center_y": 1},
+                    halign="center",
+                    valign="center",
+                ),
+                buttons=[
+                    MDFlatButton(
+                        text="CANCEL",
+                        on_release=lambda x: self.dialog.dismiss()
+                    ),
+                    MDRaisedButton(
+                        text="SAVE",
+                        on_release=lambda x: (
+                            self.save_data(),  # Save data when the SAVE button is pressed
+                        )
+                    ),
+                ],
+            )
+            
+        self.dialog.open()
+
+    def save_data(self, *args):
+        # Add your save logic here
+        print("Data saved!")
+        self.dialog.dismiss()
+          # Save the stage name
         stage_name_field = self.root.ids.home_screen.ids.stage_name_field
         global stage_name
         stage_name = stage_name_field.text
@@ -317,7 +386,7 @@ class MainApp(MDApp):
 
         # Add the stage notes as a footer to the CSV
         if hasattr(self, "current_data") and self.current_data:
-            csv_directory = os.path.join(os.path.dirname(__file__), "assets", "CSV")
+            csv_directory = os.path.join(os.path.dirname(__file__), "assets", "CSV", self.selected_folder if hasattr(self, "selected_folder") else "")
             file_path = os.path.join(csv_directory, f"{stage_name}.csv")
             try:
                 with open(file_path, mode="w", encoding="utf-8", newline="") as csv_file:
@@ -354,67 +423,7 @@ class MainApp(MDApp):
             except Exception as e:
                 print(f"Error saving data to CSV: {e}")
 
-        # Create the dialog if it doesn't already exist
-        if not self.dialog:
-               # Get the list of folders in the assets/CSV directory
-            csv_directory = os.path.join(os.path.dirname(__file__), "assets", "CSV")
-            folders = [f for f in os.listdir(csv_directory) if os.path.isdir(os.path.join(csv_directory, f))]
 
-            # Create the dropdown menu
-            self.dialog = MDDialog(
-                title="Save Data",
-                text="Do you want to save the current data?\n\nSelect a folder from the dropdown below:",
-                type="custom",
-                content_cls=MDFlatButton(
-                    id="dropdown_button",
-                    text="Select Event",
-                    size_hint=(1, None),
-                    height="48dp",
-                    on_release=lambda x: MDDropdownMenu(
-                        caller=x,
-                        items=[
-                             {
-                                "text": "New Event...",
-                                "on_release": lambda: (
-                                    setattr(self.dialog.content_cls, "text", "New Event..."),
-                                    print("New Event selected"),
-                                ),
-                            }
-                        ] + [
-                            {
-                                "text": folder,
-                                "on_release": lambda selected_folder=folder: (
-                                    setattr(self.dialog.content_cls, "text", f"{selected_folder}"),
-                                    print(f"Selected folder: {selected_folder}"),
-                                ),
-                            }
-                            for folder in folders
-                        ],
-                        width_mult=4,  # Adjust width_mult to match the button width
-                        position="center",
-                    ).open(),
-                    pos_hint={"center_x": 0, "center_y": 1},
-                    halign="center",
-                    valign="center",
-                ),
-                buttons=[
-                    MDFlatButton(
-                        text="CANCEL",
-                        on_release=lambda x: self.dialog.dismiss()
-                    ),
-                    MDRaisedButton(
-                        text="SAVE",
-                        on_release=self.save_data
-                    ),
-                ],
-            )
-            
-        self.dialog.open()
-
-    def save_data(self, *args):
-        # Add your save logic here
-        print("Data saved!")
-        self.dialog.dismiss()
 
     def navigate_to_home(self):
         """Navigate back to the home screen."""
