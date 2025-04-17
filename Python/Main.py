@@ -120,6 +120,19 @@ class MainApp(MDApp):
             # Extract the file name and set it to the stage_name_field
             file_name = os.path.basename(selected_path)
             self.root.ids.home_screen.ids.stage_name_field.text = os.path.splitext(file_name)[0]
+            # If the selected file is a CSV, extract the stage notes footer and display it in the stage_notes_field
+            if selected_path.endswith(".csv"):
+                try:
+                    with open(selected_path, mode="r", encoding="utf-8") as csv_file:
+                        lines = csv_file.readlines()
+                        # Look for the "Stage Notes:" footer and extract the notes
+                        for i, line in enumerate(lines):
+                            if line.strip().lower() == "stage notes:":
+                                stage_notes = "".join(lines[i + 1:]).strip()
+                                self.root.ids.home_screen.ids.stage_notes_field.text = stage_notes
+                                break
+                except Exception as e:
+                    print(f"Error extracting stage notes: {e}")
             print(f"Selected: {selected_path}")  # Log the selected file or folder
 
             # Check if the selected file is a CSV
