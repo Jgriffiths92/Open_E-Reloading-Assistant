@@ -71,7 +71,7 @@ MDNavigationLayout:
             title: "Home"
             left_action_items: [["menu", lambda x: app.root.ids.drawer.set_state("open")]]
             right_action_items: [["dots-vertical", lambda x: app.on_dots_press(x)]]
-            md_bg_color: 0.678, 0.0, 0.969, 1  
+            md_bg_color: 0.678, 0.0, 0.969, 1
         # Stage Name Text Field
         MDTextField:
             id: stage_name_field
@@ -79,7 +79,7 @@ MDNavigationLayout:
             hint_text_mode: "on_focus"
             multiline: False
             halign: "center"
-            size_hint_y: None            
+            size_hint_y: None
             size_hint_x: 0.8
             pos_hint: {"center_x": 0.5, "center_y": 0.5}
             on_text_validate: app.on_stage_name_entered(self.text)
