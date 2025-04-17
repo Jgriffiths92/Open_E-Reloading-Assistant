@@ -13,6 +13,7 @@ from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
 from kivymd.uix.button import MDRaisedButton
 import os
+from kivymd.uix.textfield import MDTextField
 #change color of the filechooser
 Builder.load_string('''
 
@@ -329,6 +330,8 @@ class MainApp(MDApp):
                              {
                                 "text": "New Event...",
                                 "on_release": lambda: (
+                                    # Update the text input visibility based on the selected option
+                                    update_text_input_visibility("New Event..."),
                                     setattr(self.dialog.content_cls, "text", "New Event..."),
                                     print("New Event selected"),
                                 ),
@@ -337,6 +340,8 @@ class MainApp(MDApp):
                             {
                                 "text": folder,
                                 "on_release": lambda selected_folder=folder: (
+                                    # Update the text input visibility based on the selected folder
+                                    update_text_input_visibility(selected_folder),
                                     setattr(self.dialog.content_cls, "text", f"{selected_folder}"),
                                     # Store the selected folder
                                     setattr(self, "selected_folder", selected_folder),
@@ -367,6 +372,26 @@ class MainApp(MDApp):
                     ),
                 ],
             )
+
+            # Add a text input field to the dialog, initially hidden
+            text_input = MDTextField(
+                hint_text="Event Name",
+                size_hint=(1, None),
+                height="48dp",
+                multiline=False,
+                opacity=0,  # Make it invisible initially
+                disabled=True,  # Disable it initially
+            )
+
+            # Update visibility based on the selected option
+            def update_text_input_visibility(selected_option):
+                if selected_option == "New Event...":
+                    text_input.opacity = 1  # Make it visible
+                    text_input.disabled = False  # Enable it
+                else:
+                    text_input.opacity = 0  # Hide it
+                    text_input.disabled = True  # Disable it
+            self.dialog.content_cls.add_widget(text_input)
             
         self.dialog.open()
 
