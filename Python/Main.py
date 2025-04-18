@@ -14,6 +14,9 @@ from kivymd.uix.button import MDFlatButton
 from kivymd.uix.button import MDRaisedButton
 import os
 from kivymd.uix.textfield import MDTextField
+from PIL import Image, ImageDraw, ImageFont
+import nfc
+
 #change color of the filechooser
 Builder.load_string('''
 
@@ -472,7 +475,83 @@ class MainApp(MDApp):
             except Exception as e:
                 print(f"Error saving data to CSV: {e}")
 
+    def csv_to_bitmap(self, csv_data, output_path="output.bmp"):
+        """Convert CSV data to a bitmap image."""
+        try:
+            # Define image dimensions and font
+            image_width = 800
+            image_height = 600
+            font_path = os.path.join(os.path.dirname(__file__), "assets", "fonts", "RobotoMono-Regular.ttf")
+            font = ImageFont.truetype(font_path, 16)  # Load the font file
 
+            # Create a blank white image
+            image = Image.new("RGB", (image_width, image_height), "white")
+            draw = ImageDraw.Draw(image)
+
+            # Add the stage name at the top
+            stage_name = self.root.ids.home_screen.ids.stage_name_field.text  # Get the stage name from the text field
+            x, y = 10, 10  # Starting position for the stage name
+            draw.text((x, y), f"{stage_name}", fill="black", font=font)
+            y += 40  # Add some spacing after the stage name
+
+            # Write CSV data to the image
+            for row in csv_data:
+                row_text = " | ".join(str(value) for value in row.values())
+                draw.text((x, y), row_text, fill="black", font=font)
+                y += 20  # Move to the next line
+
+            # Add the stage notes at the bottom
+            stage_notes = self.root.ids.home_screen.ids.stage_notes_field.text  # Get the stage notes from the text field
+            y = image_height - 60  # Position near the bottom of the image
+            draw.text((10, y), "Stage Notes:", fill="black", font=font)
+            y += 20  # Move to the next line
+            draw.text((10, y), stage_notes, fill="black", font=font)
+
+            # Save the image as a bitmap
+            image.save(output_path)
+            print(f"Bitmap saved to {output_path}")
+            return output_path
+        except Exception as e:
+            print(f"Error converting CSV to bitmap: {e}")
+            return None
+
+    def send_bitmap_via_nfc(self, bitmap_path):
+        """Send the bitmap image via NFC."""
+        try:
+            # Initialize NFC connection
+            clf = nfc.ContactlessFrontend("usb")
+            if not clf:
+                print("NFC reader not found.")
+                return
+
+            # Define the NFC tag write function
+            def on_connect(tag):
+                print("Tag connected. Writing data...")
+                with open(bitmap_path, "rb") as f:
+                    data = f.read()
+                if tag.ndef:
+                    tag.ndef.records = [nfc.ndef.TextRecord(data.decode("utf-8"))]
+                    print("Bitmap sent via NFC.")
+                else:
+                    print("Tag is not NDEF formatted.")
+                return True
+
+            # Wait for a tag and write the bitmap
+            clf.connect(rdwr={"on-connect": on_connect})
+            clf.close()
+        except Exception as e:
+            print(f"Error sending bitmap via NFC: {e}")
+
+    def on_send_via_nfc(self):
+        """Convert CSV to bitmap and send it via NFC."""
+        if hasattr(self, "current_data") and self.current_data:
+            # Convert CSV data to bitmap
+            bitmap_path = self.csv_to_bitmap(self.current_data)
+            if bitmap_path:
+                # Send the bitmap via NFC
+                self.send_bitmap_via_nfc(bitmap_path)
+        else:
+            print("No CSV data loaded to send.")
 
     def navigate_to_home(self):
         """Navigate back to the home screen."""
