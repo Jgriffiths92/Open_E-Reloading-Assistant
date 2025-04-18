@@ -495,7 +495,7 @@ class MainApp(MDApp):
             y += 40  # Add some spacing after the stage name
 
             # Write CSV data to the image
-            for row in csv_data:
+            for row in self.filter_table_data(csv_data):
                 row_text = " | ".join(str(value) for value in row.values())
                 draw.text((x, y), row_text, fill="black", font=font)
                 y += 20  # Move to the next line
