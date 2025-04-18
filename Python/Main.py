@@ -479,10 +479,12 @@ class MainApp(MDApp):
         """Convert CSV data to a bitmap image."""
         try:
             # Define image dimensions and font
-            image_width = 800
-            image_height = 600
+            image_width = 240 # Width of the image
+            image_height = 416 # Height of the image
+
+            # Load the font file (ensure the font file is in the correct path)
             font_path = os.path.join(os.path.dirname(__file__), "assets", "fonts", "RobotoMono-Regular.ttf")
-            font = ImageFont.truetype(font_path, 16)  # Load the font file
+            font = ImageFont.truetype(font_path, 12)  # Load the font file
 
             # Create a blank white image
             image = Image.new("RGB", (image_width, image_height), "white")
@@ -492,7 +494,10 @@ class MainApp(MDApp):
             stage_name = self.root.ids.home_screen.ids.stage_name_field.text  # Get the stage name from the text field
             x, y = 10, 10  # Starting position for the stage name
             draw.text((x, y), f"{stage_name}", fill="black", font=font)
-            y += 40  # Add some spacing after the stage name
+            # Draw a horizontal line under the stage name
+            y += 20  # Add some spacing after the stage name
+            draw.line((x, y, image_width - 10, y), fill="black", width=1)
+            y += 20  # Add some spacing after the line
 
             # Write CSV data to the image
             for row in self.filter_table_data(csv_data):
@@ -500,9 +505,9 @@ class MainApp(MDApp):
                 draw.text((x, y), row_text, fill="black", font=font)
                 y += 20  # Move to the next line
 
-            # Add the stage notes at the bottom
+            # Add the stage notes below the table data
             stage_notes = self.root.ids.home_screen.ids.stage_notes_field.text  # Get the stage notes from the text field
-            y = image_height - 60  # Position near the bottom of the image
+            y += 20  # Add some spacing before the stage notes
             draw.text((10, y), "Stage Notes:", fill="black", font=font)
             y += 20  # Move to the next line
             draw.text((10, y), stage_notes, fill="black", font=font)
