@@ -1,16 +1,19 @@
 [app]
 
 # (str) Title of your application
-title = My Application
+title = OpenE-Dope
 
 # (str) Package name
-package.name = myapp
+package.name = openedope
 
 # (str) Package domain (needed for android/ios packaging)
-package.domain = org.test
+package.domain = org.example
 
 # (str) Source code where the main.py live
 source.dir = .
+
+# (str) Main source file
+source.main = Main.py
 
 # (list) Source files to include (let empty to include all the files)
 source.include_exts = py,png,jpg,kv,atlas
@@ -37,7 +40,7 @@ version = 0.1
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy
+requirements = python3,kivy,kivymd,pyjnius,plyer,Pillow
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
@@ -95,7 +98,7 @@ fullscreen = 0
 
 # (list) Permissions
 # (See https://python-for-android.readthedocs.io/en/latest/buildoptions/#build-options-1 for all the supported syntaxes and properties)
-#android.permissions = android.permission.INTERNET, (name=android.permission.WRITE_EXTERNAL_STORAGE;maxSdkVersion=18)
+android.permissions = android.permission.NFC, android.permission.READ_EXTERNAL_STORAGE, android.permission.WRITE_EXTERNAL_STORAGE
 
 # (list) features (adds uses-feature -tags to manifest)
 #android.features = android.hardware.usb.host
