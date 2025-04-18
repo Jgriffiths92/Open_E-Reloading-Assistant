@@ -479,8 +479,8 @@ class MainApp(MDApp):
         """Convert CSV data to a bitmap image."""
         try:
             # Define image dimensions and font
-            image_width = 240 # Width of the image
-            image_height = 416 # Height of the image
+            image_width = 240  # Width of the image
+            image_height = 416  # Height of the image
 
             # Load the font file (ensure the font file is in the correct path)
             font_path = os.path.join(os.path.dirname(__file__), "assets", "fonts", "RobotoMono-Regular.ttf")
@@ -493,24 +493,54 @@ class MainApp(MDApp):
             # Add the stage name at the top
             stage_name = self.root.ids.home_screen.ids.stage_name_field.text  # Get the stage name from the text field
             x, y = 10, 10  # Starting position for the stage name
+            text_bbox = draw.textbbox((0, 0), stage_name, font=font)  # Get the bounding box of the text
+            text_width = text_bbox[2] - text_bbox[0]  # Calculate the text width
+            x = (image_width - text_width) // 2  # Center the text horizontally
             draw.text((x, y), f"{stage_name}", fill="black", font=font)
             # Draw a horizontal line under the stage name
             y += 20  # Add some spacing after the stage name
-            draw.line((x, y, image_width - 10, y), fill="black", width=1)
+            draw.line((10, y, image_width - 10, y), fill="black", width=1)
             y += 20  # Add some spacing after the line
 
+            # Calculate column widths based on the data
+            filtered_data = self.filter_table_data(csv_data)
+            column_widths = {header: len("Tgt" if header == "Target" else header) for header in filtered_data[0].keys()}  # Start with header lengths
+            for row in filtered_data:
+                for header, value in row.items():
+                    column_widths[header] = max(column_widths[header], len(str(value)))
+
+            # Write headers to the image
+            headers = " | ".join(f"{'Tgt' if header == 'Target' else header:<{column_widths[header]}}" for header in filtered_data[0].keys())
+            draw.text((10, y), headers, fill="black", font=font)
+            y += 20  # Move to the next line
+
             # Write CSV data to the image
-            for row in self.filter_table_data(csv_data):
-                row_text = " | ".join(str(value) for value in row.values())
-                draw.text((x, y), row_text, fill="black", font=font)
+            for row in filtered_data:
+                row_text = " | ".join(f"{str(value):<{column_widths[header]}}" for header, value in row.items())
+                draw.text((10, y), row_text, fill="black", font=font)
                 y += 20  # Move to the next line
 
             # Add the stage notes below the table data
             stage_notes = self.root.ids.home_screen.ids.stage_notes_field.text  # Get the stage notes from the text field
             y += 20  # Add some spacing before the stage notes
-            draw.text((10, y), "Stage Notes:", fill="black", font=font)
-            y += 20  # Move to the next line
-            draw.text((10, y), stage_notes, fill="black", font=font)
+            draw.line((10, y, image_width - 10, y), fill="black", width=1)  # Draw a line above the stage notes
+            y += 10  # Add some spacing after the line
+            text_bbox = draw.textbbox((0, 0), "Stage Notes:", font=font)  # Get the bounding box of the text
+            text_height = text_bbox[3] - text_bbox[1]  # Calculate the text height
+            y_center = y + ((6 - text_height) // 2)  # Center the text vertically between the lines
+            text_width = text_bbox[2] - text_bbox[0]  # Calculate the text width
+            x = (image_width - text_width) // 2  # Center the text horizontally
+            draw.text((x, y_center), f"Stage Notes:", fill="black", font=font)
+            y += 20  # Add some spacing after the stage notes label
+            draw.line((10, y, image_width - 10, y), fill="black", width=1)  # Draw a line below the stage notes
+            y += 10  # Add some spacing after the line
+            # Draw the stage notes text
+            x, y = 10, y  # Starting position for the stage notes
+            text_bbox = draw.textbbox((0, 0), stage_notes, font=font)  # Get the bounding box of the text
+            text_width = text_bbox[2] - text_bbox[0]  # Calculate the text width
+            x = (image_width - text_width) // 2  # Center the text horizontally
+            draw.text((x, y), f"{stage_notes}", fill="black", font=font)
+            y += 20  # Add some spacing after the stage notes
 
             # Save the image as a bitmap
             image.save(output_path)
