@@ -16,6 +16,14 @@ import os
 from kivymd.uix.textfield import MDTextField
 from PIL import Image, ImageDraw, ImageFont
 import nfc
+from jnius import autoclass, cast
+
+# Dynamically load Android classes
+Intent = autoclass('android.content.Intent')
+Activity = autoclass('android.app.Activity')
+NfcAdapter = autoclass('android.nfc.NfcAdapter')
+NdefRecord = autoclass('android.nfc.NdefRecord')
+NdefMessage = autoclass('android.nfc.NdefMessage')
 
 #change color of the filechooser
 Builder.load_string('''
@@ -551,29 +559,31 @@ class MainApp(MDApp):
             return None
 
     def send_bitmap_via_nfc(self, bitmap_path):
-        """Send the bitmap image via NFC."""
+        """Send the bitmap image via NFC using pyjnius."""
         try:
-            # Initialize NFC connection
-            clf = nfc.ContactlessFrontend("usb")
-            if not clf:
-                print("NFC reader not found.")
+            # Load the bitmap data
+            with open(bitmap_path, "rb") as f:
+                data = f.read()
+
+            # Get the current Android activity and NFC adapter
+            PythonActivity = autoclass("org.kivy.android.PythonActivity")
+            activity = PythonActivity.mActivity
+            nfc_adapter = NfcAdapter.getDefaultAdapter(activity)
+
+            if not nfc_adapter:
+                print("NFC is not available on this device.")
                 return
 
-            # Define the NFC tag write function
-            def on_connect(tag):
-                print("Tag connected. Writing data...")
-                with open(bitmap_path, "rb") as f:
-                    data = f.read()
-                if tag.ndef:
-                    tag.ndef.records = [nfc.ndef.TextRecord(data.decode("utf-8"))]
-                    print("Bitmap sent via NFC.")
-                else:
-                    print("Tag is not NDEF formatted.")
-                return True
+            # Create an NDEF record with the bitmap data
+            ndef_record = NdefRecord.createMime("application/octet-stream", data)
 
-            # Wait for a tag and write the bitmap
-            clf.connect(rdwr={"on-connect": on_connect})
-            clf.close()
+            # Create an NDEF message
+            ndef_message = NdefMessage([ndef_record])
+
+            # Set the NDEF message to be sent via NFC
+            nfc_adapter.setNdefPushMessage(ndef_message, activity)
+            print("Bitmap prepared for NFC transfer. Bring the device close to an NFC tag or another NFC-enabled device.")
+
         except Exception as e:
             print(f"Error sending bitmap via NFC: {e}")
 
