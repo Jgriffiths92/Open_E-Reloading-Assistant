@@ -255,19 +255,19 @@ class MainApp(MDApp):
 
         # Update the "Show Lead" menu item dynamically
         if show_lead:
-            lead_menu = {"text": "Hide Lead", "on_release": lambda: self.menu_callback("Hide Lead")}
+            lead_menu = {"text": "Hide Lead", "on_release": lambda: (self.menu_callback("Hide Lead"), self.menu.dismiss())}
         else:
-            lead_menu = {"text": "Show Lead", "on_release": lambda: self.menu_callback("Show Lead")}
+            lead_menu = {"text": "Show Lead", "on_release": lambda: (self.menu_callback("Show Lead"), self.menu.dismiss())}
         # Update the "Show Range" menu item dynamically
         if show_range:
-            range_menu = {"text": "Hide Range", "on_release": lambda: self.menu_callback("Hide Range")}
+            range_menu = {"text": "Hide Range", "on_release": lambda: (self.menu_callback("Hide Range"), self.menu.dismiss())}
         else:
-            range_menu = {"text": "Show Range", "on_release": lambda: self.menu_callback("Show Range")}
+            range_menu = {"text": "Show Range", "on_release": lambda: (self.menu_callback("Show Range"), self.menu.dismiss())}
         # Update the "Show 2 Wind Holds" menu item dynamically
         if show_2_wind_holds:
-            wind_holds_menu = {"text": "Show 1 Wind Hold", "on_release": lambda: self.menu_callback("Show 1 Wind Hold")}
+            wind_holds_menu = {"text": "Show 1 Wind Hold", "on_release": lambda: (self.menu_callback("Show 1 Wind Hold"), self.menu.dismiss())}
         else:
-            wind_holds_menu = {"text": "Show 2 Wind Holds", "on_release": lambda: self.menu_callback("Show 2 Wind Holds")}
+            wind_holds_menu = {"text": "Show 2 Wind Holds", "on_release": lambda: (self.menu_callback("Show 2 Wind Holds"), self.menu.dismiss())}
 
         # Define menu items
         menu_items = [
