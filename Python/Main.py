@@ -377,6 +377,8 @@ class MainApp(MDApp):
                 multiline=False,
                 opacity=0,  # Make it invisible initially
                 disabled=True,  # Disable it initially
+                halign="center",  # Center the text horizontally
+
             )
 
             # Add both widgets to the layout
