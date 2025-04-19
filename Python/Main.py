@@ -12,6 +12,7 @@ from kivymd.uix.snackbar import Snackbar
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
 from kivymd.uix.button import MDRaisedButton
+from kivy.uix.boxlayout import BoxLayout
 import os
 from kivymd.uix.textfield import MDTextField
 from PIL import Image, ImageDraw, ImageFont
@@ -333,74 +334,50 @@ class MainApp(MDApp):
 
     def on_fab_press(self):
         """Handle the floating action button press."""
-              # Create the dialog if it doesn't already exist
         if not self.dialog:
-               # Get the list of folders in the assets/CSV directory
+            # Get the list of folders in the assets/CSV directory
             csv_directory = os.path.join(os.path.dirname(__file__), "assets", "CSV")
             folders = [f for f in os.listdir(csv_directory) if os.path.isdir(os.path.join(csv_directory, f))]
 
-            # Create the dropdown menu
-            self.dialog = MDDialog(
-                title="Save Data",
-                text="Do you want to save the current data?",
-                type="custom",
-                content_cls=MDFlatButton(
-                    id="dropdown_button",
-                    text="Select Event",
-                    size_hint=(1, None),
-                    height="48dp",
-                    on_release=lambda x: MDDropdownMenu(
-                        # Create a dropdown menu with the list of folders
-                        # and a "New Event..." option
-                        caller=x,
-                        items=[
-                             {
-                                "text": "New Event...",
-                                "on_release": lambda: (
-                                    # Update the text input visibility based on the selected option
-                                    update_text_input_visibility("New Event..."),
-                                    setattr(self.dialog.content_cls, "text", "New Event..."),
-                                    print("New Event selected"),
-                                ),
-                            }
-                        ] + [
-                            {
-                                "text": folder,
-                                "on_release": lambda selected_folder=folder: (
-                                    # Update the text input visibility based on the selected folder
-                                    update_text_input_visibility(selected_folder),
-                                    setattr(self.dialog.content_cls, "text", f"{selected_folder}"),
-                                    # Store the selected folder
-                                    setattr(self, "selected_folder", selected_folder),
-                                    # Update the save path to include the selected folder
-                                    setattr(self, "save_path", os.path.join(csv_directory, selected_folder)),
-                                    print(f"Selected folder: {selected_folder}")
-                                ),
-                            }
-                            for folder in folders
-                        ],
-                        width_mult=4,  # Adjust width_mult to match the button width
-                        position="center",
-                    ).open(),
-                    pos_hint={"center_x": 0, "center_y": 1},
-                    halign="center",
-                    valign="center",
-                ),
-                buttons=[
-                    MDFlatButton(
-                        text="CANCEL",
-                        on_release=lambda x: self.dialog.dismiss()
-                    ),
-                    MDRaisedButton(
-                        text="SAVE",
-                        on_release=lambda x: (
-                            self.save_data(),  # Save data when the SAVE button is pressed
-                        )
-                    ),
-                ],
+            # Create a BoxLayout to hold the dropdown button and text input
+            content_layout = BoxLayout(
+                orientation="vertical",
+                spacing="10dp",  # Add spacing between the button and text field
+                size_hint=(1, None),
+                height="120dp",  # Adjust height to fit both widgets
             )
 
-            # Add a text input field to the dialog, initially hidden
+            # Add the dropdown button to the layout
+            dropdown_button = MDFlatButton(
+                id="dropdown_button",
+                text="Select Event",
+                size_hint=(1, None),
+                height="48dp",
+                on_release=lambda x: MDDropdownMenu(
+                    caller=x,
+                    items=[
+                        {"text": "New Event...", "on_release": lambda: update_text_input_visibility("New Event...")}
+                    ] + [
+                        {"text": folder, "on_release": lambda selected_folder=folder: update_text_input_visibility(selected_folder)}
+                        for folder in folders
+                    ],
+                    width_mult=4,
+                    position="center",
+                ).open(),
+                pos_hint={"center_x": 0.5},
+            )
+
+            # Update visibility and button text based on the selected option
+            def update_text_input_visibility(selected_option):
+                dropdown_button.text = selected_option  # Update the button text to display the selected option
+                if selected_option == "New Event...":
+                    text_input.opacity = 1  # Make the text input visible
+                    text_input.disabled = False  # Enable the text input
+                else:
+                    text_input.opacity = 0  # Hide the text input
+                    text_input.disabled = True  # Disable the text input
+
+            # Add the text input field to the layout, initially hidden
             text_input = MDTextField(
                 hint_text="Event Name",
                 size_hint=(1, None),
@@ -410,16 +387,28 @@ class MainApp(MDApp):
                 disabled=True,  # Disable it initially
             )
 
-            # Update visibility based on the selected option
-            def update_text_input_visibility(selected_option):
-                if selected_option == "New Event...":
-                    text_input.opacity = 1  # Make it visible
-                    text_input.disabled = False  # Enable it
-                else:
-                    text_input.opacity = 0  # Hide it
-                    text_input.disabled = True  # Disable it
-            self.dialog.content_cls.add_widget(text_input)
-            
+            # Add both widgets to the layout
+            content_layout.add_widget(dropdown_button)
+            content_layout.add_widget(text_input)
+
+            # Add the layout to the dialog
+            self.dialog = MDDialog(
+                title="Save Data",
+                text="Do you want to save the current data?",
+                type="custom",
+                content_cls=content_layout,
+                buttons=[
+                    MDFlatButton(
+                        text="CANCEL",
+                        on_release=lambda x: self.dialog.dismiss()
+                    ),
+                    MDRaisedButton(
+                        text="SAVE",
+                        on_release=lambda x: self.save_data(),
+                    ),
+                ],
+            )
+
         self.dialog.open()
 
     def save_data(self, *args):
