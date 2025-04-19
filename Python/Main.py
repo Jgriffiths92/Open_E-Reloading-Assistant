@@ -12,6 +12,7 @@ from kivymd.uix.snackbar import Snackbar
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
 from kivymd.uix.button import MDRaisedButton
+from kivy.uix.boxlayout import BoxLayout
 import os
 from kivymd.uix.textfield import MDTextField
 from PIL import Image, ImageDraw, ImageFont
@@ -360,23 +361,7 @@ class MainApp(MDApp):
                 text="Select Event",
                 size_hint=(1, None),
                 height="48dp",
-                on_release=lambda x: MDDropdownMenu(
-                    caller=x,
-                    items=[
-                        {"text": "New Event...", "on_release": lambda: update_text_input_visibility("New Event...")}
-                    ] + [
-                        {"text": folder, "on_release": lambda selected_folder=folder: update_text_input_visibility(selected_folder)}
-                        for folder in folders
-                    ],
-                    width_mult=4,
-                    position="center",
-                ).open(),
-                pos_hint={"center_x": 0.5},
-            )
 
-            # Update visibility and button text based on the selected option
-            def update_text_input_visibility(selected_option):
-                dropdown_button.text = selected_option  # Update the button text to display the selected option
                 if selected_option == "New Event...":
                     text_input.opacity = 1  # Make the text input visible
                     text_input.disabled = False  # Enable the text input
