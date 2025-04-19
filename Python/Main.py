@@ -353,29 +353,35 @@ class MainApp(MDApp):
                 text="Select Event",
                 size_hint=(1, None),
                 height="48dp",
-                on_release=lambda x: MDDropdownMenu(
-                    caller=x,
-                    items=[
-                        {"text": "New Event...", "on_release": lambda: update_text_input_visibility("New Event...")}
-                    ] + [
-                        {"text": folder, "on_release": lambda selected_folder=folder: update_text_input_visibility(selected_folder)}
-                        for folder in folders
-                    ],
-                    width_mult=4,
-                    position="center",
-                ).open(),
                 pos_hint={"center_x": 0.5},
             )
 
-            # Update visibility and button text based on the selected option
+            # Define the function to handle menu item selection
             def update_text_input_visibility(selected_option):
                 dropdown_button.text = selected_option  # Update the button text to display the selected option
+                dropdown_menu.dismiss()  # Close the dropdown menu
                 if selected_option == "New Event...":
                     text_input.opacity = 1  # Make the text input visible
                     text_input.disabled = False  # Enable the text input
                 else:
                     text_input.opacity = 0  # Hide the text input
                     text_input.disabled = True  # Disable the text input
+
+            # Create the dropdown menu
+            dropdown_menu = MDDropdownMenu(
+                caller=dropdown_button,
+                items=[
+                    {"text": "New Event...", "on_release": lambda: update_text_input_visibility("New Event...")}
+                ] + [
+                    {"text": folder, "on_release": lambda selected_folder=folder: update_text_input_visibility(selected_folder)}
+                    for folder in folders
+                ],
+                width_mult=4,
+                position="center",
+            )
+
+            # Assign the menu to the button's on_release callback
+            dropdown_button.on_release = lambda: dropdown_menu.open()
 
             # Add the text input field to the layout, initially hidden
             text_input = MDTextField(
