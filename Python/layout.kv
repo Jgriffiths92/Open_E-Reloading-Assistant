@@ -91,46 +91,54 @@ MDNavigationLayout:
             size_hint: 1, 1
             padding: "10dp"
 
-        # Stage Notes Text Field
-        MDTextField:
-            id: stage_notes_field
-            hint_text: "Stage Notes (e.g., shoot to move/hit to move)"
-            hint_text_mode: "on_focus"
-            multiline: True
-            halign: "center"
-            size_hint_y: None
-            height: dp(96)  # Limit height to 2 lines (48dp per line)
-            size_hint_x: 0.8
-            pos_hint: {"center_x": 0.5, "center_y": 0.5}
-            on_text: app.limit_stage_notes(self)  # Call a method to enforce the line limit
-            on_text_validate: app.on_stage_notes_entered(self.text)
+        # Layout for Stage Notes and Buttons
+        BoxLayout:
+            orientation: "vertical"
+            size_hint: 1, None
+            height: dp(160)  # Adjust height to fit both the text field and buttons
+            padding: "10dp"
 
-        # Layout for the NFC and Save buttons
-        AnchorLayout:
-            anchor_x: "right"  # Align horizontally to the right
-            anchor_y: "bottom"  # Align vertically to the bottom
-            size_hint: 1, 1  # Take up the full space
-            padding: [0, 0, "40dp", "20dp"]  # Add padding (left, top, right, bottom)
+            # Stage Notes Text Field
+            MDTextField:
+                id: stage_notes_field
+                hint_text: "Stage Notes (e.g., shoot to move/hit to move)"
+                hint_text_mode: "on_focus"
+                multiline: True
+                halign: "center"
+                size_hint_y: None
+                height: dp(96)  # Limit height to 2 lines (48dp per line)
+                size_hint_x: 0.8
+                pos_hint: {"center_x": 0.5}
+                on_text: app.limit_stage_notes(self)  # Call a method to enforce the line limit
+                on_text_validate: app.on_stage_notes_entered(self.text)
 
-            BoxLayout:
-                orientation: "horizontal"
-                size_hint: None, None
+            # Layout for the NFC and Save buttons
+            AnchorLayout:
+                anchor_x: "right"  # Align horizontally to the right
+                anchor_y: "bottom"  # Align vertically to the bottom
+                size_hint: 1, None
                 height: dp(64)  # Adjust height as needed
-                spacing: "10dp"  # Add spacing between the buttons
+                padding: [0, 0, "40dp", "20dp"]  # Add padding (left, top, right, bottom)
 
-                MDFloatingActionButton:
-                    icon: "nfc"
-                    md_bg_color: 0.0, 0.5, 0.8, 1
+                BoxLayout:
+                    orientation: "horizontal"
                     size_hint: None, None
-                    size: dp(56), dp(56)  # Standard FAB size
-                    on_release: app.on_send_via_nfc()
+                    height: dp(64)  # Adjust height as needed
+                    spacing: "10dp"  # Add spacing between the buttons
 
-                MDFloatingActionButton:
-                    icon: "content-save"
-                    md_bg_color: 0.0, 0.969, 0.565, 1
-                    size_hint: None, None
-                    size: dp(56), dp(56)  # Standard FAB size
-                    on_release: app.on_fab_press()
+                    MDFloatingActionButton:
+                        icon: "nfc"
+                        md_bg_color: 0.0, 0.5, 0.8, 1
+                        size_hint: None, None
+                        size: dp(56), dp(56)  # Standard FAB size
+                        on_release: app.on_send_via_nfc()
+
+                    MDFloatingActionButton:
+                        icon: "content-save"
+                        md_bg_color: 0.0, 0.969, 0.565, 1
+                        size_hint: None, None
+                        size: dp(56), dp(56)  # Standard FAB size
+                        on_release: app.on_fab_press()
 
 <SavedCardsScreen>:
     MDBoxLayout:
