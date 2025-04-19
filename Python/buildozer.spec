@@ -1,7 +1,7 @@
 [app]
 
 # (str) Title of your application
-title = OpenE-Dope
+title = Open-E-Dope
 
 # (str) Package name
 package.name = openedope
