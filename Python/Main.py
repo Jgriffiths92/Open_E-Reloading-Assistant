@@ -17,6 +17,14 @@ import os
 from kivymd.uix.textfield import MDTextField
 from PIL import Image, ImageDraw, ImageFont
 import nfc
+from jnius import autoclass, cast
+
+# Dynamically load Android classes
+Intent = autoclass('android.content.Intent')
+Activity = autoclass('android.app.Activity')
+NfcAdapter = autoclass('android.nfc.NfcAdapter')
+NdefRecord = autoclass('android.nfc.NdefRecord')
+NdefMessage = autoclass('android.nfc.NdefMessage')
 
 #change color of the filechooser
 Builder.load_string('''
@@ -246,7 +254,7 @@ class MainApp(MDApp):
         )
         table_container.add_widget(table_label)
         
-    def on_dots_press(self, instance):
+     def on_dots_press(self, instance):
         global show_lead, show_range, show_2_wind_holds
 
         # Dismiss the existing menu if it exists
@@ -332,7 +340,7 @@ class MainApp(MDApp):
             filtered_data.append(filtered_row)
         return filtered_data
 
-    def on_fab_press(self):
+   def on_fab_press(self):
         """Handle the floating action button press."""
         if not self.dialog:
             # Get the list of folders in the assets/CSV directory
@@ -353,35 +361,13 @@ class MainApp(MDApp):
                 text="Select Event",
                 size_hint=(1, None),
                 height="48dp",
-                pos_hint={"center_x": 0.5},
-            )
 
-            # Define the function to handle menu item selection
-            def update_text_input_visibility(selected_option):
-                dropdown_button.text = selected_option  # Update the button text to display the selected option
-                dropdown_menu.dismiss()  # Close the dropdown menu
                 if selected_option == "New Event...":
                     text_input.opacity = 1  # Make the text input visible
                     text_input.disabled = False  # Enable the text input
                 else:
                     text_input.opacity = 0  # Hide the text input
                     text_input.disabled = True  # Disable the text input
-
-            # Create the dropdown menu
-            dropdown_menu = MDDropdownMenu(
-                caller=dropdown_button,
-                items=[
-                    {"text": "New Event...", "on_release": lambda: update_text_input_visibility("New Event...")}
-                ] + [
-                    {"text": folder, "on_release": lambda selected_folder=folder: update_text_input_visibility(selected_folder)}
-                    for folder in folders
-                ],
-                width_mult=4,
-                position="center",
-            )
-
-            # Assign the menu to the button's on_release callback
-            dropdown_button.on_release = lambda: dropdown_menu.open()
 
             # Add the text input field to the layout, initially hidden
             text_input = MDTextField(
@@ -548,29 +534,31 @@ class MainApp(MDApp):
             return None
 
     def send_bitmap_via_nfc(self, bitmap_path):
-        """Send the bitmap image via NFC."""
+        """Send the bitmap image via NFC using pyjnius."""
         try:
-            # Initialize NFC connection
-            clf = nfc.ContactlessFrontend("usb")
-            if not clf:
-                print("NFC reader not found.")
+            # Load the bitmap data
+            with open(bitmap_path, "rb") as f:
+                data = f.read()
+
+            # Get the current Android activity and NFC adapter
+            PythonActivity = autoclass("org.kivy.android.PythonActivity")
+            activity = PythonActivity.mActivity
+            nfc_adapter = NfcAdapter.getDefaultAdapter(activity)
+
+            if not nfc_adapter:
+                print("NFC is not available on this device.")
                 return
 
-            # Define the NFC tag write function
-            def on_connect(tag):
-                print("Tag connected. Writing data...")
-                with open(bitmap_path, "rb") as f:
-                    data = f.read()
-                if tag.ndef:
-                    tag.ndef.records = [nfc.ndef.TextRecord(data.decode("utf-8"))]
-                    print("Bitmap sent via NFC.")
-                else:
-                    print("Tag is not NDEF formatted.")
-                return True
+            # Create an NDEF record with the bitmap data
+            ndef_record = NdefRecord.createMime("application/octet-stream", data)
 
-            # Wait for a tag and write the bitmap
-            clf.connect(rdwr={"on-connect": on_connect})
-            clf.close()
+            # Create an NDEF message
+            ndef_message = NdefMessage([ndef_record])
+
+            # Set the NDEF message to be sent via NFC
+            nfc_adapter.setNdefPushMessage(ndef_message, activity)
+            print("Bitmap prepared for NFC transfer. Bring the device close to an NFC tag or another NFC-enabled device.")
+
         except Exception as e:
             print(f"Error sending bitmap via NFC: {e}")
 
