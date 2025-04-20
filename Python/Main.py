@@ -109,9 +109,14 @@ class MainApp(MDApp):
             os.makedirs(csv_directory)  # Create the directory if it doesn't exist
         saved_cards_screen.ids.filechooser.rootpath = csv_directory
 
-        # Initialize the dropdown menu
+        # Initialize the dropdown menus
         self.display_menu = None
+        self.orientation_menu = None
         self.selected_display = "None"  # Default selected display
+        self.selected_orientation = "Portrait"  # Default orientation
+
+        # Set the default text for the orientation dropdown button
+        root.ids.settings_screen.ids.orientation_dropdown_button.text = self.selected_orientation
 
         return root
     
@@ -480,10 +485,16 @@ class MainApp(MDApp):
         """Convert CSV data to a bitmap image."""
         try: # Use the selected resolution
             if hasattr(self, "selected_resolution"):
-                image_width, image_height  = self.selected_resolution
+                image_width, image_height = self.selected_resolution
             else:
-            # Default resolution if no display is selected
+                # Default resolution if no display is selected
                 image_width, image_height = 280, 416
+
+            # Adjust for orientation based on final_resolution
+            if self.selected_orientation == "Landscape":
+                image_width, image_height = max(image_width, image_height), min(image_width, image_height)
+            else:
+                image_width, image_height = min(image_width, image_height), max(image_width, image_height)
           
 
             # Load the font file (ensure the font file is in the correct path)
@@ -644,17 +655,49 @@ class MainApp(MDApp):
 
     def set_display_model(self, model, resolution):
         """Set the selected display model and update the button text."""
-        # Invert the resolution (swap width and height)
-        inverted_resolution = (resolution[1], resolution[0])
+        # Check the selected orientation
+        if self.selected_orientation == "Landscape":
+            final_resolution = resolution  # Use the resolution as-is for Landscape
+        else:
+            final_resolution = (resolution[1], resolution[0])  # Invert the resolution for Portrait
 
         self.selected_display = model
-        self.selected_resolution = inverted_resolution  # Store the inverted resolution
-        self.root.ids.settings_screen.ids.display_dropdown_button.text = f"{model}"
-        print(f"Selected display model: {model} with inverted resolution {inverted_resolution}")
+        self.selected_resolution = final_resolution  # Store the final resolution
+        self.root.ids.settings_screen.ids.display_dropdown_button.text = f"{model} ({final_resolution[0]}x{final_resolution[1]})"
+        print(f"Selected display model: {model} with resolution {final_resolution}")
 
         # Close the dropdown menu
         if self.display_menu:
             self.display_menu.dismiss()
+
+    def open_orientation_dropdown(self, button):
+        """Open the dropdown menu for selecting orientation."""
+        # Define the available orientations
+        orientation_options = [
+            {"text": "Portrait", "on_release": lambda: self.set_orientation("Portrait")},
+            {"text": "Landscape", "on_release": lambda: self.set_orientation("Landscape")},
+        ]
+
+        # Create the dropdown menu if it doesn't exist
+        if not hasattr(self, "orientation_menu") or not self.orientation_menu:
+            self.orientation_menu = MDDropdownMenu(
+                caller=button,
+                items=orientation_options,
+                width_mult=4,
+            )
+
+        # Open the dropdown menu
+        self.orientation_menu.open()
+
+    def set_orientation(self, orientation):
+        """Set the selected orientation and update the button text."""
+        self.selected_orientation = orientation  # Store the selected orientation
+        self.root.ids.settings_screen.ids.orientation_dropdown_button.text = orientation
+        print(f"Selected orientation: {orientation}")
+
+        # Close the dropdown menu
+        if self.orientation_menu:
+            self.orientation_menu.dismiss()
 
 if __name__ == "__main__":
     MainApp().run()

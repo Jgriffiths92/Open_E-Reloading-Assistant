@@ -181,24 +181,31 @@ MDNavigationLayout:
 <SettingsScreen>:
     MDBoxLayout:
         orientation: "vertical"
+
         MDTopAppBar:
             title: "Settings"
-            left_action_items: [["arrow-left", lambda x: app.navigate_to_home()]]  # Navigate back to Home
+            left_action_items: [["arrow-left", lambda x: app.navigate_to_home()]]
             md_bg_color: 0.678, 0.0, 0.969, 1
+
         MDLabel:
             text: "Select Display Size:"
             halign: "center"
-            pos_hint: {"center_x": 0.5, "center_y": 0.5}
-        # Dropdown for selecting Good Display models
+
         MDFlatButton:
             id: display_dropdown_button
             text: "Select Display"
-            pos_hint: {"center_x": 0.5, "center_y": 0.5}
+            pos_hint: {"center_x": 0.5}
             on_release: app.open_display_dropdown(self)
-        BoxLayout:
-            orientation: "vertical"
-            height: dp(400)  # Adjust height to fit both the text field and buttons
-            padding: "10dp"
+
+        MDLabel:
+            text: "Select Orientation:"
+            halign: "center"
+
+        MDFlatButton:
+            id: orientation_dropdown_button
+            text: "Select Orientation"
+            pos_hint: {"center_x": 0.5}
+            on_release: app.open_orientation_dropdown(self)
 
 [FileListEntry@FloatLayout+TreeViewNode]:
     locked: False
