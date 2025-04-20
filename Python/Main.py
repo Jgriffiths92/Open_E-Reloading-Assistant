@@ -478,10 +478,13 @@ class MainApp(MDApp):
 
     def csv_to_bitmap(self, csv_data, output_path="output.bmp"):
         """Convert CSV data to a bitmap image."""
-        try:
-            # Define image dimensions and font
-            image_width = 240  # Width of the image
-            image_height = 416  # Height of the image
+        try: # Use the selected resolution
+            if hasattr(self, "selected_resolution"):
+                image_width, image_height  = self.selected_resolution
+            else:
+            # Default resolution if no display is selected
+                image_width, image_height = 280, 416
+          
 
             # Load the font file (ensure the font file is in the correct path)
             font_path = os.path.join(os.path.dirname(__file__), "assets", "fonts", "RobotoMono-Regular.ttf")
@@ -618,29 +621,34 @@ class MainApp(MDApp):
 
     def open_display_dropdown(self, button):
         """Open the dropdown menu for selecting a display model."""
-        # Define the available display models
+        # Define the available display models with their resolutions
         display_models = [
-            {"text": "Good Display 3.7-inch", "on_release": lambda: self.set_display_model("Good Display 3.7-inch")},
-            {"text": "Good Display 4.2-inch", "on_release": lambda: self.set_display_model("Good Display 4.2-inch")},
-            {"text": "Good Display 2.9-inch", "on_release": lambda: self.set_display_model("Good Display 2.9-inch")},
+            {"text": "Good Display 3.7-inch", "resolution": (280, 416), "on_release": lambda: self.set_display_model("Good Display 3.7-inch", (280, 480))},
+            {"text": "Good Display 4.2-inch", "resolution": (300, 400), "on_release": lambda: self.set_display_model("Good Display 4.2-inch", (400, 300))},
+            {"text": "Good Display 2.9-inch", "resolution": (128, 296), "on_release": lambda: self.set_display_model("Good Display 2.9-inch", (296, 128))},
         ]
 
         # Create the dropdown menu if it doesn't exist
         if not self.display_menu:
             self.display_menu = MDDropdownMenu(
                 caller=button,
-                items=display_models,
+                items=[
+                    {"text": model["text"], "on_release": model["on_release"]}
+                    for model in display_models
+                ],
                 width_mult=4,
             )
 
         # Open the dropdown menu
         self.display_menu.open()
 
-    def set_display_model(self, model):
+    def set_display_model(self, model, resolution):
         """Set the selected display model and update the button text."""
         self.selected_display = model
-        self.root.ids.settings_screen.ids.display_dropdown_button.text = model
-        print(f"Selected display model: {model}")
+         # Store the resolution
+        self.selected_resolution = resolution
+        self.root.ids.settings_screen.ids.display_dropdown_button.text = f"{model}"
+        print(f"Selected display model: {model} with resolution {resolution}")
 
         # Close the dropdown menu
         if self.display_menu:
