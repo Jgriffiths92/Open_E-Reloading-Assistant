@@ -644,11 +644,13 @@ class MainApp(MDApp):
 
     def set_display_model(self, model, resolution):
         """Set the selected display model and update the button text."""
+        # Invert the resolution (swap width and height)
+        inverted_resolution = (resolution[1], resolution[0])
+
         self.selected_display = model
-         # Store the resolution
-        self.selected_resolution = resolution
-        self.root.ids.settings_screen.ids.display_dropdown_button.text = f"{model}"
-        print(f"Selected display model: {model} with resolution {resolution}")
+        self.selected_resolution = inverted_resolution  # Store the inverted resolution
+        self.root.ids.settings_screen.ids.display_dropdown_button.text = f"{model} ({inverted_resolution[0]}x{inverted_resolution[1]})"
+        print(f"Selected display model: {model} with inverted resolution {inverted_resolution}")
 
         # Close the dropdown menu
         if self.display_menu:
