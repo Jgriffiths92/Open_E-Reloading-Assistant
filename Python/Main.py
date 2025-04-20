@@ -109,6 +109,10 @@ class MainApp(MDApp):
             os.makedirs(csv_directory)  # Create the directory if it doesn't exist
         saved_cards_screen.ids.filechooser.rootpath = csv_directory
 
+        # Initialize the dropdown menu
+        self.display_menu = None
+        self.selected_display = "None"  # Default selected display
+
         return root
     
     global show_lead, show_range, show_2_wind_holds
@@ -611,8 +615,36 @@ class MainApp(MDApp):
             # Trim the text to the first 2 lines
             text_field.text = "\n".join(lines[:max_lines])
             text_field.cursor = (len(text_field.text), 0)  # Reset the cursor position
-    
-            
+
+    def open_display_dropdown(self, button):
+        """Open the dropdown menu for selecting a display model."""
+        # Define the available display models
+        display_models = [
+            {"text": "Good Display 3.7-inch", "on_release": lambda: self.set_display_model("Good Display 3.7-inch")},
+            {"text": "Good Display 4.2-inch", "on_release": lambda: self.set_display_model("Good Display 4.2-inch")},
+            {"text": "Good Display 2.9-inch", "on_release": lambda: self.set_display_model("Good Display 2.9-inch")},
+        ]
+
+        # Create the dropdown menu if it doesn't exist
+        if not self.display_menu:
+            self.display_menu = MDDropdownMenu(
+                caller=button,
+                items=display_models,
+                width_mult=4,
+            )
+
+        # Open the dropdown menu
+        self.display_menu.open()
+
+    def set_display_model(self, model):
+        """Set the selected display model and update the button text."""
+        self.selected_display = model
+        self.root.ids.settings_screen.ids.display_dropdown_button.text = model
+        print(f"Selected display model: {model}")
+
+        # Close the dropdown menu
+        if self.display_menu:
+            self.display_menu.dismiss()
 
 if __name__ == "__main__":
     MainApp().run()
