@@ -1,0 +1,13 @@
+Custom Bullet
+Muzzle Velocity [FPS],2600,Bullet Weight [GR],105.0,Bullet Diameter [IN],0.243,Ballistic Coefficient [G7],0.273
+Temperature [F],59,Windspeed [MPH],0,Windspeed 2 [MPH],0,Pressure [INHG],29.92
+INCLINATION,0°,HEADING,0°,Wind Direction,12:00
+Range [Y],Elevation [MRAD],Windage [MRAD],Windage 2 [MRAD],Velocity [FPS],Energy [J]
+100,0.00 D,0.00 L,0.00 L,2437,1878
+200,0.54 U,0.00 L,0.00 L,2281,1644
+300,1.33 U,0.00 L,0.00 L,2130,1434
+400,2.27 U,0.00 L,0.00 L,1985,1246
+500,3.32 U,0.00 L,0.00 L,1845,1076
+600,4.49 U,0.00 L,0.00 L,1710,925
+700,5.80 U,0.00 L,0.00 L,1580,789
+800,7.27 U,0.00 L,0.00 L,1454,668
