@@ -623,7 +623,7 @@ class MainApp(MDApp):
         """Open the dropdown menu for selecting a display model."""
         # Define the available display models with their resolutions
         display_models = [
-            {"text": "Good Display 3.7-inch", "resolution": (280, 416), "on_release": lambda: self.set_display_model("Good Display 3.7-inch", (280, 480))},
+            {"text": "Good Display 3.7-inch", "resolution": (280, 416), "on_release": lambda: self.set_display_model("Good Display 3.7-inch", (280, 416))},
             {"text": "Good Display 4.2-inch", "resolution": (300, 400), "on_release": lambda: self.set_display_model("Good Display 4.2-inch", (400, 300))},
             {"text": "Good Display 2.9-inch", "resolution": (128, 296), "on_release": lambda: self.set_display_model("Good Display 2.9-inch", (296, 128))},
         ]
@@ -649,7 +649,7 @@ class MainApp(MDApp):
 
         self.selected_display = model
         self.selected_resolution = inverted_resolution  # Store the inverted resolution
-        self.root.ids.settings_screen.ids.display_dropdown_button.text = f"{model} ({inverted_resolution[0]}x{inverted_resolution[1]})"
+        self.root.ids.settings_screen.ids.display_dropdown_button.text = f"{model}"
         print(f"Selected display model: {model} with inverted resolution {inverted_resolution}")
 
         # Close the dropdown menu
