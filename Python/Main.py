@@ -155,8 +155,11 @@ class MainApp(MDApp):
                     data = self.read_csv_to_dict(selected_path)
                     self.current_data = data  # Store the data for filtering or other operations
 
+                    # Preprocess the data
+                    processed_data = self.preprocess_data(data)
+
                     # Display the data as a table on the Home Screen
-                    self.display_table(data)
+                    self.display_table(processed_data)
 
                     # Reset the FileChooserListView to its rootpath
                     saved_cards_screen = self.root.ids.screen_manager.get_screen("saved_cards")
@@ -203,17 +206,42 @@ class MainApp(MDApp):
 
         return data
 
+    def preprocess_data(self, data):
+        """Preprocess the data to shift columns if the 'Target' column contains a number."""
+        processed_data = []
+        for row in data:
+            target_value = row.get("Target", "")
+            # Check if the "Target" column contains a number
+            if target_value.isdigit():  # Check if the value is numeric
+                # Shift the columns across by one
+                shifted_row = {}
+                keys = list(row.keys())
+                for i in range(len(keys) - 1):  # Shift all columns except the last one
+                    shifted_row[keys[i + 1]] = row[keys[i]]
+                shifted_row[keys[0]] = ""  # Set the first column to empty
+                processed_data.append(shifted_row)
+            else:
+                # Keep the row as is if "Target" is not a number
+                processed_data.append(row)
+        return processed_data
+
     def display_table(self, data):
         """Displays the filtered CSV data as text on the Home Screen."""
         if not data:
             print("No data to display.")
             return
 
+        # Preprocess the data to handle numeric "Target" values
+        data = self.preprocess_data(data)
+
         # Define the static column order
         static_headers = ["Target", "Range", "Elv", "Wnd1", "Wnd2", "Lead"]
 
         # Filter headers based on the show/hide options
-        headers = ["Target", "Elv", "Wnd1"]  # Always include these columns
+        headers = ["Elv", "Wnd1"]  # Start with these columns
+        # Include "Target" only if the data contains values for it
+        if any(row.get("Target") for row in data):
+            headers.insert(0, "Target")
         if show_range:
             headers.insert(1, "Range")  # Insert "Range" after "Target" and before "Elv"
         if show_2_wind_holds:
@@ -254,7 +282,7 @@ class MainApp(MDApp):
             font_name="assets/fonts/RobotoMono-Regular.ttf",  # Path to the font file
         )
         table_container.add_widget(table_label)
-        
+
     def on_dots_press(self, instance):
         global show_lead, show_range, show_2_wind_holds
 
