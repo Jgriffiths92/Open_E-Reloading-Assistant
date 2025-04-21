@@ -72,6 +72,7 @@ MDNavigationLayout:
             left_action_items: [["menu", lambda x: app.root.ids.drawer.set_state("open")]]
             right_action_items: [["dots-vertical", lambda x: app.on_dots_press(x)]]
             md_bg_color: 0.678, 0.0, 0.969, 1
+
         # Stage Name Text Field
         MDTextField:
             id: stage_name_field
@@ -112,7 +113,7 @@ MDNavigationLayout:
                 on_text: app.limit_stage_notes(self)  # Call a method to enforce the line limit
                 on_text_validate: app.on_stage_notes_entered(self.text)
 
-            # Layout for the NFC and Save buttons
+            # Layout for the NFC, Save, and Broom buttons
             AnchorLayout:
                 anchor_x: "right"  # Align horizontally to the right
                 anchor_y: "bottom"  # Align vertically to the bottom
@@ -139,6 +140,16 @@ MDNavigationLayout:
                         size_hint: None, None
                         size: dp(56), dp(56)  # Standard FAB size
                         on_release: app.on_fab_press()
+
+                    MDFloatingActionButton:
+                        id: broom_button
+                        icon: "broom"
+                        md_bg_color: 0.8, 0.5, 0.0, 1
+                        size_hint: None, None
+                        size: dp(56), dp(56)  # Standard FAB size
+                        on_release: app.on_broom_button_press()
+                        opacity: 1 if app.standalone_mode_enabled else 0  # Visible only in standalone mode
+                        disabled: not app.standalone_mode_enabled  # Disable when not in standalone mode
 
 <SavedCardsScreen>:
     MDBoxLayout:

@@ -736,14 +736,19 @@ class MainApp(MDApp):
 
     def on_standalone_mode_toggle(self, is_active):
         """Handle the toggle of standalone mode."""
-        if is_active:
-            print("Standalone mode enabled.")
-            # Perform any setup or changes needed for standalone mode
-            self.standalone_mode_enabled = True
-        else:
-            print("Standalone mode disabled.")
-            # Revert any changes or cleanup for standalone mode
-            self.standalone_mode_enabled = False
+        self.standalone_mode_enabled = is_active
+        print("Standalone mode enabled." if is_active else "Standalone mode disabled.")
+
+        # Update the visibility of the broom button dynamically
+        home_screen = self.root.ids.home_screen
+        broom_button = home_screen.ids.broom_button
+        broom_button.opacity = 1 if is_active else 0
+        broom_button.disabled = not is_active
+
+    def on_broom_button_press(self):
+        """Handle the broom button press."""
+        print("Broom button pressed. Performing cleanup...")
+        # Add your cleanup logic here
 
 if __name__ == "__main__":
     MainApp().run()
