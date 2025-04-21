@@ -516,40 +516,46 @@ class MainApp(MDApp):
             except Exception as e:
                 print(f"Error saving data to CSV: {e}")
 
-    def csv_to_bitmap(self, csv_data, output_path="output.bmp"):
-        """Convert CSV data to a bitmap image."""
-        try: # Use the selected resolution
-            if hasattr(self, "selected_resolution"):
-                image_width, image_height = self.selected_resolution
-            else:
-                # Default resolution if no display is selected
-                image_width, image_height = 280, 416
+    def csv_to_bitmap(self, csv_data, output_path=None):
+        """Convert CSV data to a bitmap image, resize it to fit the display resolution while keeping the aspect ratio, and save it."""
+        try:
+            # Set the default output path to the assets/bitmap folder
+            bitmap_directory = os.path.join(os.path.dirname(__file__), "assets", "bitmap")
+            if not os.path.exists(bitmap_directory):
+                os.makedirs(bitmap_directory)  # Create the directory if it doesn't exist
 
-            # Adjust for orientation based on final_resolution
+            # Use the default output path if none is provided
+            if output_path is None:
+                output_path = os.path.join(bitmap_directory, "output.bmp")
+
+            # Default resolution if no display is selected
+            display_width, display_height = 280, 416
+
+            # Adjust for orientation based on final resolution
             if self.selected_orientation == "Landscape":
-                image_width, image_height = max(image_width, image_height), min(image_width, image_height)
+                display_width, display_height = max(display_width, display_height), min(display_width, display_height)
             else:
-                image_width, image_height = min(image_width, image_height), max(image_width, image_height)
-          
+                display_width, display_height = min(display_width, display_height), max(display_width, display_height)
 
             # Load the font file (ensure the font file is in the correct path)
             font_path = os.path.join(os.path.dirname(__file__), "assets", "fonts", "RobotoMono-Regular.ttf")
             font = ImageFont.truetype(font_path, 12)  # Load the font file
 
             # Create a blank white image
-            image = Image.new("RGB", (image_width, image_height), "white")
+            image = Image.new("RGB", (display_width, display_height), "white")
             draw = ImageDraw.Draw(image)
 
             # Add the stage name at the top
             stage_name = self.root.ids.home_screen.ids.stage_name_field.text  # Get the stage name from the text field
-            x, y = 10, 10  # Starting position for the stage name
+            y = 10  # Starting vertical position
             text_bbox = draw.textbbox((0, 0), stage_name, font=font)  # Get the bounding box of the text
             text_width = text_bbox[2] - text_bbox[0]  # Calculate the text width
-            x = (image_width - text_width) // 2  # Center the text horizontally
-            draw.text((x, y), f"{stage_name}", fill="black", font=font)
-            # Draw a horizontal line under the stage name
+            x = (display_width - text_width) // 2  # Center the text horizontally
+            draw.text((x, y), stage_name, fill="black", font=font)
             y += 20  # Add some spacing after the stage name
-            draw.line((10, y, image_width - 10, y), fill="black", width=1)
+
+            # Draw a horizontal line under the stage name
+            draw.line((10, y, display_width - 10, y), fill="black", width=1)
             y += 20  # Add some spacing after the line
 
             # Calculate column widths based on the data
@@ -561,38 +567,42 @@ class MainApp(MDApp):
 
             # Write headers to the image
             headers = " | ".join(f"{'Tgt' if header == 'Target' else header:<{column_widths[header]}}" for header in filtered_data[0].keys())
-            draw.text((10, y), headers, fill="black", font=font)
+            text_bbox = draw.textbbox((0, 0), headers, font=font)  # Get the bounding box of the headers
+            text_width = text_bbox[2] - text_bbox[0]  # Calculate the text width
+            x = (display_width - text_width) // 2  # Center the text horizontally
+            draw.text((x, y), headers, fill="black", font=font)
             y += 20  # Move to the next line
 
             # Write CSV data to the image
             for row in filtered_data:
                 row_text = " | ".join(f"{str(value):<{column_widths[header]}}" for header, value in row.items())
-                draw.text((10, y), row_text, fill="black", font=font)
+                text_bbox = draw.textbbox((0, 0), row_text, font=font)  # Get the bounding box of the row text
+                text_width = text_bbox[2] - text_bbox[0]  # Calculate the text width
+                x = (display_width - text_width) // 2  # Center the text horizontally
+                draw.text((x, y), row_text, fill="black", font=font)
                 y += 20  # Move to the next line
 
             # Add the stage notes below the table data
             stage_notes = self.root.ids.home_screen.ids.stage_notes_field.text  # Get the stage notes from the text field
             y += 20  # Add some spacing before the stage notes
-            draw.line((10, y, image_width - 10, y), fill="black", width=1)  # Draw a line above the stage notes
+            draw.line((10, y, display_width - 10, y), fill="black", width=1)  # Draw a line above the stage notes
             y += 10  # Add some spacing after the line
-            text_bbox = draw.textbbox((0, 0), "Stage Notes:", font=font)  # Get the bounding box of the text
-            text_height = text_bbox[3] - text_bbox[1]  # Calculate the text height
-            y_center = y + ((6 - text_height) // 2)  # Center the text vertically between the lines
+            text_bbox = draw.textbbox((0, 0), "Stage Notes:", font=font)  # Get the bounding box of the stage notes label
             text_width = text_bbox[2] - text_bbox[0]  # Calculate the text width
-            x = (image_width - text_width) // 2  # Center the text horizontally
-            draw.text((x, y_center), f"Stage Notes:", fill="black", font=font)
-            y += 20  # Add some spacing after the stage notes label
-            draw.line((10, y, image_width - 10, y), fill="black", width=1)  # Draw a line below the stage notes
-            y += 10  # Add some spacing after the line
-            # Draw the stage notes text
-            x, y = 10, y  # Starting position for the stage notes
-            text_bbox = draw.textbbox((0, 0), stage_notes, font=font)  # Get the bounding box of the text
+            x = (display_width - text_width) // 2  # Center the text horizontally
+            draw.text((x, y), "Stage Notes:", fill="black", font=font)
+            y += 30  # Add some spacing after the stage notes label
+            draw.line((10, y, display_width - 10, y), fill="black", width=1)  # Draw a horizontal line under the stage notes label
+            y += 20  # Add some spacing after the line
+            text_bbox = draw.textbbox((0, 0), stage_notes, font=font)  # Get the bounding box of the stage notes
             text_width = text_bbox[2] - text_bbox[0]  # Calculate the text width
-            x = (image_width - text_width) // 2  # Center the text horizontally
-            draw.text((x, y), f"{stage_notes}", fill="black", font=font)
-            y += 20  # Add some spacing after the stage notes
+            x = (display_width - text_width) // 2  # Center the text horizontally
+            draw.text((x, y), stage_notes, fill="black", font=font)
 
-            # Save the image as a bitmap
+            # Resize the image to fit within the display resolution while keeping the aspect ratio
+            image.thumbnail(self.selected_resolution, Image.Resampling.LANCZOS)
+
+            # Save the resized image as a bitmap
             image.save(output_path)
             print(f"Bitmap saved to {output_path}")
             return output_path
@@ -698,7 +708,7 @@ class MainApp(MDApp):
 
         self.selected_display = model
         self.selected_resolution = final_resolution  # Store the final resolution
-        self.root.ids.settings_screen.ids.display_dropdown_button.text = f"{model} ({final_resolution[0]}x{final_resolution[1]})"
+        self.root.ids.settings_screen.ids.display_dropdown_button.text = f"{model}"
         print(f"Selected display model: {model} with resolution {final_resolution}")
 
         # Close the dropdown menu
