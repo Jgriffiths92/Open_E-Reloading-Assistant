@@ -186,7 +186,23 @@ MDNavigationLayout:
             title: "Settings"
             left_action_items: [["arrow-left", lambda x: app.navigate_to_home()]]
             md_bg_color: 0.678, 0.0, 0.969, 1
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: 0.8, None  # Set width to 80% of the parent
+            height: dp(48)
+            padding: "20dp"
+            spacing: "10dp"
+            pos_hint: {"center_x": 0.5}  # Center horizontally
 
+            MDLabel:
+                text: "Stand Alone Mode"
+            MDSwitch:
+                id: standalone_mode_switch
+                pos_hint: {"center_y": 0.5}
+                size_hint: None, None
+                width: dp(64)
+                height: dp(48)
+                on_active: app.on_standalone_mode_toggle(self.active)
         MDLabel:
             text: "Select Display Size:"
             halign: "center"
