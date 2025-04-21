@@ -99,6 +99,9 @@ class MainApp(MDApp):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.standalone_mode_enabled = False  # Default to standalone mode being disabled
+        self.selected_display = "Good Display 3.7-inch"  # Default selected display
+        self.selected_resolution = (280, 416)  # Default resolution for 3.7-inch display
+        self.selected_orientation = "Portrait"  # Default orientation
 
     dialog = None  # Store the dialog instance
 
@@ -116,10 +119,9 @@ class MainApp(MDApp):
         # Initialize the dropdown menus
         self.display_menu = None
         self.orientation_menu = None
-        self.selected_display = "None"  # Default selected display
-        self.selected_orientation = "Portrait"  # Default orientation
 
-        # Set the default text for the orientation dropdown button
+        # Set the default text for the display and orientation dropdown buttons
+        root.ids.settings_screen.ids.display_dropdown_button.text = self.selected_display
         root.ids.settings_screen.ids.orientation_dropdown_button.text = self.selected_orientation
 
         return root
