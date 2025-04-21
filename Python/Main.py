@@ -96,6 +96,10 @@ class SettingsScreen(Screen):
     pass
 
 class MainApp(MDApp):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.standalone_mode_enabled = False  # Default to standalone mode being disabled
+
     dialog = None  # Store the dialog instance
 
     def build(self):
@@ -128,6 +132,9 @@ class MainApp(MDApp):
    
     def on_file_selected(self, selection):
         """Handle the file or folder selected in the FileChooserListView."""
+        if self.standalone_mode_enabled:
+            # If standalone mode is enabled
+            print("Standalone mode is enabled.")
         if selection:
             selected_path = selection[0]
             # Extract the file name and set it to the stage_name_field
@@ -726,6 +733,17 @@ class MainApp(MDApp):
         # Close the dropdown menu
         if self.orientation_menu:
             self.orientation_menu.dismiss()
+
+    def on_standalone_mode_toggle(self, is_active):
+        """Handle the toggle of standalone mode."""
+        if is_active:
+            print("Standalone mode enabled.")
+            # Perform any setup or changes needed for standalone mode
+            self.standalone_mode_enabled = True
+        else:
+            print("Standalone mode disabled.")
+            # Revert any changes or cleanup for standalone mode
+            self.standalone_mode_enabled = False
 
 if __name__ == "__main__":
     MainApp().run()
