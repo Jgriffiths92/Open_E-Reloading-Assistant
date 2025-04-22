@@ -16,7 +16,10 @@ from kivy.uix.boxlayout import BoxLayout
 import os
 from kivymd.uix.textfield import MDTextField
 from PIL import Image, ImageDraw, ImageFont
-from pyjnius import autoclass
+try:
+    from pyjnius import autoclass
+except ImportError:
+    autoclass = None
 
 try:
     try:
@@ -123,9 +126,12 @@ class MainApp(MDApp):
         # Load the KV file
         root = Builder.load_file("layout.kv")
 
-        # Initialize NFC
-        if self.is_android() and self.initialize_nfc():
-            self.enable_nfc_foreground_dispatch()
+        # Ensure the assets/CSV directory exists
+        csv_directory = self.ensure_csv_directory()
+
+        # Dynamically set the rootpath for the FileChooserListView
+        saved_cards_screen = root.ids.screen_manager.get_screen("saved_cards")
+        saved_cards_screen.ids.filechooser.rootpath = csv_directory
 
         return root
     
@@ -852,6 +858,13 @@ class MainApp(MDApp):
         """Handle the broom button press."""
         print("Broom button pressed. Performing cleanup...")
         # Add your cleanup logic here
+
+    def ensure_csv_directory(self):
+        """Ensure the assets/CSV directory exists."""
+        csv_directory = os.path.join(os.path.dirname(__file__), "assets", "CSV")
+        if not os.path.exists(csv_directory):
+            os.makedirs(csv_directory)
+        return csv_directory
 
 if __name__ == "__main__":
     MainApp().run()
