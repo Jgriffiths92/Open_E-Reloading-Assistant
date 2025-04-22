@@ -16,7 +16,7 @@ from kivy.uix.boxlayout import BoxLayout
 import os
 from kivymd.uix.textfield import MDTextField
 from PIL import Image, ImageDraw, ImageFont
-from jnius import autoclass
+from pyjnius import autoclass
 
 try:
     try:
