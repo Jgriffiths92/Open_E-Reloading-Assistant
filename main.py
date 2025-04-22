@@ -16,7 +16,14 @@ from kivy.uix.boxlayout import BoxLayout
 import os
 from kivymd.uix.textfield import MDTextField
 from PIL import Image, ImageDraw, ImageFont
-import nfc
+
+try:
+    from android import mActivity
+    import nfc
+    from android.widget import Toast
+except ImportError:
+    mActivity = None
+    nfc = None
 
 #change color of the filechooser
 Builder.load_string('''
@@ -131,7 +138,15 @@ class MainApp(MDApp):
     show_range = False
     show_2_wind_holds = True
 
-   
+    def is_android(self):
+        """Check if the app is running on Android."""
+        return mActivity is not None
+
+    def show_android_toast(self, message):
+        if mActivity:
+            context = mActivity.getApplicationContext()
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+
     def on_file_selected(self, selection):
         """Handle the file or folder selected in the FileChooserListView."""
         if self.standalone_mode_enabled:
