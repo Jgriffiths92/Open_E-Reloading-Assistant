@@ -1,0 +1,273 @@
+#:import MDNavigationLayout kivymd.uix.navigationdrawer.MDNavigationLayout
+#:import MDNavigationDrawer kivymd.uix.navigationdrawer.MDNavigationDrawer
+#:import MDNavigationDrawerMenu kivymd.uix.navigationdrawer.MDNavigationDrawerMenu
+#:import MDNavigationDrawerItem kivymd.uix.navigationdrawer.MDNavigationDrawerItem
+#:import MDBoxLayout kivymd.uix.boxlayout.MDBoxLayout
+#:import MDTopAppBar kivymd.uix.toolbar.MDTopAppBar
+#:import MDTextField kivymd.uix.textfield.MDTextField
+
+MDNavigationLayout:
+    ScreenManager:
+        id: screen_manager
+        HomeScreen:
+            id: home_screen
+            name: "home"  # Name used to navigate to this screen
+        SavedCardsScreen:
+            id: saved_cards_screen
+            name: "saved_cards"  # Name used to navigate to this screen
+        ManageDataScreen:
+            id: manage_data_screen
+            name: "manage_data"  # Name used to navigate to this screen
+        SettingsScreen:
+            id: settings_screen
+            name: "settings"  # Name used to navigate to this screen
+
+    MDNavigationDrawer:
+        id: drawer
+        MDNavigationDrawerMenu:
+            MDBoxLayout:
+                orientation: "vertical"
+                size_hint_y: None
+                height: "180dp"
+                padding: "10dp"
+
+                Image:
+                    source: "assets/images/logo.png"
+                    size_hint: None, None
+                    size: "80dp", "80dp"
+                    pos_hint: {"center_x": 0.5}
+
+                MDLabel:
+                    text: "Open E-Dope"
+                    theme_text_color: "Custom"
+                    text_color: 0, 0, 0, 1
+                    halign: "center"
+
+            MDNavigationDrawerItem:
+                text: "Home"
+                icon: "home"
+                on_release:
+                    screen_manager.current = "home"
+                    app.root.ids.drawer.set_state("close")
+
+            MDNavigationDrawerItem:
+                text: "Saved Cards"
+                icon: "content-save"
+                on_release:
+                    screen_manager.current = "saved_cards"
+                    app.root.ids.drawer.set_state("close")
+
+            MDNavigationDrawerItem:
+                text: "Manage Data"
+                icon: "wrench"
+                on_release:
+                    screen_manager.current = "manage_data"
+                    app.root.ids.drawer.set_state("close")
+
+<HomeScreen>:
+    MDBoxLayout:
+        orientation: "vertical"
+        MDTopAppBar:
+            title: "Home"
+            left_action_items: [["menu", lambda x: app.root.ids.drawer.set_state("open")]]
+            right_action_items: [["dots-vertical", lambda x: app.on_dots_press(x)]]
+            md_bg_color: 0.678, 0.0, 0.969, 1
+
+        # Stage Name Text Field
+        MDTextField:
+            id: stage_name_field
+            hint_text: "Stage Name"
+            hint_text_mode: "on_focus"
+            multiline: False
+            halign: "center"
+            size_hint_y: None
+            size_hint_x: 0.8
+            pos_hint: {"center_x": 0.5, "center_y": 0.5}
+            on_text_validate: app.on_stage_name_entered(self.text)
+
+        # Table container for displaying the CSV data
+        BoxLayout:
+            id: table_container  # Placeholder for the table
+            orientation: "vertical"
+            size_hint: 1, 1
+            padding: "10dp"
+
+        # Layout for Stage Notes and Buttons
+        BoxLayout:
+            orientation: "vertical"
+            size_hint: 1, None
+            height: dp(160)  # Adjust height to fit both the text field and buttons
+            padding: "10dp"
+
+            # Stage Notes Text Field
+            MDTextField:
+                id: stage_notes_field
+                hint_text: "Stage Notes (e.g., shoot to move/hit to move)"
+                hint_text_mode: "on_focus"
+                multiline: True
+                halign: "center"
+                size_hint_y: None
+                height: dp(96)  # Limit height to 2 lines (48dp per line)
+                size_hint_x: 0.8
+                pos_hint: {"center_x": 0.5}
+                on_text: app.limit_stage_notes(self)  # Call a method to enforce the line limit
+                on_text_validate: app.on_stage_notes_entered(self.text)
+
+            # Layout for the NFC, Save, and Broom buttons
+            AnchorLayout:
+                anchor_x: "right"  # Align horizontally to the right
+                anchor_y: "bottom"  # Align vertically to the bottom
+                size_hint: 1, None
+                height: dp(64)  # Adjust height as needed
+                padding: [0, 0, "40dp", "20dp"]  # Add padding (left, top, right, bottom)
+
+                BoxLayout:
+                    orientation: "horizontal"
+                    size_hint: None, None
+                    height: dp(64)  # Adjust height as needed
+                    width: dp(150)  # Adjust width as needed
+                    spacing: "10dp"  # Add spacing between the buttons
+
+                    MDFloatingActionButton:
+                        icon: "nfc"
+                        md_bg_color: 0.0, 0.5, 0.8, 1
+                        size_hint: None, None
+                        size: dp(56), dp(56)  # Standard FAB size
+                        on_release: app.on_send_via_nfc()
+
+                    MDFloatingActionButton:
+                        icon: "content-save"
+                        md_bg_color: 0.0, 0.969, 0.565, 1
+                        size_hint: None, None
+                        size: dp(56), dp(56)  # Standard FAB size
+                        on_release: app.on_fab_press()
+
+                    MDFloatingActionButton:
+                        id: broom_button
+                        icon: "broom"
+                        md_bg_color: 0.8, 0.5, 0.0, 1
+                        size_hint: None, None
+                        size: dp(56), dp(56)  # Standard FAB size
+                        on_release: app.on_broom_button_press()
+                        opacity: 1 if app.standalone_mode_enabled else 0  # Visible only in standalone mode
+                        disabled: not app.standalone_mode_enabled  # Disable when not in standalone mode
+
+<SavedCardsScreen>:
+    MDBoxLayout:
+        orientation: "vertical"
+        MDTopAppBar:
+            title: "Saved Cards"
+            left_action_items: [["menu", lambda x: app.root.ids.drawer.set_state("open")]]
+            right_action_items: [["dots-vertical", lambda x: app.on_dots_press(x)]]
+            md_bg_color: 0.678, 0.0, 0.969, 1
+
+        MDTextField:
+            id: search_field
+            hint_text: "Search Cards"
+            hint_text_mode: "on_focus"
+            multiline: False
+            size_hint_x: 0.8
+            pos_hint: {"center_x": 0.5, "center_y": 0.5}
+            on_text: app.on_search_entered(self.text)
+
+        FileChooserListView:
+            id: filechooser
+            rootpath: ""  # Placeholder, set dynamically in Python
+            filters: []  # Allow all files by default
+            on_selection: app.on_file_selected(self.selection)
+            size_hint_y: 0.8
+            pos_hint: {"center_x": 0.5, "center_y": 0.5}
+
+<ManageDataScreen>:
+    MDBoxLayout:
+        orientation: "vertical"
+        MDTopAppBar:
+            title: "Manage Data"
+            left_action_items: [["menu", lambda x: app.root.ids.drawer.set_state("open")]]
+            right_action_items: [["dots-vertical", lambda x: app.on_dots_press(x)]]
+            md_bg_color: 0.678, 0.0, 0.969, 1
+        MDLabel:
+            text: "Manage Data Screen"
+            halign: "center"
+
+<SettingsScreen>:
+    MDBoxLayout:
+        orientation: "vertical"
+
+        MDTopAppBar:
+            title: "Settings"
+            left_action_items: [["arrow-left", lambda x: app.navigate_to_home()]]
+            md_bg_color: 0.678, 0.0, 0.969, 1
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: 0.8, None  # Set width to 80% of the parent
+            height: dp(48)
+            padding: "20dp"
+            spacing: "10dp"
+            pos_hint: {"center_x": 0.5}  # Center horizontally
+
+            MDLabel:
+                text: "Stand Alone Mode"
+            MDSwitch:
+                id: standalone_mode_switch
+                pos_hint: {"center_y": 0.5}
+                size_hint: None, None
+                width: dp(64)
+                height: dp(48)
+                on_active: app.on_standalone_mode_toggle(self.active)
+        MDLabel:
+            text: "Select Display Size:"
+            halign: "center"
+
+        MDFlatButton:
+            id: display_dropdown_button
+            text: "Select Display"
+            pos_hint: {"center_x": 0.5}
+            on_release: app.open_display_dropdown(self)
+
+        MDLabel:
+            text: "Select Orientation:"
+            halign: "center"
+
+        MDFlatButton:
+            id: orientation_dropdown_button
+            text: "Select Orientation"
+            pos_hint: {"center_x": 0.5}
+            on_release: app.open_orientation_dropdown(self)
+
+[FileListEntry@FloatLayout+TreeViewNode]:
+    locked: False
+    entries: []
+    path: ctx.path
+    is_selected: self.path in ctx.controller().selection
+    orientation: 'horizontal'
+    size_hint_y: None
+    height: '64dp'  # Increased height for better visibility
+    is_leaf: not ctx.isdir or ctx.name.endswith('..' + ctx.sep) or self.locked
+    on_touch_down: self.collide_point(*args[1].pos) and ctx.controller().entry_touched(self, args[1])
+    on_touch_up: self.collide_point(*args[1].pos) and ctx.controller().entry_released(self, args[1])
+    BoxLayout:
+        pos: root.pos
+        size_hint_x: None
+        width: root.width - dp(10)
+        MDIcon:
+            icon: "arrow-left"  # Back Arrow icon
+            size_hint_x: None
+            width: dp(24)
+            halign: "left"
+            valign: "middle"
+            opacity: 1 if ctx.name == "..\\" else 0  # Show only for the parent directory
+        Label:
+            color: 0, 0, 0, 1
+            id: filename
+            text_size: self.width, None
+            halign: 'center'  # Center the file names horizontally
+            valign: 'middle'  # Center the file names vertically
+            shorten: True
+            text: "Back" if ctx.name == "..\\" else ctx.name.split('.csv')[0] if '.csv' in ctx.name else ctx.name  # Display "Back" for parent directory
+        Label:
+            color: 0, 0, 0, 0  # Make the file size label invisible
+            text_size: self.width, None
+            size_hint_x: None
+            halign: 'right'
+            text: ''  # Hide file size
