@@ -18,9 +18,15 @@ from kivymd.uix.textfield import MDTextField
 from PIL import Image, ImageDraw, ImageFont
 
 try:
-    from android import mActivity
+    try:
+        from android import mActivity
+    except ImportError:
+        mActivity = None
     import nfc
-    from android.widget import Toast
+    try:
+        from android.widget import Toast
+    except ImportError:
+        Toast = None
 except ImportError:
     mActivity = None
     nfc = None
