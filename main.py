@@ -16,6 +16,7 @@ from kivy.uix.boxlayout import BoxLayout
 import os
 from kivymd.uix.textfield import MDTextField
 from PIL import Image, ImageDraw, ImageFont
+from jnius import autoclass
 
 try:
     try:
@@ -122,20 +123,9 @@ class MainApp(MDApp):
         # Load the KV file
         root = Builder.load_file("layout.kv")
 
-        # Dynamically set the rootpath for the FileChooserListView
-        saved_cards_screen = root.ids.screen_manager.get_screen("saved_cards")
-        csv_directory = os.path.join(os.path.dirname(__file__), "assets", "CSV")
-        if not os.path.exists(csv_directory):
-            os.makedirs(csv_directory)  # Create the directory if it doesn't exist
-        saved_cards_screen.ids.filechooser.rootpath = csv_directory
-
-        # Initialize the dropdown menus
-        self.display_menu = None
-        self.orientation_menu = None
-
-        # Set the default text for the display and orientation dropdown buttons
-        root.ids.settings_screen.ids.display_dropdown_button.text = self.selected_display
-        root.ids.settings_screen.ids.orientation_dropdown_button.text = self.selected_orientation
+        # Initialize NFC
+        if self.is_android() and self.initialize_nfc():
+            self.enable_nfc_foreground_dispatch()
 
         return root
     
@@ -152,6 +142,86 @@ class MainApp(MDApp):
         if mActivity:
             context = mActivity.getApplicationContext()
             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+
+    def initialize_nfc(self):
+        """Initialize the NFC adapter and check if NFC is available."""
+        try:
+            # Get the Android activity and context
+            Activity = autoclass('android.app.Activity')
+            Context = autoclass('android.content.Context')
+            NfcAdapter = autoclass('android.nfc.NfcAdapter')
+
+            # Get the NFC adapter
+            self.nfc_adapter = NfcAdapter.getDefaultAdapter(mActivity)
+            if self.nfc_adapter is None:
+                print("NFC is not available on this device.")
+                return False
+            else:
+                print("NFC adapter initialized.")
+                return True
+        except Exception as e:
+            print(f"Error initializing NFC: {e}")
+            return False
+
+    def enable_nfc_foreground_dispatch(self):
+        """Enable NFC foreground dispatch to handle NFC intents."""
+        try:
+            PendingIntent = autoclass('android.app.PendingIntent')
+            Intent = autoclass('android.content.Intent')
+            IntentFilter = autoclass('android.content.IntentFilter')
+            NfcAdapter = autoclass('android.nfc.NfcAdapter')
+
+            # Create a pending intent for NFC
+            intent = Intent(mActivity, mActivity.getClass())
+            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            pending_intent = PendingIntent.getActivity(mActivity, 0, intent, 0)
+
+            # Create an intent filter for NFC
+            ndef_filter = IntentFilter("android.nfc.action.NDEF_DISCOVERED")
+            tech_filter = IntentFilter("android.nfc.action.TECH_DISCOVERED")
+            tag_filter = IntentFilter("android.nfc.action.TAG_DISCOVERED")
+
+            # Enable foreground dispatch
+            self.nfc_adapter.enableForegroundDispatch(
+                mActivity,
+                pending_intent,
+                [ndef_filter, tech_filter, tag_filter],
+                None
+            )
+            print("NFC foreground dispatch enabled.")
+        except Exception as e:
+            print(f"Error enabling NFC foreground dispatch: {e}")
+
+    def handle_nfc_tag(self, intent):
+        """Handle NFC tag detection and read/write data."""
+        try:
+            Tag = autoclass('android.nfc.Tag')
+            Ndef = autoclass('android.nfc.tech.Ndef')
+
+            # Get the tag from the intent
+            tag = intent.getParcelableExtra("android.nfc.extra.TAG")
+            if tag is None:
+                print("No NFC tag detected.")
+                return
+
+            # Connect to the tag and read/write data
+            ndef = Ndef.get(tag)
+            if ndef is not None:
+                ndef.connect()
+                if ndef.isWritable():
+                    message = "Hello from Kivy!"
+                    ndef_message = autoclass('android.nfc.NdefMessage')(
+                        [autoclass('android.nfc.NdefRecord').createTextRecord("en", message)]
+                    )
+                    ndef.writeNdefMessage(ndef_message)
+                    print("Data written to NFC tag.")
+                else:
+                    print("NFC tag is not writable.")
+                ndef.close()
+            else:
+                print("NDEF is not supported by this tag.")
+        except Exception as e:
+            print(f"Error handling NFC tag: {e}")
 
     def on_file_selected(self, selection):
         """Handle the file or folder selected in the FileChooserListView."""
@@ -589,7 +659,7 @@ class MainApp(MDApp):
                     column_widths[header] = max(column_widths[header], len(str(value)))
 
             # Write headers to the image
-            headers = " | ".join(f"{'Tgt' if header == 'Target' else header:<{column_widths[header]}}" for header in filtered_data[0].keys())
+            headers = " | ".join(f"{'Tgt' if header == "Target" else header:<{column_widths[header]}}" for header in filtered_data[0].keys())
             text_bbox = draw.textbbox((0, 0), headers, font=font)  # Get the bounding box of the headers
             text_width = text_bbox[2] - text_bbox[0]  # Calculate the text width
             x = (display_width - text_width) // 2  # Center the text horizontally
