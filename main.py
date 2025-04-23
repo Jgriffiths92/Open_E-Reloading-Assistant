@@ -16,24 +16,15 @@ from kivy.uix.boxlayout import BoxLayout
 import os
 from kivymd.uix.textfield import MDTextField
 from PIL import Image, ImageDraw, ImageFont
-try:
-    from pyjnius import autoclass
-except ImportError:
-    autoclass = None
+import nfc
 
 try:
     try:
         from android import mActivity
     except ImportError:
-        mActivity = None
-    import nfc
-    try:
-        from android.widget import Toast
-    except ImportError:
-        Toast = None
+        mActivity = None  # Handle cases where the app is not running on Android
 except ImportError:
-    mActivity = None
-    nfc = None
+    mActivity = None  # Handle cases where the app is not running on Android
 
 #change color of the filechooser
 Builder.load_string('''
@@ -126,12 +117,18 @@ class MainApp(MDApp):
         # Load the KV file
         root = Builder.load_file("layout.kv")
 
-        # Ensure the assets/CSV directory exists
-        csv_directory = self.ensure_csv_directory()
-
         # Dynamically set the rootpath for the FileChooserListView
         saved_cards_screen = root.ids.screen_manager.get_screen("saved_cards")
+        csv_directory = self.ensure_csv_directory()
         saved_cards_screen.ids.filechooser.rootpath = csv_directory
+
+        # Initialize the dropdown menus
+        self.display_menu = None
+        self.orientation_menu = None
+
+        # Set the default text for the display and orientation dropdown buttons
+        root.ids.settings_screen.ids.display_dropdown_button.text = self.selected_display
+        root.ids.settings_screen.ids.orientation_dropdown_button.text = self.selected_orientation
 
         return root
     
@@ -140,94 +137,12 @@ class MainApp(MDApp):
     show_range = False
     show_2_wind_holds = True
 
-    def is_android(self):
-        """Check if the app is running on Android."""
-        return mActivity is not None
-
-    def show_android_toast(self, message):
-        if mActivity:
-            context = mActivity.getApplicationContext()
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-
-    def initialize_nfc(self):
-        """Initialize the NFC adapter and check if NFC is available."""
-        try:
-            # Get the Android activity and context
-            Activity = autoclass('android.app.Activity')
-            Context = autoclass('android.content.Context')
-            NfcAdapter = autoclass('android.nfc.NfcAdapter')
-
-            # Get the NFC adapter
-            self.nfc_adapter = NfcAdapter.getDefaultAdapter(mActivity)
-            if self.nfc_adapter is None:
-                print("NFC is not available on this device.")
-                return False
-            else:
-                print("NFC adapter initialized.")
-                return True
-        except Exception as e:
-            print(f"Error initializing NFC: {e}")
-            return False
-
-    def enable_nfc_foreground_dispatch(self):
-        """Enable NFC foreground dispatch to handle NFC intents."""
-        try:
-            PendingIntent = autoclass('android.app.PendingIntent')
-            Intent = autoclass('android.content.Intent')
-            IntentFilter = autoclass('android.content.IntentFilter')
-            NfcAdapter = autoclass('android.nfc.NfcAdapter')
-
-            # Create a pending intent for NFC
-            intent = Intent(mActivity, mActivity.getClass())
-            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            pending_intent = PendingIntent.getActivity(mActivity, 0, intent, 0)
-
-            # Create an intent filter for NFC
-            ndef_filter = IntentFilter("android.nfc.action.NDEF_DISCOVERED")
-            tech_filter = IntentFilter("android.nfc.action.TECH_DISCOVERED")
-            tag_filter = IntentFilter("android.nfc.action.TAG_DISCOVERED")
-
-            # Enable foreground dispatch
-            self.nfc_adapter.enableForegroundDispatch(
-                mActivity,
-                pending_intent,
-                [ndef_filter, tech_filter, tag_filter],
-                None
-            )
-            print("NFC foreground dispatch enabled.")
-        except Exception as e:
-            print(f"Error enabling NFC foreground dispatch: {e}")
-
-    def handle_nfc_tag(self, intent):
-        """Handle NFC tag detection and read/write data."""
-        try:
-            Tag = autoclass('android.nfc.Tag')
-            Ndef = autoclass('android.nfc.tech.Ndef')
-
-            # Get the tag from the intent
-            tag = intent.getParcelableExtra("android.nfc.extra.TAG")
-            if tag is None:
-                print("No NFC tag detected.")
-                return
-
-            # Connect to the tag and read/write data
-            ndef = Ndef.get(tag)
-            if ndef is not None:
-                ndef.connect()
-                if ndef.isWritable():
-                    message = "Hello from Kivy!"
-                    ndef_message = autoclass('android.nfc.NdefMessage')(
-                        [autoclass('android.nfc.NdefRecord').createTextRecord("en", message)]
-                    )
-                    ndef.writeNdefMessage(ndef_message)
-                    print("Data written to NFC tag.")
-                else:
-                    print("NFC tag is not writable.")
-                ndef.close()
-            else:
-                print("NDEF is not supported by this tag.")
-        except Exception as e:
-            print(f"Error handling NFC tag: {e}")
+    def ensure_csv_directory(self):
+        """Ensure the assets/CSV directory exists."""
+        csv_directory = os.path.join(os.path.dirname(__file__), "assets", "CSV")
+        if not os.path.exists(csv_directory):
+            os.makedirs(csv_directory)
+        return csv_directory
 
     def on_file_selected(self, selection):
         """Handle the file or folder selected in the FileChooserListView."""
@@ -479,7 +394,7 @@ class MainApp(MDApp):
         """Handle the floating action button press."""
         if not self.dialog:
             # Get the list of folders in the assets/CSV directory
-            csv_directory = os.path.join(os.path.dirname(__file__), "assets", "CSV")
+            csv_directory = self.ensure_csv_directory()
             folders = [f for f in os.listdir(csv_directory) if os.path.isdir(os.path.join(csv_directory, f))]
 
             # Create a BoxLayout to hold the dropdown button and text input
@@ -665,7 +580,7 @@ class MainApp(MDApp):
                     column_widths[header] = max(column_widths[header], len(str(value)))
 
             # Write headers to the image
-            headers = " | ".join(f"{'Tgt' if header == "Target" else header:<{column_widths[header]}}" for header in filtered_data[0].keys())
+            headers = " | ".join(f"{'Tgt' if header == 'Target' else header:<{column_widths[header]}}" for header in filtered_data[0].keys())
             text_bbox = draw.textbbox((0, 0), headers, font=font)  # Get the bounding box of the headers
             text_width = text_bbox[2] - text_bbox[0]  # Calculate the text width
             x = (display_width - text_width) // 2  # Center the text horizontally
@@ -859,12 +774,45 @@ class MainApp(MDApp):
         print("Broom button pressed. Performing cleanup...")
         # Add your cleanup logic here
 
-    def ensure_csv_directory(self):
-        """Ensure the assets/CSV directory exists."""
-        csv_directory = os.path.join(os.path.dirname(__file__), "assets", "CSV")
-        if not os.path.exists(csv_directory):
-            os.makedirs(csv_directory)
-        return csv_directory
+    def get_external_storage_path(self):
+        """Retrieve the external storage path using mActivity."""
+        if mActivity:
+            try:
+                # Get the Android context
+                context = mActivity.getApplicationContext()
+
+                # Get the external files directory
+                result = context.getExternalFilesDir(None)  # Pass `None` to get the root directory
+                if result:
+                    storage_path = str(result.toString())
+                    print(f"External storage path: {storage_path}")
+                    return storage_path
+                else:
+                    print("Failed to retrieve external storage path.")
+                    return None
+            except Exception as e:
+                print(f"Error retrieving external storage path: {e}")
+                return None
+        else:
+            print("mActivity is not available. This feature is only supported on Android.")
+            return None
+
+    def save_to_external_storage(self, file_name, content):
+        """Save a file to the external storage directory."""
+        storage_path = self.get_external_storage_path()
+        if storage_path:
+            try:
+                # Construct the full file path
+                file_path = os.path.join(storage_path, file_name)
+
+                # Write the content to the file
+                with open(file_path, "w", encoding="utf-8") as file:
+                    file.write(content)
+                print(f"File saved to: {file_path}")
+            except Exception as e:
+                print(f"Error saving file to external storage: {e}")
+        else:
+            print("External storage path is not available.")
 
 if __name__ == "__main__":
     MainApp().run()
