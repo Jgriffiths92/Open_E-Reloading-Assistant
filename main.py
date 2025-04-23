@@ -16,7 +16,7 @@ from kivy.uix.boxlayout import BoxLayout
 import os
 from kivymd.uix.textfield import MDTextField
 from PIL import Image, ImageDraw, ImageFont
-#import nfc # commented out due to android error 
+
 import platform
 
 try:
