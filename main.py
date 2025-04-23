@@ -16,15 +16,27 @@ from kivy.uix.boxlayout import BoxLayout
 import os
 from kivymd.uix.textfield import MDTextField
 from PIL import Image, ImageDraw, ImageFont
-import nfc
+if not is_android():
+    import nfc
+import platform
 
 try:
-    try:
-        from android import mActivity
-    except ImportError:
-        mActivity = None  # Handle cases where the app is not running on Android
+    from android import mActivity
 except ImportError:
     mActivity = None  # Handle cases where the app is not running on Android
+
+try:
+    from jnius import autoclass
+except ImportError:
+    autoclass = None  # Handle cases where pyjnius is not available
+
+def is_android():
+    """Check if the app is running on an Android device."""
+    try:
+        from android import mActivity
+        return True
+    except ImportError:
+        return False
 
 #change color of the filechooser
 Builder.load_string('''
@@ -110,13 +122,16 @@ class MainApp(MDApp):
         self.selected_display = "Good Display 3.7-inch"  # Default selected display
         self.selected_resolution = (280, 416)  # Default resolution for 3.7-inch display
         self.selected_orientation = "Portrait"  # Default orientation
+        self.selected_save_folder = None  # Store the selected folder for saving CSV files
 
     dialog = None  # Store the dialog instance
 
     def build(self):
         # Load the KV file
         root = Builder.load_file("layout.kv")
-
+        # Initialize NFC
+        if self.initialize_nfc():
+            self.enable_nfc_foreground_dispatch()
         # Dynamically set the rootpath for the FileChooserListView
         saved_cards_screen = root.ids.screen_manager.get_screen("saved_cards")
         csv_directory = self.ensure_csv_directory()
@@ -124,6 +139,7 @@ class MainApp(MDApp):
 
         # Initialize the dropdown menus
         self.display_menu = None
+    
         self.orientation_menu = None
 
         # Set the default text for the display and orientation dropdown buttons
@@ -415,23 +431,25 @@ class MainApp(MDApp):
             )
 
             # Define the function to handle menu item selection
-            def update_text_input_visibility(selected_option):
+            def update_selected_folder(selected_option):
                 dropdown_button.text = selected_option  # Update the button text to display the selected option
                 dropdown_menu.dismiss()  # Close the dropdown menu
                 if selected_option == "New Event...":
                     text_input.opacity = 1  # Make the text input visible
                     text_input.disabled = False  # Enable the text input
+                    self.selected_save_folder = None  # Clear the selected folder
                 else:
                     text_input.opacity = 0  # Hide the text input
                     text_input.disabled = True  # Disable the text input
+                    self.selected_save_folder = os.path.join(csv_directory, selected_option)  # Set the selected folder
 
             # Create the dropdown menu
             dropdown_menu = MDDropdownMenu(
                 caller=dropdown_button,
                 items=[
-                    {"text": "New Event...", "on_release": lambda: update_text_input_visibility("New Event...")}
+                    {"text": "New Event...", "on_release": lambda: update_selected_folder("New Event...")}
                 ] + [
-                    {"text": folder, "on_release": lambda selected_folder=folder: update_text_input_visibility(selected_folder)}
+                    {"text": folder, "on_release": lambda selected_folder=folder: update_selected_folder(selected_folder)}
                     for folder in folders
                 ],
                 width_mult=4,
@@ -450,7 +468,6 @@ class MainApp(MDApp):
                 opacity=0,  # Make it invisible initially
                 disabled=True,  # Disable it initially
                 halign="center",  # Center the text horizontally
-
             )
 
             # Add both widgets to the layout
@@ -460,7 +477,7 @@ class MainApp(MDApp):
             # Add the layout to the dialog
             self.dialog = MDDialog(
                 title="Save Data",
-                text="Do you want to save the current data?",
+                text="Select an event folder or create a new one.",
                 type="custom",
                 content_cls=content_layout,
                 buttons=[
@@ -470,65 +487,59 @@ class MainApp(MDApp):
                     ),
                     MDRaisedButton(
                         text="SAVE",
-                        on_release=lambda x: self.save_data(),
+                        on_release=lambda x: self.save_data(new_event_name=text_input.text.strip()),
                     ),
                 ],
             )
 
         self.dialog.open()
 
-    def save_data(self, *args):
-        # Add your save logic here
-        print("Data saved!")
-        self.dialog.dismiss()
-          # Save the stage name
-        stage_name_field = self.root.ids.home_screen.ids.stage_name_field
-        global stage_name
-        stage_name = stage_name_field.text
-
-        # Save the stage notes
-        stage_notes_field = self.root.ids.home_screen.ids.stage_notes_field
-        global stage_notes
-        stage_notes = stage_notes_field.text
-
-        # Add the stage notes as a footer to the CSV
+    def save_data(self, new_event_name=None):
+        """Save the current data to a CSV file in external storage or assets/CSV, with 65 empty rows as the header and stage notes as the footer."""
         if hasattr(self, "current_data") and self.current_data:
-            csv_directory = os.path.join(os.path.dirname(__file__), "assets", "CSV", self.selected_folder if hasattr(self, "selected_folder") else "")
-            file_path = os.path.join(csv_directory, f"{stage_name}.csv")
-            try:
-                with open(file_path, mode="w", encoding="utf-8", newline="") as csv_file:
-                    writer = csv.writer(csv_file)
+            # Determine the storage path
+            storage_path = self.get_external_storage_path()
+            if storage_path:
+                # Construct the file name and path
+                file_name = f"{self.root.ids.home_screen.ids.stage_name_field.text}.csv"
+                if new_event_name:
+                    event_folder_path = os.path.join(storage_path, new_event_name)
+                    if not os.path.exists(event_folder_path):
+                        os.makedirs(event_folder_path)
+                    file_path = os.path.join(event_folder_path, file_name)
+                else:
+                    file_path = os.path.join(storage_path, file_name)
+                try:
+                    # Write the data to the CSV file
+                    with open(file_path, mode="w", encoding="utf-8", newline="") as csv_file:
+                        writer = csv.writer(csv_file)
 
-                    # Write the headers
-                    writer.writerow(["Kestrel Ballistics"])
-                    writer.writerow([])
-                    writer.writerow(["Gun Profile:"])
-                    writer.writerow([])
-                    writer.writerow(["Temp: 22 C", "Pressure: 29.63 inHg", "RH: 79%", "Range Unit: Meters", "Hold Unit: MILS", "Wind Speed Unit: MPH", "Target Speed Unit: MPH"])
-                    headers = self.current_data[0].keys()
-                    writer.writerow(headers)
+                        # Add 6 empty rows as the header
+                        for _ in range(5):
+                            writer.writerow([])
 
-                    # Write the data rows
-                    for row in self.current_data:
-                        writer.writerow(row.values())
+                        # Write the headers
+                        headers = self.current_data[0].keys()
+                        writer.writerow(headers)
 
-                    # Add the stage notes as a footer
-                    writer.writerow([])
-                    writer.writerow(["Stage Notes:"])
-                    writer.writerow([stage_notes])
+                        # Write the data rows
+                        for row in self.current_data:
+                            writer.writerow(row.values())
 
-            except Exception as e:
-                print(f"Error displaying stage notes: {e}")
-           
-            try:
-                # If data rows exist, display the stage notes in the text input
-                if hasattr(self, "current_data") and self.current_data:
-                    self.root.ids.home_screen.ids.stage_notes_field.text = stage_notes
+                        # Write the stage notes as the footer
+                        stage_notes = self.root.ids.home_screen.ids.stage_notes_field.text.strip()
+                        if stage_notes:
+                            writer.writerow([])  # Add an empty row before the footer
+                            writer.writerow(["Stage Notes:"])
+                            writer.writerow([stage_notes])
 
-                    print(f"Data saved to {file_path} with stage notes as footer.")
-            
-            except Exception as e:
-                print(f"Error saving data to CSV: {e}")
+                        print(f"Data saved to: {file_path}")
+                except Exception as e:
+                    print(f"Error saving data to CSV: {e}")
+            else:
+                print("Storage path is not available.")
+        else:
+            print("No data available to save.")
 
     def csv_to_bitmap(self, csv_data, output_path=None):
         """Convert CSV data to a bitmap image, resize it to fit the display resolution while keeping the aspect ratio, and save it."""
@@ -580,7 +591,7 @@ class MainApp(MDApp):
                     column_widths[header] = max(column_widths[header], len(str(value)))
 
             # Write headers to the image
-            headers = " | ".join(f"{'Tgt' if header == 'Target' else header:<{column_widths[header]}}" for header in filtered_data[0].keys())
+            headers = " | ".join(f"{'Tgt' if header == "Target" else header:<{column_widths[header]}}" for header in filtered_data[0].keys())
             text_bbox = draw.textbbox((0, 0), headers, font=font)  # Get the bounding box of the headers
             text_width = text_bbox[2] - text_bbox[0]  # Calculate the text width
             x = (display_width - text_width) // 2  # Center the text horizontally
@@ -775,8 +786,8 @@ class MainApp(MDApp):
         # Add your cleanup logic here
 
     def get_external_storage_path(self):
-        """Retrieve the external storage path using mActivity."""
-        if mActivity:
+        """Retrieve the external storage path using mActivity or default to assets/CSV."""
+        if is_android():
             try:
                 # Get the Android context
                 context = mActivity.getApplicationContext()
@@ -794,11 +805,15 @@ class MainApp(MDApp):
                 print(f"Error retrieving external storage path: {e}")
                 return None
         else:
-            print("mActivity is not available. This feature is only supported on Android.")
-            return None
+            # Default to assets/CSV folder
+            csv_directory = os.path.join(os.path.dirname(__file__), "assets", "CSV")
+            if not os.path.exists(csv_directory):
+                os.makedirs(csv_directory)
+            print(f"Defaulting to assets/CSV folder: {csv_directory}")
+            return csv_directory
 
     def save_to_external_storage(self, file_name, content):
-        """Save a file to the external storage directory."""
+        """Save a file to the external storage directory or assets/CSV."""
         storage_path = self.get_external_storage_path()
         if storage_path:
             try:
@@ -810,9 +825,107 @@ class MainApp(MDApp):
                     file.write(content)
                 print(f"File saved to: {file_path}")
             except Exception as e:
-                print(f"Error saving file to external storage: {e}")
+                print(f"Error saving file to storage: {e}")
         else:
-            print("External storage path is not available.")
+            print("Storage path is not available.")
+
+        if is_android():
+            print("Running on Android. External storage is available.")
+            storage_path = self.get_external_storage_path()
+            if storage_path:
+                print(f"External storage path: {storage_path}")
+        else:
+            print("Not running on Android. External storage is not available.")
+
+    def initialize_nfc(self):
+        """Initialize the NFC adapter and check if NFC is available."""
+        if is_android() and autoclass:
+            try:
+                # Get the Android context and NFC adapter
+                NfcAdapter = autoclass('android.nfc.NfcAdapter')
+                context = autoclass('android.content.Context')
+                self.nfc_adapter = NfcAdapter.getDefaultAdapter(mActivity)
+
+                if self.nfc_adapter is None:
+                    print("NFC is not available on this device.")
+                    return False
+                else:
+                    print("NFC adapter initialized.")
+                    return True
+            except Exception as e:
+                print(f"Error initializing NFC: {e}")
+                return False
+        else:
+            print("NFC functionality is only available on Android.")
+            return False
+
+    def enable_nfc_foreground_dispatch(self):
+        """Enable NFC foreground dispatch to handle NFC intents."""
+        if is_android() and autoclass:
+            try:
+                PendingIntent = autoclass('android.app.PendingIntent')
+                Intent = autoclass('android.content.Intent')
+                IntentFilter = autoclass('android.content.IntentFilter')
+
+                # Create a pending intent for NFC
+                intent = Intent(mActivity, mActivity.getClass())
+                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                pending_intent = PendingIntent.getActivity(mActivity, 0, intent, 0)
+
+                # Create an intent filter for NFC
+                ndef_filter = IntentFilter("android.nfc.action.NDEF_DISCOVERED")
+                tech_filter = IntentFilter("android.nfc.action.TECH_DISCOVERED")
+                tag_filter = IntentFilter("android.nfc.action.TAG_DISCOVERED")
+
+                # Enable foreground dispatch
+                self.nfc_adapter.enableForegroundDispatch(
+                    mActivity,
+                    pending_intent,
+                    [ndef_filter, tech_filter, tag_filter],
+                    None
+                )
+                print("NFC foreground dispatch enabled.")
+            except Exception as e:
+                print(f"Error enabling NFC foreground dispatch: {e}")
+
+    def handle_nfc_tag(self, intent):
+        """Handle NFC tag detection and read/write data."""
+        if is_android() and autoclass:
+            try:
+                Tag = autoclass('android.nfc.Tag')
+                Ndef = autoclass('android.nfc.tech.Ndef')
+
+                # Get the tag from the intent
+                tag = intent.getParcelableExtra("android.nfc.extra.TAG")
+                if tag is None:
+                    print("No NFC tag detected.")
+                    return
+
+                # Connect to the tag and read/write data
+                ndef = Ndef.get(tag)
+                if ndef is not None:
+                    ndef.connect()
+                    if ndef.isWritable():
+                        message = "Hello from Kivy!"
+                        ndef_message = autoclass('android.nfc.NdefMessage')(
+                            [autoclass('android.nfc.NdefRecord').createTextRecord("en", message)]
+                        )
+                        ndef.writeNdefMessage(ndef_message)
+                        print("Data written to NFC tag.")
+                    else:
+                        print("NFC tag is not writable.")
+                    ndef.close()
+                else:
+                    print("NDEF is not supported by this tag.")
+            except Exception as e:
+                print(f"Error handling NFC tag: {e}")
+
+    def on_new_intent(self, intent):
+        """Handle new intents, including NFC intents."""
+        if is_android() and autoclass:
+            action = intent.getAction()
+            if action in ["android.nfc.action.NDEF_DISCOVERED", "android.nfc.action.TECH_DISCOVERED", "android.nfc.action.TAG_DISCOVERED"]:
+                self.handle_nfc_tag(intent)
 
 if __name__ == "__main__":
     MainApp().run()
