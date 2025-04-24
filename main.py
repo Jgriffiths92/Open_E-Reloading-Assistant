@@ -497,7 +497,7 @@ class MainApp(MDApp):
         self.dialog.open()
 
     def save_data(self, new_event_name=None):
-        """Save the current data to a CSV file in external storage or assets/CSV, with 65 empty rows as the header and stage notes as the footer."""
+        """Save the current data to a CSV file in external storage or assets/CSV, with 5 empty rows as the header and stage notes as the footer."""
         if hasattr(self, "current_data") and self.current_data:
             # Determine the storage path
             storage_path = self.get_external_storage_path()
