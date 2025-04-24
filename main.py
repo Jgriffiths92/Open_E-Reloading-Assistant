@@ -486,7 +486,10 @@ class MainApp(MDApp):
                     ),
                     MDRaisedButton(
                         text="SAVE",
-                        on_release=lambda x: self.save_data(new_event_name=text_input.text.strip()),
+                        on_release=lambda x: (
+                            self.save_data(new_event_name=text_input.text.strip()),
+                            self.dialog.dismiss()  # Automatically close the dialog after saving
+                        ),
                     ),
                 ],
             )
