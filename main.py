@@ -141,6 +141,15 @@ class MainApp(MDApp):
         csv_directory = self.ensure_csv_directory()
         saved_cards_screen.ids.filechooser.rootpath = csv_directory
 
+        # Handle the intent if the app was opened via an intent
+        if is_android():
+            try:
+                PythonActivity = autoclass('org.kivy.android.PythonActivity')
+                intent = PythonActivity.mActivity.getIntent()
+                self.handle_received_csv(intent)
+            except Exception as e:
+                print(f"Error handling startup intent: {e}")
+
         # Initialize the dropdown menus
         self.display_menu = None
         self.orientation_menu = None
@@ -506,7 +515,7 @@ class MainApp(MDApp):
         self.dialog.open()
 
     def save_data(self, new_event_name=None):
-        """Save the current data to a CSV file in external storage or assets/CSV, with 65 empty rows as the header and stage notes as the footer."""
+        """Save the current data to a CSV file in external storage or assets/CSV, with 5 empty rows as the header and stage notes as the footer."""
         if hasattr(self, "current_data") and self.current_data:
             # Determine the storage path
             storage_path = self.get_external_storage_path()
@@ -932,80 +941,73 @@ class MainApp(MDApp):
                 print(f"Error handling NFC tag: {e}")
 
     def on_new_intent(self, intent):
-        """Handle new intents, including NFC intents."""
+        """Handle new intents, including NFC intents and CSV file intents."""
         if is_android() and autoclass:
-            action = intent.getAction()
-            if action in ["android.nfc.action.NDEF_DISCOVERED", "android.nfc.action.TECH_DISCOVERED", "android.nfc.action.TAG_DISCOVERED"]:
-                self.handle_nfc_tag(intent)
-
-    def copy_assets_to_internal_storage(self):
-        """Copy the assets/CSV folder to the app's internal storage directory on Android."""
-        if is_android():
             try:
-                # Get the Android context and internal storage directory
-                context = mActivity.getApplicationContext()
-                internal_storage_path = context.getFilesDir().getAbsolutePath()
-                csv_internal_path = os.path.join(internal_storage_path, "CSV")
+                # Get the action from the intent
+                action = intent.getAction()
 
-                # Ensure the destination directory exists
-                if not os.path.exists(csv_internal_path):
-                    os.makedirs(csv_internal_path)
+                # Handle NFC intents
+                if action in ["android.nfc.action.NDEF_DISCOVERED", "android.nfc.action.TECH_DISCOVERED", "android.nfc.action.TAG_DISCOVERED"]:
+                    self.handle_nfc_tag(intent)
 
-                # Copy files from assets/CSV to internal storage
-                AssetManager = autoclass('android.content.res.AssetManager')
-                asset_manager = context.getAssets()
-                files = asset_manager.list("CSV")  # List files in the assets/CSV folder
+                # Handle CSV file intents
+                elif action == "android.intent.action.VIEW":
+                    uri = intent.getData()
+                    if uri is not None:
+                        # Resolve the file path from the URI
+                        content_resolver = mActivity.getContentResolver()
+                        file_path = self.resolve_uri_to_path(content_resolver, uri)
 
-                for file_name in files:
-                    with asset_manager.open(f"CSV/{file_name}") as asset_file:
-                        with open(os.path.join(csv_internal_path, file_name), "wb") as output_file:
-                            output_file.write(asset_file.read())
-
-                print(f"Assets copied to internal storage: {csv_internal_path}")
-                return csv_internal_path
+                        if file_path and file_path.endswith(".csv"):
+                            print(f"Received CSV file: {file_path}")
+                            # Process the CSV file (e.g., load it into the app)
+                            self.process_received_csv(file_path)
+                        else:
+                            print("Received file is not a CSV.")
             except Exception as e:
-                print(f"Error copying assets to internal storage: {e}")
-                return None
-        else:
-            # On non-Android platforms, use the local assets/CSV folder
-            csv_directory = os.path.join(os.path.dirname(__file__), "assets", "CSV")
-            if not os.path.exists(csv_directory):
-                os.makedirs(csv_directory)
-            return csv_directory
+                print(f"Error handling new intent: {e}")
 
-    def request_android_permissions(self):
-        """Request necessary permissions on Android."""
-        if is_android():
-            try:
-                # Import required Android classes
-                PythonActivity = autoclass('org.kivy.android.PythonActivity')
-                ActivityCompat = autoclass('androidx.core.app.ActivityCompat')
-                PackageManager = autoclass('android.content.pm.PackageManager')
+    def resolve_uri_to_path(self, content_resolver, uri):
+        """Resolve a content URI to a file path."""
+        try:
+            # Check if the URI is a file scheme
+            if uri.getScheme() == "file":
+                return uri.getPath()
 
-                # Define the permissions to request
-                permissions = [
-                    "android.permission.WRITE_EXTERNAL_STORAGE",
-                    "android.permission.READ_EXTERNAL_STORAGE",
-                    "android.permission.NFC",
-                ]
+            # Handle content scheme URIs
+            elif uri.getScheme() == "content":
+                # Query the content resolver for the file path
+                projection = [autoclass("android.provider.MediaStore$MediaColumns").DATA]
+                cursor = content_resolver.query(uri, projection, None, None, None)
+                if cursor is not None:
+                    column_index = cursor.getColumnIndexOrThrow(projection[0])
+                    cursor.moveToFirst()
+                    file_path = cursor.getString(column_index)
+                    cursor.close()
+                    return file_path
+        except Exception as e:
+            print(f"Error resolving URI to path: {e}")
+        return None
 
-                # Get the current activity
-                activity = PythonActivity.mActivity
+    def process_received_csv(self, file_path):
+        """Process the received CSV file."""
+        try:
+            # Read the CSV file and convert it to a dictionary
+            data = self.read_csv_to_dict(file_path)
+            self.current_data = data  # Store the data for filtering or other operations
 
-                # Check which permissions are not granted
-                permissions_to_request = [
-                    permission for permission in permissions
-                    if ActivityCompat.checkSelfPermission(activity, permission) != PackageManager.PERMISSION_GRANTED
-                ]
+            # Preprocess the data
+            processed_data = self.preprocess_data(data)
 
-                # Request the permissions if any are not granted
-                if permissions_to_request:
-                    ActivityCompat.requestPermissions(activity, permissions_to_request, 0)
-                    print(f"Requested permissions: {permissions_to_request}")
-                else:
-                    print("All required permissions are already granted.")
-            except Exception as e:
-                print(f"Error requesting permissions: {e}")
+            # Display the data as a table on the Home Screen
+            self.display_table(processed_data)
+
+            # Navigate to the Home Screen
+            self.root.ids.screen_manager.current = "home"
+            print(f"Processed received CSV: {file_path}")
+        except Exception as e:
+            print(f"Error processing received CSV: {e}")
 
 if __name__ == "__main__":
     MainApp().run()
