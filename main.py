@@ -126,11 +126,16 @@ class MainApp(MDApp):
     dialog = None  # Store the dialog instance
 
     def build(self):
+        # Request permissions on Android
+        self.request_android_permissions()
+
         # Load the KV file
         root = Builder.load_file("layout.kv")
+
         # Initialize NFC
         if self.initialize_nfc():
             self.enable_nfc_foreground_dispatch()
+
         # Dynamically set the rootpath for the FileChooserListView
         saved_cards_screen = root.ids.screen_manager.get_screen("saved_cards")
         csv_directory = self.ensure_csv_directory()
@@ -138,7 +143,6 @@ class MainApp(MDApp):
 
         # Initialize the dropdown menus
         self.display_menu = None
-    
         self.orientation_menu = None
 
         # Set the default text for the display and orientation dropdown buttons
@@ -968,6 +972,40 @@ class MainApp(MDApp):
             if not os.path.exists(csv_directory):
                 os.makedirs(csv_directory)
             return csv_directory
+
+    def request_android_permissions(self):
+        """Request necessary permissions on Android."""
+        if is_android():
+            try:
+                # Import required Android classes
+                PythonActivity = autoclass('org.kivy.android.PythonActivity')
+                ActivityCompat = autoclass('androidx.core.app.ActivityCompat')
+                PackageManager = autoclass('android.content.pm.PackageManager')
+
+                # Define the permissions to request
+                permissions = [
+                    "android.permission.WRITE_EXTERNAL_STORAGE",
+                    "android.permission.READ_EXTERNAL_STORAGE",
+                    "android.permission.NFC",
+                ]
+
+                # Get the current activity
+                activity = PythonActivity.mActivity
+
+                # Check which permissions are not granted
+                permissions_to_request = [
+                    permission for permission in permissions
+                    if ActivityCompat.checkSelfPermission(activity, permission) != PackageManager.PERMISSION_GRANTED
+                ]
+
+                # Request the permissions if any are not granted
+                if permissions_to_request:
+                    ActivityCompat.requestPermissions(activity, permissions_to_request, 0)
+                    print(f"Requested permissions: {permissions_to_request}")
+                else:
+                    print("All required permissions are already granted.")
+            except Exception as e:
+                print(f"Error requesting permissions: {e}")
 
 if __name__ == "__main__":
     MainApp().run()
