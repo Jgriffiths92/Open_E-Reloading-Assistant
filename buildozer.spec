@@ -149,8 +149,7 @@ android.ndk = 25b
 #android.activity_class_name = org.kivy.android.PythonActivity
 
 # (str) Extra xml to write directly inside the <manifest> element of AndroidManifest.xml
-# use that parameter to provide a filename from where to load your custom XML code
-#android.extra_manifest_xml = ./src/android/extra_manifest.xml
+android.extra_manifest_xml = ./extra_manifest.xml
 
 # (str) Extra xml to write directly inside the <manifest><application> tag of AndroidManifest.xml
 # use that parameter to provide a filename from where to load your custom XML arguments:
@@ -238,15 +237,8 @@ android.ndk = 25b
 # (str) Filename of OUYA Console icon. It must be a 732x412 png image.
 #android.ouya.icon.filename = %(source.dir)s/data/ouya_icon.png
 
-# (str) XML file to include as intent filters in <activity> tag
-android.manifest.intent_filters = |
-         <action android:name="android.intent.action.VIEW" />
-        <category android:name="android.intent.category.DEFAULT" />
-        <category android:name="android.intent.category.BROWSABLE" />
-        <data android:scheme="content" />
-        <data android:scheme="file" />
-        <data android:mimeType="text/csv" />
-
+# (str) XML file to include as an intent filters in <activity> tag
+#android.manifest.intent_filters =
 
 # (list) Copy these files to src/main/res/xml/ (used for example with intent-filters)
 #android.res_xml = PATH_TO_FILE,
