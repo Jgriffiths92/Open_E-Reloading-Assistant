@@ -5,6 +5,10 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivymd.app import MDApp
 from kivymd.uix.datatables import MDDataTable
 from kivy.metrics import dp
+import platform
+
+if platform.system() != "Android":
+    import nfc
 from plyer import filechooser
 from kivy.uix.label import Label
 from kivymd.uix.menu import MDDropdownMenu
@@ -126,8 +130,9 @@ class MainApp(MDApp):
     dialog = None  # Store the dialog instance
 
     def build(self):
-        # Request permissions on Android
-        self.request_android_permissions()
+        # Request permissions on Android if running on Android
+        if is_android():
+            self.request_android_permissions()
 
         # Load the KV file
         root = Builder.load_file("layout.kv")
