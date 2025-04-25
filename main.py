@@ -153,11 +153,16 @@ class MainApp(MDApp):
     show_2_wind_holds = True
 
     def ensure_csv_directory(self):
-        """Ensure the assets/CSV directory exists."""
-        csv_directory = os.path.join(os.path.dirname(__file__), "assets", "CSV")
-        if not os.path.exists(csv_directory):
-            os.makedirs(csv_directory)
-        return csv_directory
+        """Ensure the assets/CSV directory exists and is accessible."""
+        if is_android():
+            # Copy assets/CSV to internal storage on Android
+            return self.copy_assets_to_internal_storage()
+        else:
+            # Use the local assets/CSV folder on non-Android platforms
+            csv_directory = os.path.join(os.path.dirname(__file__), "assets", "CSV")
+            if not os.path.exists(csv_directory):
+                os.makedirs(csv_directory)
+            return csv_directory
 
     def on_file_selected(self, selection):
         """Handle the file or folder selected in the FileChooserListView."""
@@ -489,7 +494,7 @@ class MainApp(MDApp):
                         on_release=lambda x: (
                             self.save_data(new_event_name=text_input.text.strip()),
                             self.dialog.dismiss()  # Automatically close the dialog after saving
-                        ),
+                        )
                     ),
                 ],
             )
@@ -497,7 +502,7 @@ class MainApp(MDApp):
         self.dialog.open()
 
     def save_data(self, new_event_name=None):
-        """Save the current data to a CSV file in external storage or assets/CSV, with 5 empty rows as the header and stage notes as the footer."""
+        """Save the current data to a CSV file in external storage or assets/CSV, with 65 empty rows as the header and stage notes as the footer."""
         if hasattr(self, "current_data") and self.current_data:
             # Determine the storage path
             storage_path = self.get_external_storage_path()
@@ -835,7 +840,7 @@ class MainApp(MDApp):
             print("Running on Android. External storage is available.")
             storage_path = self.get_external_storage_path()
             if storage_path:
-                print(f"External storage path: {storage_path}")
+                 print(f"External storage path: {storage_path}")
         else:
             print("Not running on Android. External storage is not available.")
 
@@ -928,6 +933,41 @@ class MainApp(MDApp):
             action = intent.getAction()
             if action in ["android.nfc.action.NDEF_DISCOVERED", "android.nfc.action.TECH_DISCOVERED", "android.nfc.action.TAG_DISCOVERED"]:
                 self.handle_nfc_tag(intent)
+
+    def copy_assets_to_internal_storage(self):
+        """Copy the assets/CSV folder to the app's internal storage directory on Android."""
+        if is_android():
+            try:
+                # Get the Android context and internal storage directory
+                context = mActivity.getApplicationContext()
+                internal_storage_path = context.getFilesDir().getAbsolutePath()
+                csv_internal_path = os.path.join(internal_storage_path, "CSV")
+
+                # Ensure the destination directory exists
+                if not os.path.exists(csv_internal_path):
+                    os.makedirs(csv_internal_path)
+
+                # Copy files from assets/CSV to internal storage
+                AssetManager = autoclass('android.content.res.AssetManager')
+                asset_manager = context.getAssets()
+                files = asset_manager.list("CSV")  # List files in the assets/CSV folder
+
+                for file_name in files:
+                    with asset_manager.open(f"CSV/{file_name}") as asset_file:
+                        with open(os.path.join(csv_internal_path, file_name), "wb") as output_file:
+                            output_file.write(asset_file.read())
+
+                print(f"Assets copied to internal storage: {csv_internal_path}")
+                return csv_internal_path
+            except Exception as e:
+                print(f"Error copying assets to internal storage: {e}")
+                return None
+        else:
+            # On non-Android platforms, use the local assets/CSV folder
+            csv_directory = os.path.join(os.path.dirname(__file__), "assets", "CSV")
+            if not os.path.exists(csv_directory):
+                os.makedirs(csv_directory)
+            return csv_directory
 
 if __name__ == "__main__":
     MainApp().run()
