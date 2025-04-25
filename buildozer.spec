@@ -238,8 +238,8 @@ android.ndk = 25b
 # (str) Filename of OUYA Console icon. It must be a 732x412 png image.
 #android.ouya.icon.filename = %(source.dir)s/data/ouya_icon.png
 
-# (str) XML file to include as an intent filters in <activity> tag
-android.manifest.intent_filters = 
+# (str) XML file to include as intent filters in <activity> tag
+android.manifest.intent_filters = |
     <intent-filter>
         <action android:name="android.intent.action.VIEW" />
         <category android:name="android.intent.category.DEFAULT" />
