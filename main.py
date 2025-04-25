@@ -1014,5 +1014,35 @@ class MainApp(MDApp):
         except Exception as e:
             print(f"Error processing received CSV: {e}")
 
+    def read_csv_from_assets(self, file_name):
+        """Read a CSV file from the assets/CSV folder."""
+        if is_android():
+            try:
+                # Get the Android context and AssetManager
+                PythonActivity = autoclass('org.kivy.android.PythonActivity')
+                context = PythonActivity.mActivity.getApplicationContext()
+                AssetManager = autoclass('android.content.res.AssetManager')
+                asset_manager = context.getAssets()
+
+                # Open the file in the assets/CSV folder
+                with asset_manager.open(f"CSV/{file_name}") as asset_file:
+                    content = asset_file.read().decode("utf-8")
+                    print(f"Content of {file_name}:\n{content}")
+                    return content
+            except Exception as e:
+                print(f"Error reading CSV from assets: {e}")
+                return None
+        else:
+            # On non-Android platforms, read from the local assets/CSV folder
+            file_path = os.path.join(os.path.dirname(__file__), "assets", "CSV", file_name)
+            try:
+                with open(file_path, "r", encoding="utf-8") as file:
+                    content = file.read()
+                    print(f"Content of {file_name}:\n{content}")
+                    return content
+            except Exception as e:
+                print(f"Error reading CSV file: {e}")
+                return None
+
 if __name__ == "__main__":
     MainApp().run()
