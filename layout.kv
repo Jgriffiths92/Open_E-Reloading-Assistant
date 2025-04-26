@@ -272,3 +272,10 @@ MDNavigationLayout:
             size_hint_x: None
             halign: 'right'
             text: ''  # Hide file size
+        MDIconButton:
+            icon: "delete"
+            size_hint_x: None
+            width: dp(24)
+            opacity: 0 if ctx.name == "..\\" else 1  # Hide the delete button for the back option
+            disabled: True if ctx.name == "..\\" else False  # Disable the delete button for the back option
+            on_release: app.delete_file_or_folder(ctx.path)

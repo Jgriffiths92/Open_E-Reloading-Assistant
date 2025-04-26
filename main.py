@@ -1114,5 +1114,27 @@ class MainApp(MDApp):
                 os.makedirs(csv_directory)
             return csv_directory
 
+    def delete_file_or_folder(self, path):
+        """Delete the selected file or folder and refresh the file list."""
+        try:
+            if os.path.exists(path):
+                if os.path.isdir(path):
+                    # Remove the folder
+                    os.rmdir(path)
+                    print(f"Deleted folder: {path}")
+                else:
+                    # Remove the file
+                    os.remove(path)
+                    print(f"Deleted file: {path}")
+
+                # Refresh the FileChooserListView
+                saved_cards_screen = self.root.ids.screen_manager.get_screen("saved_cards")
+                filechooser = saved_cards_screen.ids.filechooser
+                filechooser._update_files()  # Refresh the file list
+            else:
+                print(f"Path does not exist: {path}")
+        except Exception as e:
+            print(f"Error deleting file or folder: {e}")
+
 if __name__ == "__main__":
     MainApp().run()
