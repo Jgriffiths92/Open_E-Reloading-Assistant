@@ -5,7 +5,6 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivymd.app import MDApp
 from kivymd.uix.datatables import MDDataTable
 from kivy.metrics import dp
-import platform
 from plyer import filechooser
 from kivy.uix.label import Label
 from kivymd.uix.menu import MDDropdownMenu
@@ -18,7 +17,6 @@ import os
 from kivymd.uix.textfield import MDTextField
 from PIL import Image, ImageDraw, ImageFont
 import platform
-
 try:
     from android import mActivity
 except ImportError:
@@ -37,7 +35,14 @@ def is_android():
     except ImportError:
         return False
 
-#change color of the filechooser
+# Import the nfc module if not running on Android
+if not is_android():
+    try:
+        import nfc
+    except ImportError:
+        nfc = None  # Handle cases where the nfc module is not available
+
+# Change color of the filechooser
 Builder.load_string('''
 
 <FileChooserListView>:
