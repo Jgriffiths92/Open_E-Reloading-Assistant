@@ -129,6 +129,40 @@ class MainApp(MDApp):
         self.selected_save_folder = None  # Store the selected folder for saving CSV files
 
     dialog = None  # Store the dialog instance
+    
+    def request_android_permissions(self):
+        """Request necessary permissions on Android."""
+        if is_android():
+            try:
+                # Import required Android classes
+                PythonActivity = autoclass('org.kivy.android.PythonActivity')
+                ActivityCompat = autoclass('androidx.core.app.ActivityCompat')
+                PackageManager = autoclass('android.content.pm.PackageManager')
+
+                # Define the permissions to request
+                permissions = [
+                    "android.permission.WRITE_EXTERNAL_STORAGE",
+                    "android.permission.READ_EXTERNAL_STORAGE",
+                    "android.permission.NFC",
+                ]
+
+                # Get the current activity
+                activity = PythonActivity.mActivity
+
+                # Check which permissions are not granted
+                permissions_to_request = [
+                    permission for permission in permissions
+                    if ActivityCompat.checkSelfPermission(activity, permission) != PackageManager.PERMISSION_GRANTED
+                ]
+
+                # Request the permissions if any are not granted
+                if permissions_to_request:
+                    ActivityCompat.requestPermissions(activity, permissions_to_request, 0)
+                    print(f"Requested permissions: {permissions_to_request}")
+                else:
+                    print("All required permissions are already granted.")
+            except Exception as e:
+                print(f"Error requesting permissions: {e}")
 
     def build(self):
         # Request permissions on Android if running on Android
@@ -1044,40 +1078,6 @@ class MainApp(MDApp):
             except Exception as e:
                 print(f"Error reading CSV file: {e}")
                 return None
-
-    def request_android_permissions(self):
-        """Request necessary permissions on Android."""
-        if is_android():
-            try:
-                # Import required Android classes
-                PythonActivity = autoclass('org.kivy.android.PythonActivity')
-                ActivityCompat = autoclass('androidx.core.app.ActivityCompat')
-                PackageManager = autoclass('android.content.pm.PackageManager')
-
-                # Define the permissions to request
-                permissions = [
-                    "android.permission.WRITE_EXTERNAL_STORAGE",
-                    "android.permission.READ_EXTERNAL_STORAGE",
-                    "android.permission.NFC",
-                ]
-
-                # Get the current activity
-                activity = PythonActivity.mActivity
-
-                # Check which permissions are not granted
-                permissions_to_request = [
-                    permission for permission in permissions
-                    if ActivityCompat.checkSelfPermission(activity, permission) != PackageManager.PERMISSION_GRANTED
-                ]
-
-                # Request the permissions if any are not granted
-                if permissions_to_request:
-                    ActivityCompat.requestPermissions(activity, permissions_to_request, 0)
-                    print(f"Requested permissions: {permissions_to_request}")
-                else:
-                    print("All required permissions are already granted.")
-            except Exception as e:
-                print(f"Error requesting permissions: {e}")
 
 if __name__ == "__main__":
     MainApp().run()
