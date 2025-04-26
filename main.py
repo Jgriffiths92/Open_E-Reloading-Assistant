@@ -6,9 +6,6 @@ from kivymd.app import MDApp
 from kivymd.uix.datatables import MDDataTable
 from kivy.metrics import dp
 import platform
-
-if platform.system() != "Android":
-    import nfc
 from plyer import filechooser
 from kivy.uix.label import Label
 from kivymd.uix.menu import MDDropdownMenu
@@ -20,7 +17,6 @@ from kivy.uix.boxlayout import BoxLayout
 import os
 from kivymd.uix.textfield import MDTextField
 from PIL import Image, ImageDraw, ImageFont
-
 import platform
 
 try:
