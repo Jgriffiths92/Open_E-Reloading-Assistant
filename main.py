@@ -447,6 +447,12 @@ class MainApp(MDApp):
             if hasattr(self, "menu") and self.menu:
                 self.menu.dismiss()
 
+        # Regenerate the manual data input fields if they are visible
+        home_screen = self.root.ids.home_screen
+        table_container = home_screen.ids.table_container
+        if table_container.children:  # Check if manual data input fields are displayed
+            self.show_manual_data_input()
+
         # Regenerate the table with updated columns
         if hasattr(self, "current_data"):  # Check if data is already loaded
             filtered_data = self.filter_table_data(self.current_data)
