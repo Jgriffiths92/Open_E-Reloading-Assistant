@@ -111,7 +111,14 @@ class HomeScreen(Screen):
     pass
 
 class SavedCardsScreen(Screen):
-    pass
+    def on_enter(self):
+        """Refresh the FileChooserListView when the screen is entered."""
+        try:
+            filechooser = self.ids.filechooser
+            filechooser._update_files()  # Refresh the file and folder list
+            print("File and folder list refreshed on screen enter.")
+        except Exception as e:
+            print(f"Error refreshing file and folder list: {e}")
 
 class ManageDataScreen(Screen):
     pass
@@ -602,6 +609,12 @@ class MainApp(MDApp):
                             writer.writerow([stage_notes])
 
                         print(f"Data saved to: {file_path}")
+
+                        # Refresh the FileChooserListView
+                        saved_cards_screen = self.root.ids.screen_manager.get_screen("saved_cards")
+                        filechooser = saved_cards_screen.ids.filechooser
+                        filechooser._update_files()  # Refresh the file and folder list
+                        print("File and folder list refreshed.")
                 except Exception as e:
                     print(f"Error saving data to CSV: {e}")
             else:
@@ -1141,7 +1154,8 @@ class MainApp(MDApp):
                 # Refresh the FileChooserListView
                 saved_cards_screen = self.root.ids.screen_manager.get_screen("saved_cards")
                 filechooser = saved_cards_screen.ids.filechooser
-                filechooser._update_files()  # Refresh the file list
+                filechooser._update_files()  # Refresh the file and folder list
+                print("File and folder list refreshed.")
             else:
                 print(f"Path does not exist: {path}")
         except Exception as e:
