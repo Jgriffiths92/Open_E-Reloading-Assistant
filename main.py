@@ -555,7 +555,7 @@ class MainApp(MDApp):
         self.dialog.open()
 
     def save_data(self, new_event_name=None):
-        """Save the current data to a CSV file in external storage or assets/CSV, with 5 empty rows as the header and stage notes as the footer."""
+        """Save the current data to a CSV file in the selected folder, creating it if it doesn't exist."""
         if hasattr(self, "current_data") and self.current_data:
             # Determine the storage path
             storage_path = self.get_external_storage_path()
@@ -563,12 +563,20 @@ class MainApp(MDApp):
                 # Construct the file name and path
                 file_name = f"{self.root.ids.home_screen.ids.stage_name_field.text}.csv"
                 if new_event_name:
+                    # Use the new event name to create a folder
                     event_folder_path = os.path.join(storage_path, new_event_name)
                     if not os.path.exists(event_folder_path):
-                        os.makedirs(event_folder_path)
+                        os.makedirs(event_folder_path)  # Create the folder if it doesn't exist
                     file_path = os.path.join(event_folder_path, file_name)
+                elif self.selected_save_folder:
+                    # Use the selected folder
+                    if not os.path.exists(self.selected_save_folder):
+                        os.makedirs(self.selected_save_folder)  # Create the folder if it doesn't exist
+                    file_path = os.path.join(self.selected_save_folder, file_name)
                 else:
+                    # Default to the root storage path
                     file_path = os.path.join(storage_path, file_name)
+
                 try:
                     # Write the data to the CSV file
                     with open(file_path, mode="w", encoding="utf-8", newline="") as csv_file:
@@ -1163,29 +1171,45 @@ class MainApp(MDApp):
         # Add the first row of input fields
         self.add_data_row(table_container)
 
-        # Add buttons for adding a new row, submitting, or canceling the input
-        button_layout = BoxLayout(orientation="horizontal", spacing="10dp", size_hint=(1, None), height=dp(50))
-        button_layout.add_widget(
+        # Create a layout for the "ADD ROW" and "DELETE ROW" buttons
+        add_row_layout = BoxLayout(orientation="horizontal", spacing="10dp", size_hint=(1, None), height=dp(50))
+        add_row_layout.add_widget(
             MDRaisedButton(
                 text="ADD ROW",
+                size_hint=(None, None),  # Set size_hint to None to allow explicit width and height
+                size=(dp(120), dp(40)),  # Set the size of the button
+                pos_hint={"center_x": 0.5},  # Center the button horizontally
                 on_release=lambda x: self.add_data_row(table_container)
             )
         )
-        button_layout.add_widget(
+        add_row_layout.add_widget(
+            MDRaisedButton(
+                text="DELETE ROW",
+                size_hint=(None, None),  # Set size_hint to None to allow explicit width and height
+                size=(dp(120), dp(40)),  # Set the size of the button
+                pos_hint={"center_x": 0.5},  # Center the button horizontally
+                on_release=lambda x: self.delete_last_row(table_container)
+            )
+        )
+
+        # Create a layout for the "CANCEL" and "ADD" buttons
+        action_buttons_layout = BoxLayout(orientation="horizontal", spacing="10dp", size_hint=(1, None), height=dp(50))
+        action_buttons_layout.add_widget(
             MDFlatButton(
                 text="CANCEL",
                 on_release=lambda x: self.cancel_manual_data_input()
             )
         )
-        button_layout.add_widget(
+        action_buttons_layout.add_widget(
             MDRaisedButton(
                 text="ADD",
                 on_release=lambda x: self.add_manual_data()
             )
         )
 
-        # Add the button layout to the table container
-        table_container.add_widget(button_layout)
+        # Add the layouts to the table container
+        table_container.add_widget(add_row_layout)
+        table_container.add_widget(action_buttons_layout)
 
     def add_data_row(self, table_container):
         """Add a new row of data fields to the table container."""
@@ -1214,27 +1238,28 @@ class MainApp(MDApp):
         table_container.add_widget(row_layout, index=len(table_container.children) - 1)  # Add above the button layout
 
     def add_manual_data(self):
-        """Add the manually entered data to the current data."""
+        """Add the manually entered data to the current data and display it."""
         try:
-            # Collect data from the text fields
-            manual_data = {key: field.text for key, field in self.manual_data_fields.items()}
+            # Collect data from all rows of text fields
+            for row_fields in self.manual_data_rows:
+                manual_data = {key: field.text for key, field in row_fields.items()}
 
-            # Validate the data (optional)
-            if not manual_data["Target"]:
-                print("Target is required.")
-                return
+                # Validate the data (optional)
+                if not manual_data["Target"]:
+                    print("Target is required.")
+                    return
 
-            # Add the data to the current data
-            if not hasattr(self, "current_data") or not self.current_data:
-                self.current_data = []  # Initialize if no data is loaded
-            self.current_data.append(manual_data)
+                # Add the data to the current data
+                if not hasattr(self, "current_data") or not self.current_data:
+                    self.current_data = []  # Initialize if no data is loaded
+                self.current_data.append(manual_data)
 
             # Display the updated data
             self.display_table(self.current_data)
 
             # Clear the input fields
             self.cancel_manual_data_input()
-            print("Manual data added:", manual_data)
+            print("Manual data added:", self.current_data)
         except Exception as e:
             print(f"Error adding manual data: {e}")
 
@@ -1245,6 +1270,21 @@ class MainApp(MDApp):
         table_container.clear_widgets()  # Clear the input fields
         if hasattr(self, "current_data"):
             self.display_table(self.current_data)  # Restore the table if data exists
+
+    def delete_last_row(self, table_container):
+        """Delete the bottom-most row of data fields from the table container."""
+        if hasattr(self, "manual_data_rows") and self.manual_data_rows:
+            # Remove the last row from the manual_data_rows list
+            self.manual_data_rows.pop()
+
+            # Remove the last row layout from the table container
+            for child in table_container.children:
+                # Check if the child is a row layout containing text fields
+                if isinstance(child, BoxLayout) and any(isinstance(widget, MDTextField) for widget in child.children):
+                    table_container.remove_widget(child)
+                    break
+        else:
+            print("No rows to delete.")
 
 if __name__ == "__main__":
     MainApp().run()
