@@ -188,11 +188,8 @@ android.ndk = 25b
 # Either form may be used, and assets need not be in 'source.include_exts'.
 # 1) android.add_assets = source_asset_relative_path
 # 2) android.add_assets = source_asset_path:destination_asset_relative_path
-<<<<<<< HEAD
 android.add_assets = ./assets:assets, ./assets/images:assets/images, ./assets/fonts:assets/fonts, ./assets/CSV:assets/CSV, ./assets/bitmap:./assets/bitmap
-=======
-android.add_assets = ./assets
->>>>>>> 355809be7b66951bdbe60bd54f5ad03f7cd91d11
+#android.add_assets = ./assets
 
 # (list) Put these files or directories in the apk res directory.
 # The option may be used in three ways, the value may contain one or zero ':'
