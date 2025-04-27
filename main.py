@@ -829,16 +829,19 @@ class MainApp(MDApp):
         if self.orientation_menu:
             self.orientation_menu.dismiss()
 
-    def on_standalone_mode_toggle(self, is_active):
-        """Handle the toggle of standalone mode."""
-        self.standalone_mode_enabled = is_active
-        print("Standalone mode enabled." if is_active else "Standalone mode disabled.")
-
-        # Update the visibility of the broom button dynamically
-        home_screen = self.root.ids.home_screen
-        broom_button = home_screen.ids.broom_button
-        broom_button.opacity = 1 if is_active else 0
-        broom_button.disabled = not is_active
+    def on_standalone_mode_toggle(self, active):
+        """Handle the Stand Alone Mode toggle."""
+        if active:
+            print("Stand Alone Mode enabled")
+            self.show_manual_data_input()  # Show manual data input fields
+        else:
+            print("Stand Alone Mode disabled")
+            # Clear the manual data input fields and restore the table container
+            home_screen = self.root.ids.home_screen
+            table_container = home_screen.ids.table_container
+            table_container.clear_widgets()
+            if hasattr(self, "current_data"):
+                self.display_table(self.current_data)  # Restore the table if data exists
 
     def on_broom_button_press(self):
         """Handle the broom button press."""
@@ -1135,6 +1138,113 @@ class MainApp(MDApp):
                 print(f"Path does not exist: {path}")
         except Exception as e:
             print(f"Error deleting file or folder: {e}")
+
+    def show_manual_data_input(self):
+        """Display manual data input fields in the CSV data table location based on filtered display options."""
+        home_screen = self.root.ids.home_screen
+        table_container = home_screen.ids.table_container
+
+        # Clear any existing widgets in the table container
+        table_container.clear_widgets()
+
+        # Define the available fields and their display options
+        available_fields = {
+            "Target": {"hint_text": "Target", "show": True},  # Always show Target
+            "Range": {"hint_text": "Range", "show": show_range},  # Controlled by show_range
+            "Elv": {"hint_text": "Elevation", "show": True},  # Always show Elevation
+            "Wnd1": {"hint_text": "Wind 1", "show": True},  # Always show Wind 1
+            "Wnd2": {"hint_text": "Wind 2", "show": show_2_wind_holds},  # Controlled by show_2_wind_holds
+            "Lead": {"hint_text": "Lead", "show": show_lead},  # Controlled by show_lead
+        }
+
+        # Store the available fields for later use
+        self.available_fields = available_fields
+
+        # Add the first row of input fields
+        self.add_data_row(table_container)
+
+        # Add buttons for adding a new row, submitting, or canceling the input
+        button_layout = BoxLayout(orientation="horizontal", spacing="10dp", size_hint=(1, None), height=dp(50))
+        button_layout.add_widget(
+            MDRaisedButton(
+                text="ADD ROW",
+                on_release=lambda x: self.add_data_row(table_container)
+            )
+        )
+        button_layout.add_widget(
+            MDFlatButton(
+                text="CANCEL",
+                on_release=lambda x: self.cancel_manual_data_input()
+            )
+        )
+        button_layout.add_widget(
+            MDRaisedButton(
+                text="ADD",
+                on_release=lambda x: self.add_manual_data()
+            )
+        )
+
+        # Add the button layout to the table container
+        table_container.add_widget(button_layout)
+
+    def add_data_row(self, table_container):
+        """Add a new row of data fields to the table container."""
+        # Create a layout for the new row
+        row_layout = BoxLayout(orientation="horizontal", spacing="10dp", size_hint=(1, None))
+        row_layout.height = dp(50)  # Adjust height for a single row of text fields
+
+        # Add text fields for manual data input based on display options
+        row_fields = {}
+        for field_name, field_options in self.available_fields.items():
+            if field_options["show"]:  # Only add fields that are enabled
+                text_field = MDTextField(
+                    hint_text=field_options["hint_text"],
+                    multiline=False,
+                    size_hint_x=0.15
+                )
+                row_fields[field_name] = text_field
+                row_layout.add_widget(text_field)
+
+        # Store the row fields for later data collection
+        if not hasattr(self, "manual_data_rows"):
+            self.manual_data_rows = []
+        self.manual_data_rows.append(row_fields)
+
+        # Add the row layout to the table container
+        table_container.add_widget(row_layout, index=len(table_container.children) - 1)  # Add above the button layout
+
+    def add_manual_data(self):
+        """Add the manually entered data to the current data."""
+        try:
+            # Collect data from the text fields
+            manual_data = {key: field.text for key, field in self.manual_data_fields.items()}
+
+            # Validate the data (optional)
+            if not manual_data["Target"]:
+                print("Target is required.")
+                return
+
+            # Add the data to the current data
+            if not hasattr(self, "current_data") or not self.current_data:
+                self.current_data = []  # Initialize if no data is loaded
+            self.current_data.append(manual_data)
+
+            # Display the updated data
+            self.display_table(self.current_data)
+
+            # Clear the input fields
+            self.cancel_manual_data_input()
+            print("Manual data added:", manual_data)
+        except Exception as e:
+            print(f"Error adding manual data: {e}")
+
+    def cancel_manual_data_input(self):
+        """Cancel manual data input and restore the table container."""
+        home_screen = self.root.ids.home_screen
+        table_container = home_screen.ids.table_container
+        table_container.clear_widgets()  # Clear the input fields
+        if hasattr(self, "current_data"):
+            self.display_table(self.current_data)  # Restore the table if data exists
 
 if __name__ == "__main__":
     MainApp().run()
