@@ -973,7 +973,7 @@ class MainApp(MDApp):
                 print(f"Error enabling NFC foreground dispatch: {e}")
 
     def handle_nfc_tag(self, intent):
-        """Handle NFC tag detection and read/write data."""
+        """Handle NFC tag detection and write the bitmap data."""
         if is_android() and autoclass:
             try:
                 Tag = autoclass('android.nfc.Tag')
@@ -985,17 +985,30 @@ class MainApp(MDApp):
                     print("No NFC tag detected.")
                     return
 
-                # Connect to the tag and read/write data
+                # Connect to the tag and write the bitmap data
                 ndef = Ndef.get(tag)
                 if ndef is not None:
                     ndef.connect()
                     if ndef.isWritable():
-                        message = "Hello from Kivy!"
-                        ndef_message = autoclass('android.nfc.NdefMessage')(
-                            [autoclass('android.nfc.NdefRecord').createTextRecord("en", message)]
-                        )
-                        ndef.writeNdefMessage(ndef_message)
-                        print("Data written to NFC tag.")
+                        # Convert the bitmap to a byte array
+                        if hasattr(self, "current_data") and self.current_data:
+                            bitmap_path = self.csv_to_bitmap(self.current_data)
+                            if bitmap_path:
+                                with open(bitmap_path, "rb") as bitmap_file:
+                                    bitmap_data = bitmap_file.read()
+
+                                # Create an NDEF message with the bitmap data
+                                ndef_message = autoclass('android.nfc.NdefMessage')(
+                                    [autoclass('android.nfc.NdefRecord').createMime(
+                                        "image/bmp", bitmap_data
+                                    )]
+                                )
+                                ndef.writeNdefMessage(ndef_message)
+                                print("Bitmap data written to NFC tag.")
+                            else:
+                                print("Failed to generate bitmap.")
+                        else:
+                            print("No data available to generate bitmap.")
                     else:
                         print("NFC tag is not writable.")
                     ndef.close()
@@ -1186,7 +1199,7 @@ class MainApp(MDApp):
         self.add_data_row(table_container)
 
         # Create a layout for the "ADD ROW" and "DELETE ROW" buttons
-        add_row_layout = BoxLayout(orientation="horizontal", spacing="10dp", size_hint=(1, None), height=dp(50))
+        add_row_layout = BoxLayout(orientation="horizontal", spacing="10dp", size_hint=(1, None), height=dp(50), pos_hint={"center_x": 0.5})
         add_row_layout.add_widget(
             MDRaisedButton(
                 text="ADD ROW",
@@ -1202,6 +1215,7 @@ class MainApp(MDApp):
                 size_hint=(None, None),  # Set size_hint to None to allow explicit width and height
                 size=(dp(120), dp(40)),  # Set the size of the button
                 pos_hint={"center_x": 0.5},  # Center the button horizontally
+                md_bg_color=(1, 0, 0, 1),  # Set the background color to red (RGBA)
                 on_release=lambda x: self.delete_last_row(table_container)
             )
         )
@@ -1287,7 +1301,7 @@ class MainApp(MDApp):
 
     def delete_last_row(self, table_container):
         """Delete the bottom-most row of data fields from the table container."""
-        if hasattr(self, "manual_data_rows") and self.manual_data_rows:
+        if hasattr(self, "manual_data_rows") and len(self.manual_data_rows) > 1:
             # Remove the last row from the manual_data_rows list
             self.manual_data_rows.pop()
 
@@ -1298,7 +1312,12 @@ class MainApp(MDApp):
                     table_container.remove_widget(child)
                     break
         else:
-            print("No rows to delete.")
+            if len(self.manual_data_rows) > 0:
+                # Clear the text fields in the last row
+                last_row_fields = self.manual_data_rows[-1]
+                for field in last_row_fields.values():
+                    field.text = ""
+            print("Cannot delete the last row. At least one row must remain.")
 
 if __name__ == "__main__":
     MainApp().run()
