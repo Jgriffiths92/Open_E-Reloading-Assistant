@@ -226,22 +226,14 @@ class MainApp(MDApp):
 
     def on_file_selected(self, selection):
         """Handle the file or folder selected in the FileChooserListView."""
+        if self.standalone_mode_enabled:
+            # If standalone mode is enabled
+            print("Standalone mode is enabled.")
         if selection:
             selected_path = selection[0]
-            print(f"Selected file path: {selected_path}")
-
-            # Ensure the selected path is resolved correctly
-            if is_android():
-                # If the path is relative, resolve it to the private storage directory
-                if not os.path.isabs(selected_path):
-                    csv_directory = self.ensure_csv_directory()
-                    selected_path = os.path.join(csv_directory, selected_path)
-                    print(f"Resolved path on Android: {selected_path}")
-
             # Extract the file name and set it to the stage_name_field
             file_name = os.path.basename(selected_path)
             self.root.ids.home_screen.ids.stage_name_field.text = os.path.splitext(file_name)[0]
-
             # If the selected file is a CSV, extract the stage notes footer and display it in the stage_notes_field
             if selected_path.endswith(".csv"):
                 try:
@@ -255,8 +247,9 @@ class MainApp(MDApp):
                                 break
                 except Exception as e:
                     print(f"Error extracting stage notes: {e}")
+            print(f"Selected: {selected_path}")  # Log the selected file or folder
 
-            # Process the CSV file
+            # Check if the selected file is a CSV
             if selected_path.endswith(".csv"):
                 try:
                     # Read the CSV file and convert it to a dictionary
