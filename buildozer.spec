@@ -188,7 +188,7 @@ android.private_storage = True
 # Either form may be used, and assets need not be in 'source.include_exts'.
 # 1) android.add_assets = source_asset_relative_path
 # 2) android.add_assets = source_asset_path:destination_asset_relative_path
-android.add_assets = ./assets:assets, ./assets/images:assets/images, ./assets/fonts:assets/fonts, ./assets/CSV:assets/CSV, ./assets/bitmap:./assets/bitmap
+android.add_assets = ./assets/images:images, ./assets/fonts:fonts, ./assets/CSV:CSV, ./assets/bitmap:bitmap
 #android.add_assets = ./assets
 
 # (list) Put these files or directories in the apk res directory.
