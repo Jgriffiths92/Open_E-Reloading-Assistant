@@ -219,21 +219,18 @@ class MainApp(MDApp):
 
     def on_file_selected(self, selection):
         """Handle the file or folder selected in the FileChooserListView."""
-        if self.standalone_mode_enabled:
-            # If standalone mode is enabled
-            print("Standalone mode is enabled.")
         if selection:
             selected_path = selection[0]
             print(f"Selected path: {selected_path}")
 
-            # Ensure the selected path is resolved correctly
+            # Ensure the selected path is resolved correctly on Android
             if is_android():
                 if not os.path.isabs(selected_path):
                     csv_directory = self.ensure_csv_directory()
                     selected_path = os.path.join(csv_directory, selected_path)
                     print(f"Resolved path on Android: {selected_path}")
 
-            # Process the CSV file
+            # Check if the selected file is a CSV
             if selected_path.endswith(".csv"):
                 try:
                     # Read the CSV file and convert it to a dictionary
@@ -254,7 +251,7 @@ class MainApp(MDApp):
             else:
                 print("Please select a valid CSV file.")
         else:
-            print("No file selected.")
+            print("No file selected")
 
     def read_csv_to_dict(self, file_path):
         """Reads a CSV file and maps it to static column names, ignoring the headers and skipping the first 4 lines."""
