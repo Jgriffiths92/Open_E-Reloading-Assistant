@@ -1152,26 +1152,44 @@ class MainApp(MDApp):
                 if not os.path.exists(csv_internal_path):
                     os.makedirs(csv_internal_path)
 
-                # Copy files from assets/CSV to private storage
+                # Copy files and directories from assets/CSV to private storage
                 if is_android():
                     AssetManager = autoclass('android.content.res.AssetManager')
                     context = mActivity.getApplicationContext()
                     asset_manager = context.getAssets()
-                    files = asset_manager.list("CSV")  # List files in the assets/CSV folder
+                    files = asset_manager.list("CSV")  # List files and directories in the assets/CSV folder
 
                     for file_name in files:
-                        with asset_manager.open(f"CSV/{file_name}") as asset_file:
-                            with open(os.path.join(csv_internal_path, file_name), "wb") as output_file:
-                                output_file.write(asset_file.read())
+                        source_path = f"CSV/{file_name}"
+                        dest_path = os.path.join(csv_internal_path, file_name)
+
+                        if asset_manager.list(source_path):  # Check if it's a directory
+                            if not os.path.exists(dest_path):
+                                os.makedirs(dest_path)  # Create the directory in the destination
+                            # Recursively copy the directory
+                            self.copy_directory_from_assets(asset_manager, source_path, dest_path)
+                        else:
+                            # Copy a single file
+                            with asset_manager.open(source_path) as asset_file:
+                                with open(dest_path, "wb") as output_file:
+                                    output_file.write(asset_file.read())
+                            print(f"Copied file: {source_path} to {dest_path}")
                 else:
                     # Copy files locally for non-Android platforms
                     assets_csv_path = os.path.join(os.path.dirname(__file__), "assets", "CSV")
                     for file_name in os.listdir(assets_csv_path):
-                        src_file = os.path.join(assets_csv_path, file_name)
-                        dest_file = os.path.join(csv_internal_path, file_name)
-                        if os.path.isfile(src_file):
-                            with open(src_file, "rb") as src, open(dest_file, "wb") as dest:
+                        src_path = os.path.join(assets_csv_path, file_name)
+                        dest_path = os.path.join(csv_internal_path, file_name)
+                        if os.path.isdir(src_path):
+                            if not os.path.exists(dest_path):
+                                os.makedirs(dest_path)
+                            # Recursively copy the directory
+                            self.copy_directory_locally(src_path, dest_path)
+                        else:
+                            # Copy a single file
+                            with open(src_path, "rb") as src, open(dest_path, "wb") as dest:
                                 dest.write(src.read())
+                            print(f"Copied file: {src_path} to {dest_path}")
 
                 print(f"Assets copied to private storage: {csv_internal_path}")
                 return csv_internal_path
