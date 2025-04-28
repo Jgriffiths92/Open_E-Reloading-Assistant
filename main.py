@@ -141,21 +141,28 @@ class MainApp(MDApp):
         """Request necessary permissions on Android."""
         if is_android():
             try:
+                # Import required Android classes
                 PythonActivity = autoclass('org.kivy.android.PythonActivity')
                 ActivityCompat = autoclass('androidx.core.app.ActivityCompat')
                 PackageManager = autoclass('android.content.pm.PackageManager')
 
+                # Define the permissions to request
                 permissions = [
                     "android.permission.WRITE_EXTERNAL_STORAGE",
                     "android.permission.READ_EXTERNAL_STORAGE",
+                    "android.permission.NFC",
                 ]
 
+                # Get the current activity
                 activity = PythonActivity.mActivity
+
+                # Check which permissions are not granted
                 permissions_to_request = [
                     permission for permission in permissions
                     if ActivityCompat.checkSelfPermission(activity, permission) != PackageManager.PERMISSION_GRANTED
                 ]
 
+                # Request the permissions if any are not granted
                 if permissions_to_request:
                     ActivityCompat.requestPermissions(activity, permissions_to_request, 0)
                     print(f"Requested permissions: {permissions_to_request}")
@@ -1112,21 +1119,10 @@ class MainApp(MDApp):
                 asset_manager = context.getAssets()
 
                 # Open the file in the assets/CSV folder
-                # Recursively read files from subfolders in the assets/CSV directory
-                def read_from_assets(asset_manager, folder_path):
-                    files = asset_manager.list(folder_path)
-                    for file_name in files:
-                        sub_path = f"{folder_path}/{file_name}"
-                        if asset_manager.list(sub_path):  # Check if it's a directory
-                            read_from_assets(asset_manager, sub_path)  # Recursively read subfolders
-                        else:
-                            with asset_manager.open(sub_path) as asset_file:
-                                content = asset_file.read().decode("utf-8")
-                                print(f"Content of {sub_path}:\n{content}")
-                                return content
-
-                # Start reading from the root CSV folder
-                return read_from_assets(asset_manager, "CSV")
+                with asset_manager.open(f"CSV/{file_name}") as asset_file:
+                    content = asset_file.read().decode("utf-8")
+                    print(f"Content of {file_name}:\n{content}")
+                    return content
             except Exception as e:
                 print(f"Error reading CSV from assets: {e}")
                 return None
@@ -1143,7 +1139,7 @@ class MainApp(MDApp):
                 return None
 
     def copy_assets_to_internal_storage(self):
-        """Copy the assets/CSV folder to the app's private storage directory."""
+        """Copy the assets/CSV folder to the app's private storage directory on Android."""
         private_storage_path = self.get_private_storage_path()
         if private_storage_path:
             try:
@@ -1368,46 +1364,6 @@ class MainApp(MDApp):
                 for field in last_row_fields.values():
                     field.text = ""
             print("Cannot delete the last row. At least one row must remain.")
-
-    def copy_directory_from_assets(self, asset_manager, source_path, dest_path):
-        """Recursively copy a directory from the assets folder to the destination."""
-        try:
-            files = asset_manager.list(source_path)
-            for file_name in files:
-                sub_source_path = f"{source_path}/{file_name}"
-                sub_dest_path = os.path.join(dest_path, file_name)
-
-                if asset_manager.list(sub_source_path):  # Check if it's a directory
-                    if not os.path.exists(sub_dest_path):
-                        os.makedirs(sub_dest_path)
-                    self.copy_directory_from_assets(asset_manager, sub_source_path, sub_dest_path)
-                else:
-                    # Copy a single file
-                    with asset_manager.open(sub_source_path) as asset_file:
-                        with open(sub_dest_path, "wb") as output_file:
-                            output_file.write(asset_file.read())
-                    print(f"Copied file: {sub_source_path} to {sub_dest_path}")
-        except Exception as e:
-            print(f"Error copying directory from assets: {e}")
-
-    def copy_directory_locally(self, src_path, dest_path):
-        """Recursively copy a directory locally."""
-        try:
-            for file_name in os.listdir(src_path):
-                sub_src_path = os.path.join(src_path, file_name)
-                sub_dest_path = os.path.join(dest_path, file_name)
-
-                if os.path.isdir(sub_src_path):
-                    if not os.path.exists(sub_dest_path):
-                        os.makedirs(sub_dest_path)
-                    self.copy_directory_locally(sub_src_path, sub_dest_path)
-                else:
-                    # Copy a single file
-                    with open(sub_src_path, "rb") as src, open(sub_dest_path, "wb") as dest:
-                        dest.write(src.read())
-                    print(f"Copied file: {sub_src_path} to {sub_dest_path}")
-        except Exception as e:
-            print(f"Error copying directory locally: {e}")
 
 if __name__ == "__main__":
     MainApp().run()
