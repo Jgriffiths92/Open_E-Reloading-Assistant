@@ -1033,30 +1033,28 @@ class MainApp(MDApp):
                 print(f"Error handling NFC tag: {e}")
 
     def on_new_intent(self, intent):
-        """Handle new intents, including NFC intents and CSV file intents."""
+        """Handle new intents, including shared content."""
         if is_android() and autoclass:
             try:
                 # Get the action from the intent
                 action = intent.getAction()
 
-                # Handle NFC intents
-                if action in ["android.nfc.action.NDEF_DISCOVERED", "android.nfc.action.TECH_DISCOVERED", "android.nfc.action.TAG_DISCOVERED"]:
-                    self.handle_nfc_tag(intent)
-
-                # Handle CSV file intents
-                elif action == "android.intent.action.VIEW":
-                    uri = intent.getData()
+                # Handle shared content
+                if action in ["android.intent.action.SEND", "android.intent.action.SEND_MULTIPLE"]:
+                    uri = intent.getParcelableExtra("android.intent.extra.STREAM")
                     if uri is not None:
                         # Resolve the file path from the URI
                         content_resolver = mActivity.getContentResolver()
                         file_path = self.resolve_uri_to_path(content_resolver, uri)
 
                         if file_path and file_path.endswith(".csv"):
-                            print(f"Received CSV file: {file_path}")
+                            print(f"Received shared CSV file: {file_path}")
                             # Process the CSV file (e.g., load it into the app)
                             self.process_received_csv(file_path)
                         else:
-                            print("Received file is not a CSV.")
+                            print("Received shared file is not a CSV.")
+                    else:
+                        print("No file URI found in the shared intent.")
             except Exception as e:
                 print(f"Error handling new intent: {e}")
 
