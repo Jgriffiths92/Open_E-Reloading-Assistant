@@ -902,6 +902,28 @@ class MainApp(MDApp):
             print(f"Defaulting to assets/CSV folder: {csv_directory}")
             return csv_directory
 
+    def get_private_storage_path(self):
+        """Retrieve the app's private storage path."""
+        if is_android():
+            try:
+                # Get the Android context
+                context = mActivity.getApplicationContext()
+
+                # Get the private files directory
+                private_storage_path = context.getFilesDir().getAbsolutePath()
+                print(f"Private storage path: {private_storage_path}")
+                return private_storage_path
+            except Exception as e:
+                print(f"Error retrieving private storage path: {e}")
+                return None
+        else:
+            # Use a local directory for non-Android platforms
+            private_storage_path = os.path.join(os.path.dirname(__file__), "private_storage")
+            if not os.path.exists(private_storage_path):
+                os.makedirs(private_storage_path)
+            print(f"Private storage path (non-Android): {private_storage_path}")
+            return private_storage_path
+
     def save_to_external_storage(self, file_name, content):
         """Save a file to the external storage directory or assets/CSV."""
         storage_path = self.get_external_storage_path()
@@ -1123,39 +1145,45 @@ class MainApp(MDApp):
                 return None
 
     def copy_assets_to_internal_storage(self):
-        """Copy the assets/CSV folder to the app's internal storage directory on Android."""
-        if is_android():
+        """Copy the assets/CSV folder to the app's private storage directory on Android."""
+        private_storage_path = self.get_private_storage_path()
+        if private_storage_path:
             try:
-                # Get the Android context and internal storage directory
-                context = mActivity.getApplicationContext()
-                internal_storage_path = context.getFilesDir().getAbsolutePath()
-                csv_internal_path = os.path.join(internal_storage_path, "CSV")
+                csv_internal_path = os.path.join(private_storage_path, "CSV")
 
                 # Ensure the destination directory exists
                 if not os.path.exists(csv_internal_path):
                     os.makedirs(csv_internal_path)
 
-                # Copy files from assets/CSV to internal storage
-                AssetManager = autoclass('android.content.res.AssetManager')
-                asset_manager = context.getAssets()
-                files = asset_manager.list("CSV")  # List files in the assets/CSV folder
+                # Copy files from assets/CSV to private storage
+                if is_android():
+                    AssetManager = autoclass('android.content.res.AssetManager')
+                    context = mActivity.getApplicationContext()
+                    asset_manager = context.getAssets()
+                    files = asset_manager.list("CSV")  # List files in the assets/CSV folder
 
-                for file_name in files:
-                    with asset_manager.open(f"CSV/{file_name}") as asset_file:
-                        with open(os.path.join(csv_internal_path, file_name), "wb") as output_file:
-                            output_file.write(asset_file.read())
+                    for file_name in files:
+                        with asset_manager.open(f"CSV/{file_name}") as asset_file:
+                            with open(os.path.join(csv_internal_path, file_name), "wb") as output_file:
+                                output_file.write(asset_file.read())
+                else:
+                    # Copy files locally for non-Android platforms
+                    assets_csv_path = os.path.join(os.path.dirname(__file__), "assets", "CSV")
+                    for file_name in os.listdir(assets_csv_path):
+                        src_file = os.path.join(assets_csv_path, file_name)
+                        dest_file = os.path.join(csv_internal_path, file_name)
+                        if os.path.isfile(src_file):
+                            with open(src_file, "rb") as src, open(dest_file, "wb") as dest:
+                                dest.write(src.read())
 
-                print(f"Assets copied to internal storage: {csv_internal_path}")
+                print(f"Assets copied to private storage: {csv_internal_path}")
                 return csv_internal_path
             except Exception as e:
-                print(f"Error copying assets to internal storage: {e}")
+                print(f"Error copying assets to private storage: {e}")
                 return None
         else:
-            # On non-Android platforms, use the local assets/CSV folder
-            csv_directory = os.path.join(os.path.dirname(__file__), "assets", "CSV")
-            if not os.path.exists(csv_directory):
-                os.makedirs(csv_directory)
-            return csv_directory
+            print("Private storage path is not available.")
+            return None
 
     def delete_file_or_folder(self, path):
         """Delete the selected file or folder and refresh the file list."""
