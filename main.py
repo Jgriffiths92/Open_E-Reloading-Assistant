@@ -141,28 +141,21 @@ class MainApp(MDApp):
         """Request necessary permissions on Android."""
         if is_android():
             try:
-                # Import required Android classes
                 PythonActivity = autoclass('org.kivy.android.PythonActivity')
                 ActivityCompat = autoclass('androidx.core.app.ActivityCompat')
                 PackageManager = autoclass('android.content.pm.PackageManager')
 
-                # Define the permissions to request
                 permissions = [
                     "android.permission.WRITE_EXTERNAL_STORAGE",
                     "android.permission.READ_EXTERNAL_STORAGE",
-                    "android.permission.NFC",
                 ]
 
-                # Get the current activity
                 activity = PythonActivity.mActivity
-
-                # Check which permissions are not granted
                 permissions_to_request = [
                     permission for permission in permissions
                     if ActivityCompat.checkSelfPermission(activity, permission) != PackageManager.PERMISSION_GRANTED
                 ]
 
-                # Request the permissions if any are not granted
                 if permissions_to_request:
                     ActivityCompat.requestPermissions(activity, permissions_to_request, 0)
                     print(f"Requested permissions: {permissions_to_request}")
@@ -226,22 +219,14 @@ class MainApp(MDApp):
 
     def on_file_selected(self, selection):
         """Handle the file or folder selected in the FileChooserListView."""
+        if self.standalone_mode_enabled:
+            # If standalone mode is enabled
+            print("Standalone mode is enabled.")
         if selection:
             selected_path = selection[0]
-            print(f"Selected file path: {selected_path}")
-
-            # Ensure the selected path is resolved correctly
-            if is_android():
-                # If the path is relative, resolve it to the private storage directory
-                if not os.path.isabs(selected_path):
-                    csv_directory = self.ensure_csv_directory()
-                    selected_path = os.path.join(csv_directory, selected_path)
-                    print(f"Resolved path on Android: {selected_path}")
-
             # Extract the file name and set it to the stage_name_field
             file_name = os.path.basename(selected_path)
             self.root.ids.home_screen.ids.stage_name_field.text = os.path.splitext(file_name)[0]
-
             # If the selected file is a CSV, extract the stage notes footer and display it in the stage_notes_field
             if selected_path.endswith(".csv"):
                 try:
@@ -255,8 +240,9 @@ class MainApp(MDApp):
                                 break
                 except Exception as e:
                     print(f"Error extracting stage notes: {e}")
+            print(f"Selected: {selected_path}")  # Log the selected file or folder
 
-            # Process the CSV file
+            # Check if the selected file is a CSV
             if selected_path.endswith(".csv"):
                 try:
                     # Read the CSV file and convert it to a dictionary
@@ -1146,7 +1132,7 @@ class MainApp(MDApp):
                 return None
 
     def copy_assets_to_internal_storage(self):
-        """Copy the assets/CSV folder to the app's private storage directory on Android."""
+        """Copy the assets/CSV folder to the app's private storage directory."""
         private_storage_path = self.get_private_storage_path()
         if private_storage_path:
             try:
@@ -1371,6 +1357,46 @@ class MainApp(MDApp):
                 for field in last_row_fields.values():
                     field.text = ""
             print("Cannot delete the last row. At least one row must remain.")
+
+    def copy_directory_from_assets(self, asset_manager, source_path, dest_path):
+        """Recursively copy a directory from the assets folder to the destination."""
+        try:
+            files = asset_manager.list(source_path)
+            for file_name in files:
+                sub_source_path = f"{source_path}/{file_name}"
+                sub_dest_path = os.path.join(dest_path, file_name)
+
+                if asset_manager.list(sub_source_path):  # Check if it's a directory
+                    if not os.path.exists(sub_dest_path):
+                        os.makedirs(sub_dest_path)
+                    self.copy_directory_from_assets(asset_manager, sub_source_path, sub_dest_path)
+                else:
+                    # Copy a single file
+                    with asset_manager.open(sub_source_path) as asset_file:
+                        with open(sub_dest_path, "wb") as output_file:
+                            output_file.write(asset_file.read())
+                    print(f"Copied file: {sub_source_path} to {sub_dest_path}")
+        except Exception as e:
+            print(f"Error copying directory from assets: {e}")
+
+    def copy_directory_locally(self, src_path, dest_path):
+        """Recursively copy a directory locally."""
+        try:
+            for file_name in os.listdir(src_path):
+                sub_src_path = os.path.join(src_path, file_name)
+                sub_dest_path = os.path.join(dest_path, file_name)
+
+                if os.path.isdir(sub_src_path):
+                    if not os.path.exists(sub_dest_path):
+                        os.makedirs(sub_dest_path)
+                    self.copy_directory_locally(sub_src_path, sub_dest_path)
+                else:
+                    # Copy a single file
+                    with open(sub_src_path, "rb") as src, open(sub_dest_path, "wb") as dest:
+                        dest.write(src.read())
+                    print(f"Copied file: {sub_src_path} to {sub_dest_path}")
+        except Exception as e:
+            print(f"Error copying directory locally: {e}")
 
 if __name__ == "__main__":
     MainApp().run()
