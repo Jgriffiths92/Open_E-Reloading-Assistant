@@ -258,6 +258,7 @@ class MainApp(MDApp):
         static_columns = ["Target", "Range", "Elv", "Wnd1", "Wnd2", "Lead"]  # Static column names
         data = []
         try:
+            print(f"Reading CSV file: {file_path}")  # Debug: Log the file path
             with open(file_path, mode="r", encoding="utf-8") as csv_file:
                 reader = csv.reader(csv_file)  # Use csv.reader to read the file
                 # Skip the first 4 lines
@@ -277,9 +278,11 @@ class MainApp(MDApp):
                     # Map the row to the static column names
                     mapped_row = {static_columns[i]: row[i] if i < len(row) else "" for i in range(len(static_columns))}
                     data.append(mapped_row)
+                    print(f"Row {index}: {mapped_row}")  # Debug: Log each row
         except Exception as e:
             print(f"Error reading CSV file: {e}")
 
+        print(f"Total rows read: {len(data)}")  # Debug: Log the total number of rows
         return data
 
     def preprocess_data(self, data):
