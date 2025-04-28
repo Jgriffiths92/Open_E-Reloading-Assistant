@@ -516,12 +516,9 @@ class MainApp(MDApp):
             # Create the dropdown menu
             dropdown_menu = MDDropdownMenu(
                 caller=dropdown_button,
-                items=[
-                    {"text": "New Event...", "on_release": lambda: update_selected_folder("New Event...")}
-                ] + [
-                    {"text": folder, "on_release": lambda selected_folder=folder: update_selected_folder(selected_folder)}
-                    for folder in folders
-                ],
+                items=[{"text": "New Event...", "on_release": lambda: update_selected_folder("New Event...")}] +
+                      [{"text": folder, "on_release": lambda selected_folder=folder: update_selected_folder(selected_folder)}
+                       for folder in folders],
                 width_mult=4,
                 position="center",
             )
@@ -558,7 +555,7 @@ class MainApp(MDApp):
                     MDRaisedButton(
                         text="SAVE",
                         on_release=lambda x: (
-                            self.save_data(new_event_name=text_input.text.strip()),
+                            self.save_data(new_event_name=text_input.text.strip() if text_input.text.strip() else None),
                             self.dialog.dismiss()  # Automatically close the dialog after saving
                         )
                     ),
@@ -587,8 +584,8 @@ class MainApp(MDApp):
                         os.makedirs(self.selected_save_folder)  # Create the folder if it doesn't exist
                     file_path = os.path.join(self.selected_save_folder, file_name)
                 else:
-                    # Default to the root storage path
-                    file_path = os.path.join(storage_path, file_name)
+                    print("No folder selected or created. Cannot save data.")
+                    return
 
                 try:
                     # Write the data to the CSV file
