@@ -141,21 +141,28 @@ class MainApp(MDApp):
         """Request necessary permissions on Android."""
         if is_android():
             try:
+                # Import required Android classes
                 PythonActivity = autoclass('org.kivy.android.PythonActivity')
                 ActivityCompat = autoclass('androidx.core.app.ActivityCompat')
                 PackageManager = autoclass('android.content.pm.PackageManager')
 
+                # Define the permissions to request
                 permissions = [
                     "android.permission.WRITE_EXTERNAL_STORAGE",
                     "android.permission.READ_EXTERNAL_STORAGE",
+                    "android.permission.NFC",
                 ]
 
+                # Get the current activity
                 activity = PythonActivity.mActivity
+
+                # Check which permissions are not granted
                 permissions_to_request = [
                     permission for permission in permissions
                     if ActivityCompat.checkSelfPermission(activity, permission) != PackageManager.PERMISSION_GRANTED
                 ]
 
+                # Request the permissions if any are not granted
                 if permissions_to_request:
                     ActivityCompat.requestPermissions(activity, permissions_to_request, 0)
                     print(f"Requested permissions: {permissions_to_request}")
@@ -221,16 +228,35 @@ class MainApp(MDApp):
         """Handle the file or folder selected in the FileChooserListView."""
         if selection:
             selected_path = selection[0]
-            print(f"Selected path: {selected_path}")
+            print(f"Selected file path: {selected_path}")
 
-            # Ensure the selected path is resolved correctly on Android
+            # Ensure the selected path is resolved correctly
             if is_android():
+                # If the path is relative, resolve it to the private storage directory
                 if not os.path.isabs(selected_path):
                     csv_directory = self.ensure_csv_directory()
                     selected_path = os.path.join(csv_directory, selected_path)
                     print(f"Resolved path on Android: {selected_path}")
 
-            # Check if the selected file is a CSV
+            # Extract the file name and set it to the stage_name_field
+            file_name = os.path.basename(selected_path)
+            self.root.ids.home_screen.ids.stage_name_field.text = os.path.splitext(file_name)[0]
+
+            # If the selected file is a CSV, extract the stage notes footer and display it in the stage_notes_field
+            if selected_path.endswith(".csv"):
+                try:
+                    with open(selected_path, mode="r", encoding="utf-8") as csv_file:
+                        lines = csv_file.readlines()
+                        # Look for the "Stage Notes:" footer and extract the notes
+                        for i, line in enumerate(lines):
+                            if line.strip().lower() == "stage notes:":
+                                stage_notes = "".join(lines[i + 1:]).strip()
+                                self.root.ids.home_screen.ids.stage_notes_field.text = stage_notes
+                                break
+                except Exception as e:
+                    print(f"Error extracting stage notes: {e}")
+
+            # Process the CSV file
             if selected_path.endswith(".csv"):
                 try:
                     # Read the CSV file and convert it to a dictionary
@@ -243,8 +269,14 @@ class MainApp(MDApp):
                     # Display the data as a table on the Home Screen
                     self.display_table(processed_data)
 
+                    # Reset the FileChooserListView to its rootpath
+                    saved_cards_screen = self.root.ids.screen_manager.get_screen("saved_cards")
+                    filechooser = saved_cards_screen.ids.filechooser
+                    filechooser.path = filechooser.rootpath  # Reset to rootpath
+
                     # Navigate back to the Home Screen
-                    self.root.ids.screen_manager.current = "home"
+                    self.root.ids.screen_manager.current = "home"  # Reference the Home Screen by its name in layout.kv
+
                     print(f"CSV loaded: {os.path.basename(selected_path)}")
                 except Exception as e:
                     print(f"Error reading CSV: {e}")
@@ -258,7 +290,6 @@ class MainApp(MDApp):
         static_columns = ["Target", "Range", "Elv", "Wnd1", "Wnd2", "Lead"]  # Static column names
         data = []
         try:
-            print(f"Reading CSV file: {file_path}")  # Debug: Log the file path
             with open(file_path, mode="r", encoding="utf-8") as csv_file:
                 reader = csv.reader(csv_file)  # Use csv.reader to read the file
                 # Skip the first 4 lines
@@ -278,11 +309,9 @@ class MainApp(MDApp):
                     # Map the row to the static column names
                     mapped_row = {static_columns[i]: row[i] if i < len(row) else "" for i in range(len(static_columns))}
                     data.append(mapped_row)
-                    print(f"Row {index}: {mapped_row}")  # Debug: Log each row
         except Exception as e:
             print(f"Error reading CSV file: {e}")
 
-        print(f"Total rows read: {len(data)}")  # Debug: Log the total number of rows
         return data
 
     def preprocess_data(self, data):
@@ -309,8 +338,6 @@ class MainApp(MDApp):
         if not data:
             print("No data to display.")
             return
-
-        print(f"Data to display: {data}")  # Debug: Log the data being displayed
 
         # Preprocess the data to handle numeric "Target" values
         data = self.preprocess_data(data)
@@ -1099,20 +1126,10 @@ class MainApp(MDApp):
                 asset_manager = context.getAssets()
 
                 # Open the file in the assets/CSV folder
-                def read_asset_file(asset_manager, path):
-                    """Recursively read files from the assets/CSV folder, including subfolders."""
-                    files = asset_manager.list(path)
-                    for file_name in files:
-                        sub_path = f"{path}/{file_name}"
-                        if asset_manager.list(sub_path):  # Check if it's a directory
-                            read_asset_file(asset_manager, sub_path)  # Recursively read subfolders
-                        else:
-                            with asset_manager.open(sub_path) as asset_file:
-                                content = asset_file.read().decode("utf-8")
-                                print(f"Content of {sub_path}:\n{content}")
-                                return content
-
-                read_asset_file(asset_manager, "CSV")
+                with asset_manager.open(f"CSV/{file_name}") as asset_file:
+                    content = asset_file.read().decode("utf-8")
+                    print(f"Content of {file_name}:\n{content}")
+                    return content
             except Exception as e:
                 print(f"Error reading CSV from assets: {e}")
                 return None
@@ -1129,7 +1146,7 @@ class MainApp(MDApp):
                 return None
 
     def copy_assets_to_internal_storage(self):
-        """Copy the assets/CSV folder to the app's private storage directory."""
+        """Copy the assets/CSV folder to the app's private storage directory on Android."""
         private_storage_path = self.get_private_storage_path()
         if private_storage_path:
             try:
@@ -1354,46 +1371,6 @@ class MainApp(MDApp):
                 for field in last_row_fields.values():
                     field.text = ""
             print("Cannot delete the last row. At least one row must remain.")
-
-    def copy_directory_from_assets(self, asset_manager, source_path, dest_path):
-        """Recursively copy a directory from the assets folder to the destination."""
-        try:
-            files = asset_manager.list(source_path)
-            for file_name in files:
-                sub_source_path = f"{source_path}/{file_name}"
-                sub_dest_path = os.path.join(dest_path, file_name)
-
-                if asset_manager.list(sub_source_path):  # Check if it's a directory
-                    if not os.path.exists(sub_dest_path):
-                        os.makedirs(sub_dest_path)
-                    self.copy_directory_from_assets(asset_manager, sub_source_path, sub_dest_path)
-                else:
-                    # Copy a single file
-                    with asset_manager.open(sub_source_path) as asset_file:
-                        with open(sub_dest_path, "wb") as output_file:
-                            output_file.write(asset_file.read())
-                    print(f"Copied file: {sub_source_path} to {sub_dest_path}")
-        except Exception as e:
-            print(f"Error copying directory from assets: {e}")
-
-    def copy_directory_locally(self, src_path, dest_path):
-        """Recursively copy a directory locally."""
-        try:
-            for file_name in os.listdir(src_path):
-                sub_src_path = os.path.join(src_path, file_name)
-                sub_dest_path = os.path.join(dest_path, file_name)
-
-                if os.path.isdir(sub_src_path):
-                    if not os.path.exists(sub_dest_path):
-                        os.makedirs(sub_dest_path)
-                    self.copy_directory_locally(sub_src_path, sub_dest_path)
-                else:
-                    # Copy a single file
-                    with open(sub_src_path, "rb") as src, open(sub_dest_path, "wb") as dest:
-                        dest.write(src.read())
-                    print(f"Copied file: {sub_src_path} to {sub_dest_path}")
-        except Exception as e:
-            print(f"Error copying directory locally: {e}")
 
 if __name__ == "__main__":
     MainApp().run()
