@@ -1112,10 +1112,21 @@ class MainApp(MDApp):
                 asset_manager = context.getAssets()
 
                 # Open the file in the assets/CSV folder
-                with asset_manager.open(f"CSV/{file_name}") as asset_file:
-                    content = asset_file.read().decode("utf-8")
-                    print(f"Content of {file_name}:\n{content}")
-                    return content
+                # Recursively read files from subfolders in the assets/CSV directory
+                def read_from_assets(asset_manager, folder_path):
+                    files = asset_manager.list(folder_path)
+                    for file_name in files:
+                        sub_path = f"{folder_path}/{file_name}"
+                        if asset_manager.list(sub_path):  # Check if it's a directory
+                            read_from_assets(asset_manager, sub_path)  # Recursively read subfolders
+                        else:
+                            with asset_manager.open(sub_path) as asset_file:
+                                content = asset_file.read().decode("utf-8")
+                                print(f"Content of {sub_path}:\n{content}")
+                                return content
+
+                # Start reading from the root CSV folder
+                return read_from_assets(asset_manager, "CSV")
             except Exception as e:
                 print(f"Error reading CSV from assets: {e}")
                 return None
