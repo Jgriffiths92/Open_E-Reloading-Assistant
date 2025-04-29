@@ -219,28 +219,20 @@ class MainApp(MDApp):
 
     def on_file_selected(self, selection):
         """Handle the file or folder selected in the FileChooserListView."""
-        if self.standalone_mode_enabled:
-            # If standalone mode is enabled
-            print("Standalone mode is enabled.")
         if selection:
             selected_path = selection[0]
+            print(f"Selected path: {selected_path}")
+
+            # Ensure the selected path is resolved correctly on Android
+            if is_android():
+                if not os.path.isabs(selected_path):
+                    csv_directory = self.ensure_csv_directory()
+                    selected_path = os.path.join(csv_directory, selected_path)
+                    print(f"Resolved path on Android: {selected_path}")
+
             # Extract the file name and set it to the stage_name_field
             file_name = os.path.basename(selected_path)
             self.root.ids.home_screen.ids.stage_name_field.text = os.path.splitext(file_name)[0]
-            # If the selected file is a CSV, extract the stage notes footer and display it in the stage_notes_field
-            if selected_path.endswith(".csv"):
-                try:
-                    with open(selected_path, mode="r", encoding="utf-8") as csv_file:
-                        lines = csv_file.readlines()
-                        # Look for the "Stage Notes:" footer and extract the notes
-                        for i, line in enumerate(lines):
-                            if line.strip().lower() == "stage notes:":
-                                stage_notes = "".join(lines[i + 1:]).strip()
-                                self.root.ids.home_screen.ids.stage_notes_field.text = stage_notes
-                                break
-                except Exception as e:
-                    print(f"Error extracting stage notes: {e}")
-            print(f"Selected: {selected_path}")  # Log the selected file or folder
 
             # Check if the selected file is a CSV
             if selected_path.endswith(".csv"):
@@ -255,14 +247,8 @@ class MainApp(MDApp):
                     # Display the data as a table on the Home Screen
                     self.display_table(processed_data)
 
-                    # Reset the FileChooserListView to its rootpath
-                    saved_cards_screen = self.root.ids.screen_manager.get_screen("saved_cards")
-                    filechooser = saved_cards_screen.ids.filechooser
-                    filechooser.path = filechooser.rootpath  # Reset to rootpath
-
                     # Navigate back to the Home Screen
-                    self.root.ids.screen_manager.current = "home"  # Reference the Home Screen by its name in layout.kv
-
+                    self.root.ids.screen_manager.current = "home"
                     print(f"CSV loaded: {os.path.basename(selected_path)}")
                 except Exception as e:
                     print(f"Error reading CSV: {e}")
