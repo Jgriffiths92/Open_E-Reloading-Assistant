@@ -261,6 +261,7 @@ class MainApp(MDApp):
         """Reads a CSV file and maps it to static column names, ignoring the headers and skipping the first 4 lines."""
         static_columns = ["Target", "Range", "Elv", "Wnd1", "Wnd2", "Lead"]  # Static column names
         data = []
+        stage_notes = ""  # Initialize stage notes as an empty string
         try:
             print(f"Reading CSV file: {file_path}")
             with open(file_path, mode="r", encoding="utf-8") as csv_file:
@@ -273,16 +274,20 @@ class MainApp(MDApp):
                     if not row:
                         continue
 
-                    # Skip footer if it exists (e.g., rows starting with "Stage Notes:")
+                    # Check if the row contains the "Stage Notes:" footer
                     if row[0].strip().lower() == "stage notes:":
+                        # Collect all lines after "Stage Notes:" as the footer
+                        stage_notes = "\n".join(line[0] for line in reader if line)
                         break
-                    if not row:
-                        continue
 
                     # Map the row to the static column names
                     mapped_row = {static_columns[i]: row[i] if i < len(row) else "" for i in range(len(static_columns))}
                     data.append(mapped_row)
                     print(f"Row {index}: {mapped_row}")
+
+            # Update the stage notes text input field
+            self.root.ids.home_screen.ids.stage_notes_field.text = stage_notes
+            print(f"Stage Notes: {stage_notes}")
         except Exception as e:
             print(f"Error reading CSV file: {e}")
 
@@ -1077,6 +1082,7 @@ class MainApp(MDApp):
     def process_received_csv(self, file_path):
         """Process the received CSV file."""
         try:
+            print(f"Processing received CSV file: {file_path}")
             # Read the CSV file and convert it to a dictionary
             data = self.read_csv_to_dict(file_path)
             self.current_data = data  # Store the data for filtering or other operations
