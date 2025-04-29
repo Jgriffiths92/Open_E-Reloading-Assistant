@@ -262,6 +262,7 @@ class MainApp(MDApp):
         static_columns = ["Target", "Range", "Elv", "Wnd1", "Wnd2", "Lead"]  # Static column names
         data = []
         try:
+            print(f"Reading CSV file: {file_path}")
             with open(file_path, mode="r", encoding="utf-8") as csv_file:
                 reader = csv.reader(csv_file)  # Use csv.reader to read the file
                 # Skip the first 4 lines
@@ -281,9 +282,11 @@ class MainApp(MDApp):
                     # Map the row to the static column names
                     mapped_row = {static_columns[i]: row[i] if i < len(row) else "" for i in range(len(static_columns))}
                     data.append(mapped_row)
+                    print(f"Row {index}: {mapped_row}")
         except Exception as e:
             print(f"Error reading CSV file: {e}")
 
+        print(f"Total rows read: {len(data)}")
         return data
 
     def preprocess_data(self, data):
@@ -1026,14 +1029,17 @@ class MainApp(MDApp):
             try:
                 # Get the action from the intent
                 action = intent.getAction()
+                print(f"Intent action: {action}")
 
                 # Handle shared content
                 if action in ["android.intent.action.SEND", "android.intent.action.SEND_MULTIPLE"]:
                     uri = intent.getParcelableExtra("android.intent.extra.STREAM")
+                    print(f"Received URI: {uri}")
                     if uri is not None:
                         # Resolve the file path from the URI
                         content_resolver = mActivity.getContentResolver()
                         file_path = self.resolve_uri_to_path(content_resolver, uri)
+                        print(f"Resolved file path: {file_path}")
 
                         if file_path and file_path.endswith(".csv"):
                             print(f"Received shared CSV file: {file_path}")
