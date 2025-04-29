@@ -2,5 +2,5 @@
     <action android:name="android.intent.action.SEND" />
     <action android:name="android.intent.action.SEND_MULTIPLE" />
     <category android:name="android.intent.category.DEFAULT" />
-    <data android:mimeType="text/html" /> <!-- Match all file types -->
+    <data android:mimeType="text/*" /> <!-- Match all text file types -->
 </intent-filter>

@@ -115,6 +115,11 @@ class SavedCardsScreen(Screen):
         """Refresh the FileChooserListView when the screen is entered."""
         try:
             filechooser = self.ids.filechooser
+            csv_directory = self.manager.get_screen("home").app.ensure_csv_directory()
+            csv_files = self.manager.get_screen("home").app.get_all_csv_files(csv_directory)
+
+            # Update the FileChooserListView to display only the collected CSV files
+            filechooser.filters = [lambda folder, filename: filename in [os.path.basename(f) for f in csv_files]]
             filechooser._update_files()  # Refresh the file and folder list
             print("File and folder list refreshed on screen enter.")
         except Exception as e:
@@ -1029,7 +1034,7 @@ class MainApp(MDApp):
                 print(f"Error handling NFC tag: {e}")
 
     def on_new_intent(self, intent):
-        """Handle new intents, including shared HTML content."""
+        """Handle new intents, including shared content."""
         if is_android() and autoclass:
             try:
                 # Get the action from the intent
@@ -1046,12 +1051,12 @@ class MainApp(MDApp):
                         file_path = self.resolve_uri_to_path(content_resolver, uri)
                         print(f"Resolved file path: {file_path}")
 
-                        if file_path and file_path.endswith(".html"):
-                            print(f"Received shared HTML file: {file_path}")
-                            # Process the HTML file and display the data
-                            self.process_received_html(file_path)
+                        if file_path and file_path.endswith(".csv"):
+                            print(f"Received shared CSV file: {file_path}")
+                            # Process the CSV file and display the data
+                            self.process_received_csv(file_path)
                         else:
-                            print("Received shared file is not an HTML file.")
+                            print("Received shared file is not a CSV.")
                     else:
                         print("No file URI found in the shared intent.")
             except Exception as e:
@@ -1374,6 +1379,19 @@ class MainApp(MDApp):
                     print(f"Copied file: {sub_src_path} to {sub_dest_path}")
         except Exception as e:
             print(f"Error copying directory locally: {e}")
+
+    def get_all_csv_files(self, directory):
+        """Recursively collect all CSV files from the given directory and its subfolders."""
+        csv_files = []
+        try:
+            for root, _, files in os.walk(directory):
+                for file_name in files:
+                    if file_name.endswith(".csv"):
+                        csv_files.append(os.path.join(root, file_name))
+            print(f"Found CSV files: {csv_files}")
+        except Exception as e:
+            print(f"Error collecting CSV files: {e}")
+        return csv_files
 
 if __name__ == "__main__":
     MainApp().run()
