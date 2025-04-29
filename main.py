@@ -1118,7 +1118,7 @@ class MainApp(MDApp):
                 return None
 
     def copy_assets_to_internal_storage(self):
-        """Copy the assets/CSV folder to the app's private storage directory."""
+        """Copy only CSV files from the assets/CSV folder to the app's private storage directory."""
         private_storage_path = self.get_private_storage_path()
         if private_storage_path:
             try:
@@ -1133,48 +1133,18 @@ class MainApp(MDApp):
                     AssetManager = autoclass('android.content.res.AssetManager')
                     context = mActivity.getApplicationContext()
                     asset_manager = context.getAssets()
-                    files = asset_manager.list("CSV")  # List files and directories in the assets/CSV folder
 
-                    for file_name in files:
-                        source_path = f"CSV/{file_name}"
-                        dest_path = os.path.join(csv_internal_path, file_name)
-
-                        if asset_manager.list(source_path):  # Check if it's a directory
-                            if not os.path.exists(dest_path):
-                                os.makedirs(dest_path)  # Create the directory in the destination
-                            # Recursively copy the directory
-                            self.copy_directory_from_assets(asset_manager, source_path, dest_path)
-                        else:
-                            # Copy a single file
-                            with asset_manager.open(source_path, "rb") as asset_file:  # Open the file in binary mode
-                                with open(dest_path, "wb") as output_file:
-                                    while True:
-                                        chunk = asset_file.read(1024)  # Read in chunks of 1024 bytes
-                                        if not chunk:
-                                            break
-                                        output_file.write(chunk)
-                            print(f"Copied file: {source_path} to {dest_path}")
+                    # Recursively copy CSV files
+                    self.copy_csv_files_from_assets(asset_manager, "CSV", csv_internal_path)
                 else:
                     # Copy files locally for non-Android platforms
                     assets_csv_path = os.path.join(os.path.dirname(__file__), "assets", "CSV")
-                    for file_name in os.listdir(assets_csv_path):
-                        src_path = os.path.join(assets_csv_path, file_name)
-                        dest_path = os.path.join(csv_internal_path, file_name)
-                        if os.path.isdir(src_path):
-                            if not os.path.exists(dest_path):
-                                os.makedirs(dest_path)
-                            # Recursively copy the directory
-                            self.copy_directory_locally(src_path, dest_path)
-                        else:
-                            # Copy a single file
-                            with open(src_path, "rb") as src, open(dest_path, "wb") as dest:
-                                dest.write(src.read())
-                            print(f"Copied file: {src_path} to {dest_path}")
+                    self.copy_csv_files_locally(assets_csv_path, csv_internal_path)
 
-                print(f"Assets copied to private storage: {csv_internal_path}")
+                print(f"CSV files copied to private storage: {csv_internal_path}")
                 return csv_internal_path
             except Exception as e:
-                print(f"Error copying assets to private storage: {e}")
+                print(f"Error copying CSV files to private storage: {e}")
                 return None
         else:
             print("Private storage path is not available.")
@@ -1348,8 +1318,8 @@ class MainApp(MDApp):
                     field.text = ""
             print("Cannot delete the last row. At least one row must remain.")
 
-    def copy_directory_from_assets(self, asset_manager, source_path, dest_path):
-        """Recursively copy a directory from the assets folder to the destination."""
+    def copy_csv_files_from_assets(self, asset_manager, source_path, dest_path):
+        """Recursively copy only CSV files from the assets folder to the destination."""
         try:
             files = asset_manager.list(source_path)
             for file_name in files:
@@ -1360,9 +1330,8 @@ class MainApp(MDApp):
                     if not os.path.exists(sub_dest_path):
                         os.makedirs(sub_dest_path)
                     # Recursively copy the directory
-                    self.copy_directory_from_assets(asset_manager, sub_source_path, sub_dest_path)
-                else:
-                    # Copy a single file
+                    self.copy_csv_files_from_assets(asset_manager, sub_source_path, sub_dest_path)
+                elif file_name.endswith(".csv"):  # Only copy CSV files
                     with asset_manager.open(sub_source_path, "rb") as asset_file:  # Open the file in binary mode
                         with open(sub_dest_path, "wb") as output_file:
                             while True:
@@ -1370,12 +1339,12 @@ class MainApp(MDApp):
                                 if not chunk:
                                     break
                                 output_file.write(chunk)
-                    print(f"Copied file: {sub_source_path} to {sub_dest_path}")
+                    print(f"Copied CSV file: {sub_source_path} to {sub_dest_path}")
         except Exception as e:
-            print(f"Error copying directory from assets: {e}")
+            print(f"Error copying CSV files from assets: {e}")
 
-    def copy_directory_locally(self, src_path, dest_path):
-        """Recursively copy a directory locally."""
+    def copy_csv_files_locally(self, src_path, dest_path):
+        """Recursively copy CSV files locally."""
         try:
             for file_name in os.listdir(src_path):
                 sub_src_path = os.path.join(src_path, file_name)
@@ -1385,7 +1354,7 @@ class MainApp(MDApp):
                     if not os.path.exists(sub_dest_path):
                         os.makedirs(sub_dest_path)
                     # Recursively copy the directory
-                    self.copy_directory_locally(sub_src_path, sub_dest_path)
+                    self.copy_csv_files_locally(sub_src_path, sub_dest_path)
                 else:
                     # Copy a single file
                     with open(sub_src_path, "rb") as src, open(sub_dest_path, "wb") as dest:
