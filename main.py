@@ -852,7 +852,7 @@ class MainApp(MDApp):
         # Add your cleanup logic here
 
     def get_external_storage_path(self):
-        """Retrieve the external storage path using mActivity or default to assets/CSV."""
+        """Retrieve the external storage path and ensure the CSV subdirectory exists."""
         if is_android():
             try:
                 # Get the Android context
@@ -861,7 +861,9 @@ class MainApp(MDApp):
                 # Get the external files directory
                 result = context.getExternalFilesDir(None)  # Pass `None` to get the root directory
                 if result:
-                    storage_path = str(result.toString())
+                    storage_path = os.path.join(str(result.toString()), "CSV")  # Append the CSV subdirectory
+                    if not os.path.exists(storage_path):
+                        os.makedirs(storage_path)  # Create the CSV directory if it doesn't exist
                     print(f"External storage path: {storage_path}")
                     return storage_path
                 else:
@@ -871,7 +873,7 @@ class MainApp(MDApp):
                 print(f"Error retrieving external storage path: {e}")
                 return None
         else:
-            # Default to assets/CSV folder
+            # Default to assets/CSV folder for non-Android platforms
             csv_directory = os.path.join(os.path.dirname(__file__), "assets", "CSV")
             if not os.path.exists(csv_directory):
                 os.makedirs(csv_directory)
@@ -1357,6 +1359,7 @@ class MainApp(MDApp):
                 if asset_manager.list(sub_source_path):  # Check if it's a directory
                     if not os.path.exists(sub_dest_path):
                         os.makedirs(sub_dest_path)
+                    # Recursively copy the directory
                     self.copy_directory_from_assets(asset_manager, sub_source_path, sub_dest_path)
                 else:
                     # Copy a single file
