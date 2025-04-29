@@ -306,7 +306,7 @@ class MainApp(MDApp):
         for row in data:
             target_value = row.get("Target", "")
             # Check if the "Target" column contains a number
-            if target_value.isdigit():  # Check if the value is numeric
+            if target_value:  # Check if the value contains data
                 # Shift the columns across by one
                 shifted_row = {}
                 keys = list(row.keys())
