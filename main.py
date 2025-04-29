@@ -304,7 +304,7 @@ class MainApp(MDApp):
         """Preprocess the data to shift columns if the 'Target' column contains a number."""
         processed_data = []
         for row in data:
-            target_value = row.get("Target", "")
+            target_value = row.get("Tgt", "")
             # Check if the "Target" column contains a number
             if target_value:  # Check if the value contains data
                 # Shift the columns across by one
