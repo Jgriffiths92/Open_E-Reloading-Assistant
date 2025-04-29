@@ -1077,6 +1077,7 @@ class MainApp(MDApp):
                     cursor.moveToFirst()
                     file_path = cursor.getString(column_index)
                     cursor.close()
+                    print(f"Resolved file path: {file_path}")
                     return file_path
         except Exception as e:
             print(f"Error resolving URI to path: {e}")
