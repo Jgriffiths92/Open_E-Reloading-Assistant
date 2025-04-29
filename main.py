@@ -1029,7 +1029,7 @@ class MainApp(MDApp):
                 print(f"Error handling NFC tag: {e}")
 
     def on_new_intent(self, intent):
-        """Handle new intents, including shared content."""
+        """Handle new intents, including shared HTML content."""
         if is_android() and autoclass:
             try:
                 # Get the action from the intent
@@ -1046,12 +1046,12 @@ class MainApp(MDApp):
                         file_path = self.resolve_uri_to_path(content_resolver, uri)
                         print(f"Resolved file path: {file_path}")
 
-                        if file_path and file_path.endswith(".csv"):
-                            print(f"Received shared CSV file: {file_path}")
-                            # Process the CSV file and display the data
-                            self.process_received_csv(file_path)
+                        if file_path and file_path.endswith(".html"):
+                            print(f"Received shared HTML file: {file_path}")
+                            # Process the HTML file and display the data
+                            self.process_received_html(file_path)
                         else:
-                            print("Received shared file is not a CSV.")
+                            print("Received shared file is not an HTML file.")
                     else:
                         print("No file URI found in the shared intent.")
             except Exception as e:
