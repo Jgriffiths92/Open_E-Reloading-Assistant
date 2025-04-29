@@ -1144,9 +1144,13 @@ class MainApp(MDApp):
                             self.copy_directory_from_assets(asset_manager, source_path, dest_path)
                         else:
                             # Copy a single file
-                            with asset_manager.open(source_path) as asset_file:
+                            with asset_manager.open(source_path, "rb") as asset_file:  # Open the file in binary mode
                                 with open(dest_path, "wb") as output_file:
-                                    output_file.write(asset_file.read())
+                                    while True:
+                                        chunk = asset_file.read(1024)  # Read in chunks of 1024 bytes
+                                        if not chunk:
+                                            break
+                                        output_file.write(chunk)
                             print(f"Copied file: {source_path} to {dest_path}")
                 else:
                     # Copy files locally for non-Android platforms
@@ -1356,9 +1360,13 @@ class MainApp(MDApp):
                     self.copy_directory_from_assets(asset_manager, sub_source_path, sub_dest_path)
                 else:
                     # Copy a single file
-                    with asset_manager.open(sub_source_path) as asset_file:
+                    with asset_manager.open(sub_source_path, "rb") as asset_file:  # Open the file in binary mode
                         with open(sub_dest_path, "wb") as output_file:
-                            output_file.write(asset_file.read())
+                            while True:
+                                chunk = asset_file.read(1024)  # Read in chunks of 1024 bytes
+                                if not chunk:
+                                    break
+                                output_file.write(chunk)
                     print(f"Copied file: {sub_source_path} to {sub_dest_path}")
         except Exception as e:
             print(f"Error copying directory from assets: {e}")
@@ -1373,6 +1381,7 @@ class MainApp(MDApp):
                 if os.path.isdir(sub_src_path):
                     if not os.path.exists(sub_dest_path):
                         os.makedirs(sub_dest_path)
+                    # Recursively copy the directory
                     self.copy_directory_locally(sub_src_path, sub_dest_path)
                 else:
                     # Copy a single file
