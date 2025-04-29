@@ -455,7 +455,7 @@ class MainApp(MDApp):
             filtered_data.append(filtered_row)
         return filtered_data
 
-    def on_fab_press(self):
+   
         """Handle the floating action button press."""
         if not self.dialog:
             # Get the list of folders in the assets/CSV directory
