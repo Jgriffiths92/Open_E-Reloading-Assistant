@@ -1035,7 +1035,7 @@ class MainApp(MDApp):
 
                         if file_path and file_path.endswith(".csv"):
                             print(f"Received shared CSV file: {file_path}")
-                            # Process the CSV file (e.g., load it into the app)
+                            # Process the CSV file and display the data
                             self.process_received_csv(file_path)
                         else:
                             print("Received shared file is not a CSV.")
