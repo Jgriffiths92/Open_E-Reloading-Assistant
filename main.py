@@ -115,11 +115,6 @@ class SavedCardsScreen(Screen):
         """Refresh the FileChooserListView when the screen is entered."""
         try:
             filechooser = self.ids.filechooser
-            csv_directory = self.manager.get_screen("home").app.ensure_csv_directory()
-            csv_files = self.manager.get_screen("home").app.get_all_csv_files(csv_directory)
-
-            # Update the FileChooserListView to display only the collected CSV files
-            filechooser.filters = [lambda folder, filename: filename in [os.path.basename(f) for f in csv_files]]
             filechooser._update_files()  # Refresh the file and folder list
             print("File and folder list refreshed on screen enter.")
         except Exception as e:
@@ -224,20 +219,28 @@ class MainApp(MDApp):
 
     def on_file_selected(self, selection):
         """Handle the file or folder selected in the FileChooserListView."""
+        if self.standalone_mode_enabled:
+            # If standalone mode is enabled
+            print("Standalone mode is enabled.")
         if selection:
             selected_path = selection[0]
-            print(f"Selected path: {selected_path}")
-
-            # Ensure the selected path is resolved correctly on Android
-            if is_android():
-                if not os.path.isabs(selected_path):
-                    csv_directory = self.ensure_csv_directory()
-                    selected_path = os.path.join(csv_directory, selected_path)
-                    print(f"Resolved path on Android: {selected_path}")
-
             # Extract the file name and set it to the stage_name_field
             file_name = os.path.basename(selected_path)
             self.root.ids.home_screen.ids.stage_name_field.text = os.path.splitext(file_name)[0]
+            # If the selected file is a CSV, extract the stage notes footer and display it in the stage_notes_field
+            if selected_path.endswith(".csv"):
+                try:
+                    with open(selected_path, mode="r", encoding="utf-8") as csv_file:
+                        lines = csv_file.readlines()
+                        # Look for the "Stage Notes:" footer and extract the notes
+                        for i, line in enumerate(lines):
+                            if line.strip().lower() == "stage notes:":
+                                stage_notes = "".join(lines[i + 1:]).strip()
+                                self.root.ids.home_screen.ids.stage_notes_field.text = stage_notes
+                                break
+                except Exception as e:
+                    print(f"Error extracting stage notes: {e}")
+            print(f"Selected: {selected_path}")  # Log the selected file or folder
 
             # Check if the selected file is a CSV
             if selected_path.endswith(".csv"):
@@ -252,8 +255,14 @@ class MainApp(MDApp):
                     # Display the data as a table on the Home Screen
                     self.display_table(processed_data)
 
+                    # Reset the FileChooserListView to its rootpath
+                    saved_cards_screen = self.root.ids.screen_manager.get_screen("saved_cards")
+                    filechooser = saved_cards_screen.ids.filechooser
+                    filechooser.path = filechooser.rootpath  # Reset to rootpath
+
                     # Navigate back to the Home Screen
-                    self.root.ids.screen_manager.current = "home"
+                    self.root.ids.screen_manager.current = "home"  # Reference the Home Screen by its name in layout.kv
+
                     print(f"CSV loaded: {os.path.basename(selected_path)}")
                 except Exception as e:
                     print(f"Error reading CSV: {e}")
@@ -266,9 +275,7 @@ class MainApp(MDApp):
         """Reads a CSV file and maps it to static column names, ignoring the headers and skipping the first 4 lines."""
         static_columns = ["Target", "Range", "Elv", "Wnd1", "Wnd2", "Lead"]  # Static column names
         data = []
-        stage_notes = ""  # Initialize stage notes as an empty string
         try:
-            print(f"Reading CSV file: {file_path}")
             with open(file_path, mode="r", encoding="utf-8") as csv_file:
                 reader = csv.reader(csv_file)  # Use csv.reader to read the file
                 # Skip the first 4 lines
@@ -279,24 +286,18 @@ class MainApp(MDApp):
                     if not row:
                         continue
 
-                    # Check if the row contains the "Stage Notes:" footer
+                    # Skip footer if it exists (e.g., rows starting with "Stage Notes:")
                     if row[0].strip().lower() == "stage notes:":
-                        # Collect all lines after "Stage Notes:" as the footer
-                        stage_notes = "\n".join(line[0] for line in reader if line)
                         break
+                    if not row:
+                        continue
 
                     # Map the row to the static column names
                     mapped_row = {static_columns[i]: row[i] if i < len(row) else "" for i in range(len(static_columns))}
                     data.append(mapped_row)
-                    print(f"Row {index}: {mapped_row}")
-
-            # Update the stage notes text input field
-            self.root.ids.home_screen.ids.stage_notes_field.text = stage_notes
-            print(f"Stage Notes: {stage_notes}")
         except Exception as e:
             print(f"Error reading CSV file: {e}")
 
-        print(f"Total rows read: {len(data)}")
         return data
 
     def preprocess_data(self, data):
@@ -305,7 +306,7 @@ class MainApp(MDApp):
         for row in data:
             target_value = row.get("Target", "")
             # Check if the "Target" column contains a number
-            if not target_value:  # Check if the value does not contain data
+            if target_value.isdigit():  # Check if the value is numeric
                 # Shift the columns across by one
                 shifted_row = {}
                 keys = list(row.keys())
@@ -865,7 +866,7 @@ class MainApp(MDApp):
         # Add your cleanup logic here
 
     def get_external_storage_path(self):
-        """Retrieve the external storage path and ensure the CSV subdirectory exists."""
+        """Retrieve the external storage path using mActivity or default to assets/CSV."""
         if is_android():
             try:
                 # Get the Android context
@@ -874,9 +875,7 @@ class MainApp(MDApp):
                 # Get the external files directory
                 result = context.getExternalFilesDir(None)  # Pass `None` to get the root directory
                 if result:
-                    storage_path = os.path.join(str(result.toString()), "CSV")  # Append the CSV subdirectory
-                    if not os.path.exists(storage_path):
-                        os.makedirs(storage_path)  # Create the CSV directory if it doesn't exist
+                    storage_path = str(result.toString())
                     print(f"External storage path: {storage_path}")
                     return storage_path
                 else:
@@ -886,7 +885,7 @@ class MainApp(MDApp):
                 print(f"Error retrieving external storage path: {e}")
                 return None
         else:
-            # Default to assets/CSV folder for non-Android platforms
+            # Default to assets/CSV folder
             csv_directory = os.path.join(os.path.dirname(__file__), "assets", "CSV")
             if not os.path.exists(csv_directory):
                 os.makedirs(csv_directory)
@@ -1034,31 +1033,30 @@ class MainApp(MDApp):
                 print(f"Error handling NFC tag: {e}")
 
     def on_new_intent(self, intent):
-        """Handle new intents, including shared content."""
+        """Handle new intents, including NFC intents and CSV file intents."""
         if is_android() and autoclass:
             try:
                 # Get the action from the intent
                 action = intent.getAction()
-                print(f"Intent action: {action}")
 
-                # Handle shared content
-                if action in ["android.intent.action.SEND", "android.intent.action.SEND_MULTIPLE"]:
-                    uri = intent.getParcelableExtra("android.intent.extra.STREAM")
-                    print(f"Received URI: {uri}")
+                # Handle NFC intents
+                if action in ["android.nfc.action.NDEF_DISCOVERED", "android.nfc.action.TECH_DISCOVERED", "android.nfc.action.TAG_DISCOVERED"]:
+                    self.handle_nfc_tag(intent)
+
+                # Handle CSV file intents
+                elif action == "android.intent.action.VIEW":
+                    uri = intent.getData()
                     if uri is not None:
                         # Resolve the file path from the URI
                         content_resolver = mActivity.getContentResolver()
                         file_path = self.resolve_uri_to_path(content_resolver, uri)
-                        print(f"Resolved file path: {file_path}")
 
                         if file_path and file_path.endswith(".csv"):
-                            print(f"Received shared CSV file: {file_path}")
-                            # Process the CSV file and display the data
+                            print(f"Received CSV file: {file_path}")
+                            # Process the CSV file (e.g., load it into the app)
                             self.process_received_csv(file_path)
                         else:
-                            print("Received shared file is not a CSV.")
-                    else:
-                        print("No file URI found in the shared intent.")
+                            print("Received file is not a CSV.")
             except Exception as e:
                 print(f"Error handling new intent: {e}")
 
@@ -1087,7 +1085,6 @@ class MainApp(MDApp):
     def process_received_csv(self, file_path):
         """Process the received CSV file."""
         try:
-            print(f"Processing received CSV file: {file_path}")
             # Read the CSV file and convert it to a dictionary
             data = self.read_csv_to_dict(file_path)
             self.current_data = data  # Store the data for filtering or other operations
@@ -1135,7 +1132,7 @@ class MainApp(MDApp):
                 return None
 
     def copy_assets_to_internal_storage(self):
-        """Copy only CSV files from the assets/CSV folder to the app's private storage directory."""
+        """Copy the assets/CSV folder to the app's private storage directory."""
         private_storage_path = self.get_private_storage_path()
         if private_storage_path:
             try:
@@ -1150,18 +1147,44 @@ class MainApp(MDApp):
                     AssetManager = autoclass('android.content.res.AssetManager')
                     context = mActivity.getApplicationContext()
                     asset_manager = context.getAssets()
+                    files = asset_manager.list("CSV")  # List files and directories in the assets/CSV folder
 
-                    # Recursively copy CSV files
-                    self.copy_csv_files_from_assets(asset_manager, "CSV", csv_internal_path)
+                    for file_name in files:
+                        source_path = f"CSV/{file_name}"
+                        dest_path = os.path.join(csv_internal_path, file_name)
+
+                        if asset_manager.list(source_path):  # Check if it's a directory
+                            if not os.path.exists(dest_path):
+                                os.makedirs(dest_path)  # Create the directory in the destination
+                            # Recursively copy the directory
+                            self.copy_directory_from_assets(asset_manager, source_path, dest_path)
+                        else:
+                            # Copy a single file
+                            with asset_manager.open(source_path) as asset_file:
+                                with open(dest_path, "wb") as output_file:
+                                    output_file.write(asset_file.read())
+                            print(f"Copied file: {source_path} to {dest_path}")
                 else:
                     # Copy files locally for non-Android platforms
                     assets_csv_path = os.path.join(os.path.dirname(__file__), "assets", "CSV")
-                    self.copy_csv_files_locally(assets_csv_path, csv_internal_path)
+                    for file_name in os.listdir(assets_csv_path):
+                        src_path = os.path.join(assets_csv_path, file_name)
+                        dest_path = os.path.join(csv_internal_path, file_name)
+                        if os.path.isdir(src_path):
+                            if not os.path.exists(dest_path):
+                                os.makedirs(dest_path)
+                            # Recursively copy the directory
+                            self.copy_directory_locally(src_path, dest_path)
+                        else:
+                            # Copy a single file
+                            with open(src_path, "rb") as src, open(dest_path, "wb") as dest:
+                                dest.write(src.read())
+                            print(f"Copied file: {src_path} to {dest_path}")
 
-                print(f"CSV files copied to private storage: {csv_internal_path}")
+                print(f"Assets copied to private storage: {csv_internal_path}")
                 return csv_internal_path
             except Exception as e:
-                print(f"Error copying CSV files to private storage: {e}")
+                print(f"Error copying assets to private storage: {e}")
                 return None
         else:
             print("Private storage path is not available.")
@@ -1335,8 +1358,8 @@ class MainApp(MDApp):
                     field.text = ""
             print("Cannot delete the last row. At least one row must remain.")
 
-    def copy_csv_files_from_assets(self, asset_manager, source_path, dest_path):
-        """Recursively copy only CSV files from the assets folder to the destination."""
+    def copy_directory_from_assets(self, asset_manager, source_path, dest_path):
+        """Recursively copy a directory from the assets folder to the destination."""
         try:
             files = asset_manager.list(source_path)
             for file_name in files:
@@ -1346,22 +1369,18 @@ class MainApp(MDApp):
                 if asset_manager.list(sub_source_path):  # Check if it's a directory
                     if not os.path.exists(sub_dest_path):
                         os.makedirs(sub_dest_path)
-                    # Recursively copy the directory
-                    self.copy_csv_files_from_assets(asset_manager, sub_source_path, sub_dest_path)
-                elif file_name.endswith(".csv"):  # Only copy CSV files
-                    with asset_manager.open(sub_source_path, "rb") as asset_file:  # Open the file in binary mode
+                    self.copy_directory_from_assets(asset_manager, sub_source_path, sub_dest_path)
+                else:
+                    # Copy a single file
+                    with asset_manager.open(sub_source_path) as asset_file:
                         with open(sub_dest_path, "wb") as output_file:
-                            while True:
-                                chunk = asset_file.read(1024)  # Read in chunks of 1024 bytes
-                                if not chunk:
-                                    break
-                                output_file.write(chunk)
-                    print(f"Copied CSV file: {sub_source_path} to {sub_dest_path}")
+                            output_file.write(asset_file.read())
+                    print(f"Copied file: {sub_source_path} to {sub_dest_path}")
         except Exception as e:
-            print(f"Error copying CSV files from assets: {e}")
+            print(f"Error copying directory from assets: {e}")
 
-    def copy_csv_files_locally(self, src_path, dest_path):
-        """Recursively copy CSV files locally."""
+    def copy_directory_locally(self, src_path, dest_path):
+        """Recursively copy a directory locally."""
         try:
             for file_name in os.listdir(src_path):
                 sub_src_path = os.path.join(src_path, file_name)
@@ -1370,8 +1389,7 @@ class MainApp(MDApp):
                 if os.path.isdir(sub_src_path):
                     if not os.path.exists(sub_dest_path):
                         os.makedirs(sub_dest_path)
-                    # Recursively copy the directory
-                    self.copy_csv_files_locally(sub_src_path, sub_dest_path)
+                    self.copy_directory_locally(sub_src_path, sub_dest_path)
                 else:
                     # Copy a single file
                     with open(sub_src_path, "rb") as src, open(sub_dest_path, "wb") as dest:
@@ -1379,19 +1397,6 @@ class MainApp(MDApp):
                     print(f"Copied file: {sub_src_path} to {sub_dest_path}")
         except Exception as e:
             print(f"Error copying directory locally: {e}")
-
-    def get_all_csv_files(self, directory):
-        """Recursively collect all CSV files from the given directory and its subfolders."""
-        csv_files = []
-        try:
-            for root, _, files in os.walk(directory):
-                for file_name in files:
-                    if file_name.endswith(".csv"):
-                        csv_files.append(os.path.join(root, file_name))
-            print(f"Found CSV files: {csv_files}")
-        except Exception as e:
-            print(f"Error collecting CSV files: {e}")
-        return csv_files
 
 if __name__ == "__main__":
     MainApp().run()
