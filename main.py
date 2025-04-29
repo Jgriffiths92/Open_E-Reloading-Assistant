@@ -292,7 +292,7 @@ class MainApp(MDApp):
         for row in data:
             target_value = row.get("Target", "")
             # Check if the "Target" column contains a number
-            if target_value.isdigit():  # Check if the value is numeric
+            if not target_value:  # Check if the value does not contain data
                 # Shift the columns across by one
                 shifted_row = {}
                 keys = list(row.keys())
