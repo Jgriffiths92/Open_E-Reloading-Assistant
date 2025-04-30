@@ -1044,7 +1044,7 @@ class MainApp(MDApp):
                     self.handle_nfc_tag(intent)
 
                 # Handle CSV file intents
-                elif action == "android.intent.action.VIEW":
+                if action == "android.intent.action.VIEW":
                     uri = intent.getData()
                     if uri is not None:
                         # Resolve the file path from the URI
