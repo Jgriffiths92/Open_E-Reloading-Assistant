@@ -186,7 +186,7 @@ class MainApp(MDApp):
             try:
                 PythonActivity = autoclass('org.kivy.android.PythonActivity')
                 intent = PythonActivity.mActivity.getIntent()
-                self.handle_received_csv(intent)
+                self.on_new_intent(intent)  # Use the existing on_new_intent method
             except Exception as e:
                 print(f"Error handling startup intent: {e}")
 
@@ -1046,6 +1046,7 @@ class MainApp(MDApp):
                 # Handle CSV file intents
                 if action == "android.intent.action.VIEW":
                     uri = intent.getData()
+                    print(f"Received URI: {uri}")
                     if uri is not None:
                         # Resolve the file path from the URI
                         content_resolver = mActivity.getContentResolver()
@@ -1065,7 +1066,9 @@ class MainApp(MDApp):
         try:
             # Check if the URI is a file scheme
             if uri.getScheme() == "file":
-                return uri.getPath()
+                file_path = uri.getPath()
+                print(f"File scheme URI resolved to path: {file_path}")
+                return file_path
 
             # Handle content scheme URIs
             elif uri.getScheme() == "content":
@@ -1077,17 +1080,25 @@ class MainApp(MDApp):
                     cursor.moveToFirst()
                     file_path = cursor.getString(column_index)
                     cursor.close()
-                    print(f"Resolved file path: {file_path}")
+                    print(f"Content scheme URI resolved to path: {file_path}")
                     return file_path
+                else:
+                    print("Cursor is None. Could not resolve content URI.")
         except Exception as e:
             print(f"Error resolving URI to path: {e}")
         return None
 
-    def process_received_csv(self, file_path):
+    def process_received_csv(self, file_path_or_uri):
         """Process the received CSV file."""
         try:
-            # Read the CSV file and convert it to a dictionary
-            data = self.read_csv_to_dict(file_path)
+            if file_path_or_uri.startswith("/"):  # If it's a file path
+                with open(file_path_or_uri, mode="r", encoding="utf-8") as csv_file:
+                    data = self.read_csv_to_dict(csv_file)
+            else:  # If it's a content URI
+                content_resolver = mActivity.getContentResolver()
+                input_stream = content_resolver.openInputStream(file_path_or_uri)
+                data = self.read_csv_to_dict(input_stream)
+
             self.current_data = data  # Store the data for filtering or other operations
 
             # Preprocess the data
@@ -1098,7 +1109,7 @@ class MainApp(MDApp):
 
             # Navigate to the Home Screen
             self.root.ids.screen_manager.current = "home"
-            print(f"Processed received CSV: {file_path}")
+            print(f"Processed received CSV: {file_path_or_uri}")
         except Exception as e:
             print(f"Error processing received CSV: {e}")
 
