@@ -1043,9 +1043,10 @@ class MainApp(MDApp):
                 # Handle NFC intents
                 if action in ["android.nfc.action.NDEF_DISCOVERED", "android.nfc.action.TECH_DISCOVERED", "android.nfc.action.TAG_DISCOVERED"]:
                     self.handle_nfc_tag(intent)
+                from kivy.lang import Builder
 
                 # Handle file or text intents
-                elif action in ["android.intent.action.VIEW", "android.intent.action.SEND"]:
+                if action in ["android.intent.action.VIEW", "android.intent.action.SEND"]:
                     uri = intent.getData()
                     mime_type = intent.getType()
                     print(f"Received URI: {uri}, MIME type: {mime_type}")
