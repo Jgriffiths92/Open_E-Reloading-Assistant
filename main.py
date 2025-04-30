@@ -1050,6 +1050,19 @@ class MainApp(MDApp):
                     mime_type = intent.getType()
                     print(f"Received URI: {uri}, MIME type: {mime_type}")
 
+                    # Check for extras
+                    extras = intent.getExtras()
+                    if extras:
+                        print(f"Intent extras: {extras.keySet()}")
+                        if extras.containsKey("android.intent.extra.TEXT"):
+                            text_content = extras.getString("android.intent.extra.TEXT")
+                            print(f"Received text content: {text_content}")
+                            # Process the text content if needed
+                        else:
+                            print("No text content found in the intent.")
+                    else:
+                        print("No extras found in the intent.")
+
                     # Handle file intents
                     if uri is not None and mime_type == "text/csv":
                         content_resolver = mActivity.getContentResolver()
@@ -1060,16 +1073,6 @@ class MainApp(MDApp):
                             self.process_received_csv(file_path)
                         else:
                             print("Received file is not a CSV or could not resolve the file path.")
-
-                    # Handle text intents
-                    elif mime_type == "text/html":
-                        extras = intent.getExtras()
-                        if extras and extras.containsKey("android.intent.extra.TEXT"):
-                            text_content = extras.getString("android.intent.extra.TEXT")
-                            print(f"Received text content: {text_content}")
-                            # Process the text content if needed
-                        else:
-                            print("No text content found in the intent.")
                     else:
                         print("Unsupported MIME type or no URI provided.")
             except Exception as e:
