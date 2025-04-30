@@ -1043,10 +1043,9 @@ class MainApp(MDApp):
                 # Handle NFC intents
                 if action in ["android.nfc.action.NDEF_DISCOVERED", "android.nfc.action.TECH_DISCOVERED", "android.nfc.action.TAG_DISCOVERED"]:
                     self.handle_nfc_tag(intent)
-                from kivy.lang import Builder
 
                 # Handle file or text intents
-                if action in ["android.intent.action.VIEW", "android.intent.action.SEND"]:
+                elif action in ["android.intent.action.VIEW", "android.intent.action.SEND"]:
                     uri = intent.getData()
                     mime_type = intent.getType()
                     print(f"Received URI: {uri}, MIME type: {mime_type}")
@@ -1055,12 +1054,20 @@ class MainApp(MDApp):
                     extras = intent.getExtras()
                     if extras:
                         print(f"Intent extras: {extras.keySet()}")
+                        # Iterate through all extras to inspect their values
+                        for key in extras.keySet().toArray():
+                            value = extras.get(key)
+                            print(f"Extra key: {key}, value: {value}")
+
+                        # Check for text content
                         if extras.containsKey("android.intent.extra.TEXT"):
                             text_content = extras.getString("android.intent.extra.TEXT")
                             print(f"Received text content: {text_content}")
                             # Process the text content if needed
-                        else:
-                            print("No text content found in the intent.")
+                        elif extras.containsKey("android.intent.extra.STREAM"):
+                            stream_uri = extras.getParcelable("android.intent.extra.STREAM")
+                            print(f"Received stream URI: {stream_uri}")
+                            # Process the stream URI if needed
                     else:
                         print("No extras found in the intent.")
 
