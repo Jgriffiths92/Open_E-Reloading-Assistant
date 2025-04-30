@@ -1059,11 +1059,20 @@ class MainApp(MDApp):
                             value = extras.get(key)
                             print(f"Extra key: {key}, value: {value}")
 
+                        # Check for subject content
+                        if extras.containsKey("android.intent.extra.SUBJECT"):
+                            subject_content = extras.getString("android.intent.extra.SUBJECT")
+                            print(f"Received subject content: {subject_content}")
+                            # Process the subject content
+                            self.process_subject_content(subject_content)
+
                         # Check for text content
-                        if extras.containsKey("android.intent.extra.TEXT"):
+                        elif extras.containsKey("android.intent.extra.TEXT"):
                             text_content = extras.getString("android.intent.extra.TEXT")
                             print(f"Received text content: {text_content}")
                             # Process the text content if needed
+
+                        # Check for stream URI
                         elif extras.containsKey("android.intent.extra.STREAM"):
                             stream_uri = extras.getParcelable("android.intent.extra.STREAM")
                             print(f"Received stream URI: {stream_uri}")
@@ -1434,6 +1443,11 @@ class MainApp(MDApp):
                     print(f"Copied file: {sub_src_path} to {sub_dest_path}")
         except Exception as e:
             print(f"Error copying directory locally: {e}")
+
+    def process_subject_content(self, subject_content):
+        """Process the subject content received in the intent."""
+        print(f"Processing subject content: {subject_content}")
+        # Add your logic to handle the subject content here
 
 if __name__ == "__main__":
     MainApp().run()
