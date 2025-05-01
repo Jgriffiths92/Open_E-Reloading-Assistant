@@ -969,9 +969,14 @@ class MainApp(MDApp):
                 # Create a pending intent for NFC
                 intent = Intent(mActivity, mActivity.getClass())
                 intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                pending_intent = PendingIntent.getActivity(mActivity, 0, intent, 0)
+                pending_intent = PendingIntent.getActivity(
+                    mActivity,
+                    0,
+                    intent,
+                    PendingIntent.FLAG_IMMUTABLE  # Add FLAG_IMMUTABLE to comply with Android 12+
+                )
 
-                # Create an intent filter for NFC
+                # Create intent filters for NFC
                 ndef_filter = IntentFilter("android.nfc.action.NDEF_DISCOVERED")
                 tech_filter = IntentFilter("android.nfc.action.TECH_DISCOVERED")
                 tag_filter = IntentFilter("android.nfc.action.TAG_DISCOVERED")
