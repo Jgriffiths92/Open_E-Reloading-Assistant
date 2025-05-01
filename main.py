@@ -1063,17 +1063,15 @@ class MainApp(MDApp):
                         if extras.containsKey("android.intent.extra.SUBJECT"):
                             subject_content = extras.getString("android.intent.extra.SUBJECT")
                             print(f"Received subject content: {subject_content}")
-                            # Process the subject content
                             self.process_subject_content(subject_content)
 
                         # Check for text content
-                        elif extras.containsKey("android.intent.extra.TEXT"):
+                        if extras.containsKey("android.intent.extra.TEXT"):
                             text_content = extras.getString("android.intent.extra.TEXT")
                             print(f"Received text content: {text_content}")
-                            # Process the text content if needed
 
                         # Check for stream URI
-                        elif extras.containsKey("android.intent.extra.STREAM"):
+                        if extras.containsKey("android.intent.extra.STREAM"):
                             stream_uri = extras.getParcelable("android.intent.extra.STREAM")
                             print(f"Received stream URI: {stream_uri}")
                             # Process the stream URI if needed
