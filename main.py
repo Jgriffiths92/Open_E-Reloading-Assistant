@@ -1066,7 +1066,7 @@ class MainApp(MDApp):
                             self.process_subject_content(subject_content)
 
                         # Check for stream URI
-                        elif extras.containsKey("android.intent.extra.STREAM"):
+                        if extras.containsKey("android.intent.extra.STREAM"):
                             stream_uri = extras.getParcelable("android.intent.extra.STREAM")
                             print(f"Received stream URI: {stream_uri}")
                             # Read and display the content of the file
