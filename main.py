@@ -1086,11 +1086,11 @@ class MainApp(MDApp):
                         print("No extras found in the intent.")
 
                     # Handle file intents
-                    if uri is not None and mime_type == "text/csv":
+                    if uri is not None and mime_type == "text/html":
                         content_resolver = mActivity.getContentResolver()
                         file_path = self.resolve_uri_to_path(content_resolver, uri)
 
-                        if file_path and file_path.endswith(".csv"):
+                        if file_path and file_path.endswith(".html"):
                             print(f"Resolved CSV file path: {file_path}")
                             self.process_received_csv(file_path)
                         else:
