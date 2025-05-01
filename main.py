@@ -412,7 +412,6 @@ class MainApp(MDApp):
         self.menu = MDDropdownMenu(
             caller=instance,
             items=menu_items,
-            width_mult=4,
         )
         self.menu.open()
 
@@ -512,7 +511,6 @@ class MainApp(MDApp):
                 items=[{"text": "New Event...", "on_release": lambda: update_selected_folder("New Event...")}] +
                       [{"text": folder, "on_release": lambda selected_folder=folder: update_selected_folder(selected_folder)}
                        for folder in folders],
-                width_mult=4,
                 position="center",
             )
 
@@ -794,7 +792,6 @@ class MainApp(MDApp):
                     {"text": model["text"], "on_release": model["on_release"]}
                     for model in display_models
                 ],
-                width_mult=4,
             )
 
         # Open the dropdown menu
@@ -830,7 +827,6 @@ class MainApp(MDApp):
             self.orientation_menu = MDDropdownMenu(
                 caller=button,
                 items=orientation_options,
-                width_mult=4,
             )
 
         # Open the dropdown menu
@@ -1347,7 +1343,7 @@ class MainApp(MDApp):
                 row_fields[field_name] = text_field
                 row_layout.add_widget(text_field)
 
-        # Store the row fields for later data collection
+        # Store the row fields for later use
         if not hasattr(self, "manual_data_rows"):
             self.manual_data_rows = []
         self.manual_data_rows.append(row_fields)
