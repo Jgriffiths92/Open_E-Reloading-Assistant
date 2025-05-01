@@ -18,19 +18,19 @@ from kivymd.uix.textfield import MDTextField
 from PIL import Image, ImageDraw, ImageFont
 import platform
 try:
-    from android import mActivity
+    from android import mActivity # type: ignore
 except ImportError:
     mActivity = None  # Handle cases where the app is not running on Android
 
 try:
-    from jnius import autoclass
+    from jnius import autoclass # type: ignore
 except ImportError:
     autoclass = None  # Handle cases where pyjnius is not available
 
 def is_android():
     """Check if the app is running on an Android device."""
     try:
-        from android import mActivity
+        from android import mActivity # type: ignore
         return True
     except ImportError:
         return False
@@ -1086,11 +1086,11 @@ class MainApp(MDApp):
                         print("No extras found in the intent.")
 
                     # Handle file intents
-                    if uri is not None and mime_type == "text/html":
+                    if uri is not None and mime_type == "text/csv":
                         content_resolver = mActivity.getContentResolver()
                         file_path = self.resolve_uri_to_path(content_resolver, uri)
 
-                        if file_path and file_path.endswith(".html"):
+                        if file_path and file_path.endswith(".csv"):
                             print(f"Resolved CSV file path: {file_path}")
                             self.process_received_csv(file_path)
                         else:
