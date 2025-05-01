@@ -1063,33 +1063,27 @@ class MainApp(MDApp):
                         if extras.containsKey("android.intent.extra.SUBJECT"):
                             subject_content = extras.getString("android.intent.extra.SUBJECT")
                             print(f"Received subject content: {subject_content}")
-                            # Process the subject content
                             self.process_subject_content(subject_content)
-
-                        # Check for text content
-                        elif extras.containsKey("android.intent.extra.TEXT"):
-                            text_content = extras.getString("android.intent.extra.TEXT")
-                            print(f"Received text content: {text_content}")
-                            # Process the text content if needed
 
                         # Check for stream URI
                         elif extras.containsKey("android.intent.extra.STREAM"):
                             stream_uri = extras.getParcelable("android.intent.extra.STREAM")
                             print(f"Received stream URI: {stream_uri}")
-                            # Process the stream URI if needed
+                            # Read and display the content of the file
+                            self.display_file_content(stream_uri)
                     else:
                         print("No extras found in the intent.")
 
                     # Handle file intents
-                    if uri is not None and mime_type == "text/csv":
+                    if uri is not None and mime_type == "text/":
                         content_resolver = mActivity.getContentResolver()
                         file_path = self.resolve_uri_to_path(content_resolver, uri)
 
-                        if file_path and file_path.endswith(".csv"):
-                            print(f"Resolved CSV file path: {file_path}")
+                        if file_path and (file_path.endswith(".csv") or file_path.endswith(".html")):
+                            print(f"Resolved file path: {file_path}")
                             self.process_received_csv(file_path)
                         else:
-                            print("Received file is not a CSV or could not resolve the file path.")
+                            print("Received file is not a CSV or text file or could not resolve the file path.")
                     else:
                         print("Unsupported MIME type or no URI provided.")
             except Exception as e:
@@ -1455,6 +1449,19 @@ class MainApp(MDApp):
             self.root.ids.home_screen.ids.stage_name_field.text = subject_content
         except Exception as e:
             print(f"Error processing subject content: {e}")
+
+    def display_file_content(self, stream_uri):
+        """Display the content of the file received via intent."""
+        try:
+            content_resolver = mActivity.getContentResolver()
+            input_stream = content_resolver.openInputStream(stream_uri)
+            if input_stream:
+                content = input_stream.read().decode("utf-8")
+                print(f"Received file content:\n{content}")
+                # Optionally, display the content in a label or text field
+                self.root.ids.home_screen.ids.stage_notes_field.text = content
+        except Exception as e:
+            print(f"Error displaying file content: {e}")
 
 if __name__ == "__main__":
     MainApp().run()
