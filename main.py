@@ -1342,7 +1342,7 @@ class MainApp(MDApp):
                 row_fields[field_name] = text_field
                 row_layout.add_widget(text_field)
 
-        # Store the row fields for later data collection
+        # Store the row fields for later use
         if not hasattr(self, "manual_data_rows"):
             self.manual_data_rows = []
         self.manual_data_rows.append(row_fields)
@@ -1446,8 +1446,15 @@ class MainApp(MDApp):
 
     def process_subject_content(self, subject_content):
         """Process the subject content received in the intent."""
-        print(f"Processing subject content: {subject_content}")
-        # Add your logic to handle the subject content here
+        try:
+            print(f"Processing subject content: {subject_content}")
+            # Print the received text
+            print(f"Received text from the file: {subject_content}")
+
+            # Optionally, display the content in a label or text field
+            self.root.ids.home_screen.ids.stage_name_field.text = subject_content
+        except Exception as e:
+            print(f"Error processing subject content: {e}")
 
 if __name__ == "__main__":
     MainApp().run()
