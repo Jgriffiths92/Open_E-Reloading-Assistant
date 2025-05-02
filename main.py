@@ -1108,19 +1108,22 @@ class MainApp(MDApp):
                 return file_path
 
             # Handle content scheme URIs
-            elif uri.getScheme() == "content":
-                # Query the content resolver for the file path
-                projection = [autoclass("android.provider.MediaStore$MediaColumns").DATA]
-                cursor = content_resolver.query(uri, projection, None, None, None)
-                if cursor is not None:
-                    column_index = cursor.getColumnIndexOrThrow(projection[0])
-                    cursor.moveToFirst()
-                    file_path = cursor.getString(column_index)
-                    cursor.close()
-                    print(f"Content scheme URI resolved to path: {file_path}")
-                    return file_path
-                else:
-                    print("Cursor is None. Could not resolve content URI.")
+            if uri.getScheme() == "file":
+                file_path = uri.getPath()
+                print(f"File scheme URI resolved to path: {file_path}")
+                return file_path
+            # Query the content resolver for the file path
+            projection = [autoclass("android.provider.MediaStore$MediaColumns").DATA]
+            cursor = content_resolver.query(uri, projection, None, None, None)
+            if cursor is not None:
+                column_index = cursor.getColumnIndexOrThrow(projection[0])
+                cursor.moveToFirst()
+                file_path = cursor.getString(column_index)
+                cursor.close()
+                print(f"Content scheme URI resolved to path: {file_path}")
+                return file_path
+            else:
+                print("Cursor is None. Could not resolve content URI.")
         except Exception as e:
             print(f"Error resolving URI to path: {e}")
         return None
