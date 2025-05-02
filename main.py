@@ -295,7 +295,6 @@ class MainApp(MDApp):
                     # Map the row to the static column names
                     mapped_row = {static_columns[i]: row[i] if i < len(row) else "" for i in range(len(static_columns))}
                     data.append(mapped_row)
-            print(f"CSV data read successfully: {data}")
         except Exception as e:
             print(f"Error reading CSV file: {e}")
 
@@ -326,8 +325,6 @@ class MainApp(MDApp):
             print("No data to display.")
             return
 
-        print(f"Displaying data: {data}")
-
         # Preprocess the data to handle numeric "Target" values
         data = self.preprocess_data(data)
 
@@ -336,10 +333,11 @@ class MainApp(MDApp):
 
         # Filter headers based on the show/hide options
         headers = ["Elv", "Wnd1"]  # Start with these columns
+        # Include "Target" only if the data contains values for it
         if any(row.get("Target") for row in data):
             headers.insert(0, "Target")
         if show_range:
-            headers.insert(1, "Range")
+            headers.insert(1, "Range")  # Insert "Range" after "Target" and before "Elv"
         if show_2_wind_holds:
             headers.append("Wnd2")
         if show_lead:
@@ -350,22 +348,32 @@ class MainApp(MDApp):
             {header: row.get(header, "") for header in headers} for row in data
         ]
 
-        print(f"Filtered data: {filtered_data}")
+        # Calculate the maximum width for each column
+        column_widths = {header: len(header) for header in headers}  # Start with header lengths
+        for row in filtered_data:
+            for header in headers:
+                column_widths[header] = max(column_widths[header], len(str(row.get(header, ""))))
+
+        # Format the headers and rows as text
+        table_text = " | ".join(f"{header:<{column_widths[header]}}" for header in headers) + "\n"  # Add headers
+        table_text += "-" * (sum(column_widths.values()) + len(headers) * 3 - 1) + "\n"  # Add a separator line
+        for row in filtered_data:
+            table_text += " | ".join(f"{str(row.get(header, '')):<{column_widths[header]}}" for header in headers) + "\n"  # Add rows
 
         # Add the text to the table_container in Home Screen
         home_screen = self.root.ids.home_screen
         table_container = home_screen.ids.table_container
-        table_container.clear_widgets()
+        table_container.clear_widgets()  # Clear any existing widgets in the container
 
         # Create a Label to display the table text
-        table_text = "\n".join([str(row) for row in filtered_data])
         table_label = Label(
             text=table_text,
             halign="center",
             valign="center",
             size_hint=(1, 1),
             text_size=(table_container.width, None),
-            color=(0, 0, 0, 1),
+            color=(0, 0, 0, 1),  # Set text color to black
+            font_name="assets/fonts/RobotoMono-Regular.ttf",  # Path to the font file
         )
         table_container.add_widget(table_label)
 
@@ -1074,11 +1082,11 @@ class MainApp(MDApp):
                         print("No extras found in the intent.")
 
                     # Handle file intents
-                    if uri is not None and mime_type == "text/csv" or mime_type == "text/html":
+                    if uri is not None and mime_type == "text/csv":
                         content_resolver = mActivity.getContentResolver()
                         file_path = self.resolve_uri_to_path(content_resolver, uri)
 
-                        if file_path and file_path.endswith(".csv" or ".html"):
+                        if file_path and file_path.endswith(".csv"):
                             print(f"Resolved CSV file path: {file_path}")
                             self.process_received_csv(file_path)
                         else:
