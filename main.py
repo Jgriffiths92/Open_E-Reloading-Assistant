@@ -1413,7 +1413,11 @@ class MainApp(MDApp):
                     # Copy a single file
                     with asset_manager.open(sub_source_path) as asset_file:
                         with open(sub_dest_path, "wb") as output_file:
-                            output_file.write(asset_file.read())
+                            while True:
+                                chunk = asset_file.read(1024)  # Read in chunks of 1024 bytes
+                                if not chunk:
+                                    break
+                                output_file.write(chunk)
                     print(f"Copied file: {sub_source_path} to {sub_dest_path}")
         except Exception as e:
             print(f"Error copying directory from assets: {e}")
