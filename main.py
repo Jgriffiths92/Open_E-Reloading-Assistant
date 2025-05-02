@@ -1101,6 +1101,10 @@ class MainApp(MDApp):
     def resolve_uri_to_path(self, content_resolver, uri):
         """Resolve a content URI to a file path."""
         try:
+            if uri is None:
+                print("Error: URI is None. Cannot resolve path.")
+                return None
+
             # Check if the URI is a file scheme
             if uri.getScheme() == "file":
                 file_path = uri.getPath()
