@@ -633,12 +633,13 @@ class MainApp(MDApp):
             if not self.config_parser.has_section("Settings"):
                 self.config_parser.add_section("Settings")
 
-            # Save the selected display model and orientation
+            # Save the selected display model, orientation, and standalone mode
             self.config_parser.set("Settings", "display_model", self.selected_display)
             self.config_parser.set("Settings", "orientation", self.selected_orientation)
+            self.config_parser.set("Settings", "standalone_mode", str(self.standalone_mode_enabled))  # Save as string
 
             # Debug: Print the settings being saved
-            print(f"Saving settings: display_model={self.selected_display}, orientation={self.selected_orientation}")
+            print(f"Saving settings: display_model={self.selected_display}, orientation={self.selected_orientation}, standalone_mode={self.standalone_mode_enabled}")
 
             # Write the settings to the file
             with open(self.config_file, "w") as config_file:
@@ -898,11 +899,15 @@ class MainApp(MDApp):
 
     def on_standalone_mode_toggle(self, active):
         """Handle the Stand Alone Mode toggle."""
+        self.standalone_mode_enabled = active  # Update the standalone mode state
+        print(f"Stand Alone Mode {'enabled' if active else 'disabled'}")
+
+        # Save the updated state to the settings
+        self.save_settings()
+
         if active:
-            print("Stand Alone Mode enabled")
             self.show_manual_data_input()  # Show manual data input fields
         else:
-            print("Stand Alone Mode disabled")
             # Clear the manual data input fields and restore the table container
             home_screen = self.root.ids.home_screen
             table_container = home_screen.ids.table_container
