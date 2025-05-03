@@ -32,7 +32,7 @@ except ImportError:
 def is_android():
     """Check if the app is running on an Android device."""
     try:
-        from android import mActivity # type: ignore
+        from android import mActivity  # type: ignore
         return True
     except ImportError:
         return False
@@ -997,7 +997,6 @@ class MainApp(MDApp):
             try:
                 # Get the Android context and NFC adapter
                 NfcAdapter = autoclass('android.nfc.NfcAdapter')
-                context = autoclass('android.content.Context')
                 self.nfc_adapter = NfcAdapter.getDefaultAdapter(mActivity)
 
                 if self.nfc_adapter is None:
