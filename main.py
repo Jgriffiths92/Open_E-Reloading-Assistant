@@ -1363,6 +1363,10 @@ class MainApp(MDApp):
         # Clear any existing widgets in the table container
         table_container.clear_widgets()
 
+        # Create a vertical layout to hold the rows and buttons
+        main_layout = BoxLayout(orientation="vertical", spacing="10dp", size_hint=(1, None))
+        main_layout.bind(minimum_height=main_layout.setter("height"))  # Adjust height dynamically
+
         # Define the available fields and their display options
         available_fields = {
             "Target": {"hint_text": "Target", "show": True},  # Always show Target
@@ -1377,27 +1381,25 @@ class MainApp(MDApp):
         self.available_fields = available_fields
 
         # Add the first row of input fields
-        self.add_data_row(table_container)
+        self.add_data_row(main_layout)
 
         # Create a layout for the "ADD ROW" and "DELETE ROW" buttons
-        add_row_layout = BoxLayout(orientation="horizontal", spacing="10dp", size_hint=(1, None), height=dp(50), pos_hint={"center_x": 0.5})
+        add_row_layout = BoxLayout(orientation="horizontal", spacing="10dp", size_hint=(1, None), height=dp(50))
         add_row_layout.add_widget(
             MDRaisedButton(
                 text="ADD ROW",
-                size_hint=(None, None),  # Set size_hint to None to allow explicit width and height
-                size=(dp(120), dp(40)),  # Set the size of the button
-                pos_hint={"center_x": 0.5},  # Center the button horizontally
-                on_release=lambda x: self.add_data_row(table_container)
+                size_hint=(None, None),
+                size=(dp(120), dp(40)),
+                on_release=lambda x: self.add_data_row(main_layout)
             )
         )
         add_row_layout.add_widget(
             MDRaisedButton(
                 text="DELETE ROW",
-                size_hint=(None, None),  # Set size_hint to None to allow explicit width and height
-                size=(dp(120), dp(40)),  # Set the size of the button
-                pos_hint={"center_x": 0.5},  # Center the button horizontally
-                md_bg_color=(1, 0, 0, 1),  # Set the background color to red (RGBA)
-                on_release=lambda x: self.delete_last_row(table_container)
+                size_hint=(None, None),
+                size=(dp(120), dp(40)),
+                md_bg_color=(1, 0, 0, 1),  # Red background
+                on_release=lambda x: self.delete_last_row(main_layout)
             )
         )
 
@@ -1416,12 +1418,15 @@ class MainApp(MDApp):
             )
         )
 
-        # Add the layouts to the table container
-        table_container.add_widget(add_row_layout)
-        table_container.add_widget(action_buttons_layout)
+        # Add the button layouts to the main layout
+        main_layout.add_widget(add_row_layout)
+        main_layout.add_widget(action_buttons_layout)
+
+        # Add the main layout to the table container
+        table_container.add_widget(main_layout)
 
     def add_data_row(self, table_container):
-        """Add a new row of data fields to the table container."""
+        """Add a new row of data fields directly underneath the existing rows."""
         # Create a layout for the new row
         row_layout = BoxLayout(orientation="horizontal", spacing="10dp", size_hint=(1, None))
         row_layout.height = dp(50)  # Adjust height for a single row of text fields
@@ -1443,8 +1448,16 @@ class MainApp(MDApp):
             self.manual_data_rows = []
         self.manual_data_rows.append(row_fields)
 
-        # Add the row layout to the table container
-        table_container.add_widget(row_layout, index=len(table_container.children) - 1)  # Add above the button layout
+        # Find the correct index to insert the new row
+        # The new row should be added above the button layouts
+        button_index = 0
+        for i, child in enumerate(reversed(table_container.children)):
+            if isinstance(child, BoxLayout) and any(isinstance(widget, MDRaisedButton) or isinstance(widget, MDFlatButton) for widget in child.children):
+                button_index = len(table_container.children) - i
+                break
+
+        # Add the new row at the calculated index
+        table_container.add_widget(row_layout, index=button_index)
 
     def add_manual_data(self):
         """Add the manually entered data to the current data and display it."""
