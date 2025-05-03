@@ -17,15 +17,17 @@ import os
 from kivymd.uix.textfield import MDTextField
 from PIL import Image, ImageDraw, ImageFont
 import platform
+from kivy.config import ConfigParser
+from configparser import ConfigParser
+
 try:
     from android import mActivity # type: ignore
 except ImportError:
-    mActivity = None  # Handle cases where the app is not running on Android
 
-try:
-    from jnius import autoclass # type: ignore
-except ImportError:
-    autoclass = None  # Handle cases where pyjnius is not available
+    try:
+        from jnius import autoclass # type: ignore
+    except ImportError:
+        autoclass = None  # Handle cases where pyjnius is not available
 
 def is_android():
     """Check if the app is running on an Android device."""
@@ -129,6 +131,9 @@ class SettingsScreen(Screen):
 class MainApp(MDApp):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.config_parser = ConfigParser()  # Initialize ConfigParser
+        private_storage_path = self.get_private_storage_path()
+        self.config_file = os.path.join(private_storage_path, "settings.ini")  # Path to the settings file
         self.standalone_mode_enabled = False  # Default to standalone mode being disabled
         self.selected_display = "Good Display 3.7-inch"  # Default selected display
         self.selected_resolution = (280, 416)  # Default resolution for 3.7-inch display
@@ -165,6 +170,9 @@ class MainApp(MDApp):
                 print(f"Error requesting permissions: {e}")
 
     def build(self):
+        # Load saved settings
+        self.load_settings()
+
         # Request permissions on Android if running on Android
         if is_android():
             self.request_android_permissions()
@@ -618,6 +626,44 @@ class MainApp(MDApp):
         else:
             print("No data available to save.")
 
+    def save_settings(self):
+        """Save the selected settings to a configuration file."""
+        try:
+            # Add a section for settings if it doesn't exist
+            if not self.config_parser.has_section("Settings"):
+                self.config_parser.add_section("Settings")
+
+            # Save the selected display model and orientation
+            self.config_parser.set("Settings", "display_model", self.selected_display)
+            self.config_parser.set("Settings", "orientation", self.selected_orientation)
+
+            # Debug: Print the settings being saved
+            print(f"Saving settings: display_model={self.selected_display}, orientation={self.selected_orientation}")
+
+            # Write the settings to the file
+            with open(self.config_file, "w") as config_file:
+                self.config_parser.write(config_file)  # Pass the file object to the write() method
+            print("Settings saved successfully.")
+        except Exception as e:
+            print(f"Error saving settings: {e}")
+
+    def load_settings(self):
+        """Load the saved settings from the configuration file."""
+        try:
+            # Read the configuration file
+            self.config_parser.read(self.config_file)
+
+            # Load the display model and orientation
+            if self.config_parser.has_option("Settings", "display_model"):
+                self.selected_display = self.config_parser.get("Settings", "display_model")
+            if self.config_parser.has_option("Settings", "orientation"):
+                self.selected_orientation = self.config_parser.get("Settings", "orientation")
+
+            # Debug: Print the loaded settings
+            print(f"Loaded settings: display_model={self.selected_display}, orientation={self.selected_orientation}")
+        except Exception as e:
+            print(f"Error loading settings: {e}")
+
     def csv_to_bitmap(self, csv_data, output_path=None):
         """Convert CSV data to a bitmap image, resize it to fit the display resolution while keeping the aspect ratio, and save it."""
         try:
@@ -812,6 +858,9 @@ class MainApp(MDApp):
         self.root.ids.settings_screen.ids.display_dropdown_button.text = f"{model}"
         print(f"Selected display model: {model} with resolution {final_resolution}")
 
+        # Save the updated settings
+        self.save_settings()
+
         # Close the dropdown menu
         if self.display_menu:
             self.display_menu.dismiss()
@@ -839,6 +888,9 @@ class MainApp(MDApp):
         self.selected_orientation = orientation  # Store the selected orientation
         self.root.ids.settings_screen.ids.orientation_dropdown_button.text = orientation
         print(f"Selected orientation: {orientation}")
+
+        # Save the updated settings
+        self.save_settings()
 
         # Close the dropdown menu
         if self.orientation_menu:
@@ -1123,7 +1175,7 @@ class MainApp(MDApp):
                             # Resolve the URI to a file path
                             content_resolver = mActivity.getContentResolver()
                             file_path = self.resolve_uri_to_path(content_resolver, stream_uri)
-                            if file_path and file_path.endswith(".csv"or ".html"):
+                            if file_path and file_path.endswith(".csv" or ".html"):
                                 print(f"Resolved CSV file path: {file_path}")
                                 self.process_received_csv(file_path)
                             else:
