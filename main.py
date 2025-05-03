@@ -996,6 +996,7 @@ class MainApp(MDApp):
             try:
                 Tag = autoclass('android.nfc.Tag')
                 Ndef = autoclass('android.nfc.tech.Ndef')
+                NdefFormatable = autoclass('android.nfc.tech.NdefFormatable')
 
                 # Get the tag from the intent
                 tag = intent.getParcelableExtra("android.nfc.extra.TAG")
@@ -1003,37 +1004,76 @@ class MainApp(MDApp):
                     print("No NFC tag detected.")
                     return
 
-                # Connect to the tag and write the bitmap data
+                # Check if the tag supports NDEF
                 ndef = Ndef.get(tag)
                 if ndef is not None:
                     ndef.connect()
                     if ndef.isWritable():
-                        # Convert the bitmap to a byte array
-                        if hasattr(self, "current_data") and self.current_data:
-                            bitmap_path = self.csv_to_bitmap(self.current_data)
-                            if bitmap_path:
-                                with open(bitmap_path, "rb") as bitmap_file:
-                                    bitmap_data = bitmap_file.read()
-
-                                # Create an NDEF message with the bitmap data
-                                ndef_message = autoclass('android.nfc.NdefMessage')(
-                                    [autoclass('android.nfc.NdefRecord').createMime(
-                                        "image/bmp", bitmap_data
-                                    )]
-                                )
-                                ndef.writeNdefMessage(ndef_message)
-                                print("Bitmap data written to NFC tag.")
-                            else:
-                                print("Failed to generate bitmap.")
-                        else:
-                            print("No data available to generate bitmap.")
+                        # Write data to the tag
+                        self.write_to_ndef_tag(ndef)
                     else:
                         print("NFC tag is not writable.")
                     ndef.close()
                 else:
-                    print("NDEF is not supported by this tag.")
+                    # If the tag is not NDEF-formatted, try formatting it
+                    ndef_formatable = NdefFormatable.get(tag)
+                    if ndef_formatable is not None:
+                        ndef_formatable.connect()
+                        # Write data to the tag after formatting
+                        self.format_and_write_to_tag(ndef_formatable)
+                        ndef_formatable.close()
+                    else:
+                        print("NDEF is not supported by this tag.")
             except Exception as e:
                 print(f"Error handling NFC tag: {e}")
+
+    def write_to_ndef_tag(self, ndef):
+        """Write data to an NDEF tag."""
+        try:
+            if hasattr(self, "current_data") and self.current_data:
+                bitmap_path = self.csv_to_bitmap(self.current_data)
+                if bitmap_path:
+                    with open(bitmap_path, "rb") as bitmap_file:
+                        bitmap_data = bitmap_file.read()
+
+                    # Create an NDEF message with the bitmap data
+                    ndef_message = autoclass('android.nfc.NdefMessage')(
+                        [autoclass('android.nfc.NdefRecord').createMime(
+                            "image/bmp", bitmap_data
+                        )]
+                    )
+                    ndef.writeNdefMessage(ndef_message)
+                    print("Bitmap data written to NFC tag.")
+                else:
+                    print("Failed to generate bitmap.")
+            else:
+                print("No data available to write to the NFC tag.")
+        except Exception as e:
+            print(f"Error writing to NDEF tag: {e}")
+
+    def format_and_write_to_tag(self, ndef_formatable):
+        """Format an NFC tag and write data to it."""
+        try:
+            if hasattr(self, "current_data") and self.current_data:
+                bitmap_path = self.csv_to_bitmap(self.current_data)
+                if bitmap_path:
+                    with open(bitmap_path, "rb") as bitmap_file:
+                        bitmap_data = bitmap_file.read()
+
+                    # Create an NDEF message with the bitmap data
+                    ndef_message = autoclass('android.nfc.NdefMessage')(
+                        [autoclass('android.nfc.NdefRecord').createMime(
+                            "image/bmp", bitmap_data
+                        )]
+                    )
+                    ndef_formatable.format(ndef_message)
+                    print("NFC tag formatted and data written.")
+                else:
+                    print("Failed to generate bitmap.")
+            else:
+                print("No data available to write to the NFC tag.")
+        except Exception as e:
+            print(f"Error formatting and writing to NFC tag: {e}")
 
     def on_new_intent(self, intent):
         """Handle new intents, including NFC intents and file/text intents."""
@@ -1046,6 +1086,7 @@ class MainApp(MDApp):
                 # Handle NFC intents
                 if action in ["android.nfc.action.NDEF_DISCOVERED", "android.nfc.action.TECH_DISCOVERED", "android.nfc.action.TAG_DISCOVERED"]:
                     self.handle_nfc_tag(intent)
+                    print("NFC tag detected and handled.")
 
                 # Handle file or text intents
                 elif action in ["android.intent.action.VIEW", "android.intent.action.SEND"]:
