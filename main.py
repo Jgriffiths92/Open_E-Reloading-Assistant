@@ -20,21 +20,22 @@ import platform
 from kivy.config import ConfigParser
 from configparser import ConfigParser
 
+
+# Check if running on Android and import necessary modules
+
 try:
     from android import mActivity # type: ignore
 except ImportError:
-
-    try:
-        from jnius import autoclass # type: ignore
-    except ImportError:
-        autoclass = None  # Handle cases where pyjnius is not available
+    mActivity = None  # Handle cases where mActivity is not available
 
 def is_android():
     """Check if the app is running on an Android device."""
     try:
-        from android import mActivity  # type: ignore
+        from android import mActivity
+        from jnius import autoclass
         return True
     except ImportError:
+        autoclass = None  # Handle cases where pyjnius is not available
         return False
 
 # Import the nfc module if not running on Android
