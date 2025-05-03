@@ -19,23 +19,22 @@ from PIL import Image, ImageDraw, ImageFont
 import platform
 from kivy.config import ConfigParser
 from configparser import ConfigParser
-
-
-# Check if running on Android and import necessary modules
+try:
+    from android import mActivity
+except ImportError:
+    mActivity = None  # Handle cases where the app is not running on Android
 
 try:
-    from android import mActivity # type: ignore
+    from jnius import autoclass
 except ImportError:
-    mActivity = None  # Handle cases where mActivity is not available
+    autoclass = None  # Handle cases where pyjnius is not available
 
 def is_android():
     """Check if the app is running on an Android device."""
     try:
-        from android import mActivity
-        from jnius import autoclass
+        from android import mActivity # type: ignore
         return True
     except ImportError:
-        autoclass = None  # Handle cases where pyjnius is not available
         return False
 
 # Import the nfc module if not running on Android
@@ -145,7 +144,7 @@ class MainApp(MDApp):
     
     def request_android_permissions(self):
         """Request necessary permissions on Android."""
-        if is_android():
+        if is_android() and autoclass:
             try:
                 PythonActivity = autoclass('org.kivy.android.PythonActivity')
                 ActivityCompat = autoclass('androidx.core.app.ActivityCompat')
@@ -169,6 +168,8 @@ class MainApp(MDApp):
                     print("All required permissions are already granted.")
             except Exception as e:
                 print(f"Error requesting permissions: {e}")
+        else:
+            print("Permissions can only be requested on Android.")
 
     def build(self):
         # Load saved settings
