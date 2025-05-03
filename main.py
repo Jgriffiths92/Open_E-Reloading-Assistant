@@ -793,14 +793,50 @@ class MainApp(MDApp):
         except Exception as e:
             print(f"Error sending bitmap via NFC: {e}")
 
+    def send_bitmap_via_intent(self, bitmap_path):
+        """Send the generated bitmap via an Android intent."""
+        if is_android() and autoclass:
+            try:
+                # Get the Android context and classes
+                Intent = autoclass('android.content.Intent')
+                File = autoclass('java.io.File')
+                Uri = autoclass('android.net.Uri')
+                Build = autoclass('android.os.Build')
+                FileProvider = autoclass('androidx.core.content.FileProvider')
+
+                # Create a file object for the bitmap
+                bitmap_file = File(bitmap_path)
+
+                # Get the URI for the file
+                if Build.VERSION.SDK_INT >= 24:  # For Android 7.0+ (API level 24+)
+                    context = mActivity.getApplicationContext()
+                    uri = FileProvider.getUriForFile(context, f"{context.getPackageName()}.provider", bitmap_file)
+                else:
+                    uri = Uri.fromFile(bitmap_file)
+
+                # Create the intent
+                intent = Intent(Intent.ACTION_SEND)
+                intent.setType("image/bmp")  # Set the MIME type for the bitmap
+                intent.putExtra(Intent.EXTRA_STREAM, uri)
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)  # Grant read permission for the URI
+
+                # Start the intent
+                chooser = Intent.createChooser(intent, "Share Bitmap")
+                mActivity.startActivity(chooser)
+                print(f"Bitmap sent via intent: {bitmap_path}")
+            except Exception as e:
+                print(f"Error sending bitmap via intent: {e}")
+        else:
+            print("This functionality is only available on Android.")
+
     def on_send_via_nfc(self):
-        """Convert CSV to bitmap and send it via NFC."""
+        """Convert CSV to bitmap and send it via an Android intent."""
         if hasattr(self, "current_data") and self.current_data:
             # Convert CSV data to bitmap
             bitmap_path = self.csv_to_bitmap(self.current_data)
             if bitmap_path:
-                # Send the bitmap via NFC
-                self.send_bitmap_via_nfc(bitmap_path)
+                # Send the bitmap via an Android intent
+                self.send_bitmap_via_intent(bitmap_path)
         else:
             print("No CSV data loaded to send.")
 
