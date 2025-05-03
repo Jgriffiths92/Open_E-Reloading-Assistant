@@ -668,7 +668,7 @@ class MainApp(MDApp):
                     column_widths[header] = max(column_widths[header], len(str(value)))
 
             # Write headers to the image
-            headers = " | ".join(f"{'Tgt' if header == 'Target' else header:<{column_widths[header]}}" for header in filtered_data[0].keys())
+            headers = " | ".join(f"{'Tgt' if header == "Target" else header:<{column_widths[header]}}" for header in filtered_data[0].keys())
             text_bbox = draw.textbbox((0, 0), headers, font=font)  # Get the bounding box of the headers
             text_width = text_bbox[2] - text_bbox[0]  # Calculate the text width
             x = (display_width - text_width) // 2  # Center the text horizontally
@@ -1120,20 +1120,14 @@ class MainApp(MDApp):
                         elif extras.containsKey("android.intent.extra.STREAM"):
                             stream_uri = extras.getParcelable("android.intent.extra.STREAM")
                             print(f"Received stream URI: {stream_uri}")
-                            # Process the stream URI if needed
-                    else:
-                        print("No extras found in the intent.")
-
-                    # Handle file intents
-                    if uri is not None and mime_type == "text/csv" or mime_type == "text/html":
-                        content_resolver = mActivity.getContentResolver()
-                        file_path = self.resolve_uri_to_path(content_resolver, uri)
-
-                        if file_path and file_path.endswith(".csv" or ".html"):
-                            print(f"Resolved CSV file path: {file_path}")
-                            self.process_received_csv(file_path)
-                        else:
-                            print("Received file is not a CSV or could not resolve the file path.")
+                            # Resolve the URI to a file path
+                            content_resolver = mActivity.getContentResolver()
+                            file_path = self.resolve_uri_to_path(content_resolver, stream_uri)
+                            if file_path and file_path.endswith(".csv"or ".html"):
+                                print(f"Resolved CSV file path: {file_path}")
+                                self.process_received_csv(file_path)
+                            else:
+                                print("Received file is not a CSV or could not resolve the file path.")
                     else:
                         print("Unsupported MIME type or no URI provided.")
             except Exception as e:
@@ -1146,6 +1140,8 @@ class MainApp(MDApp):
                 print("Error: URI is None. Cannot resolve path.")
                 return None
 
+            print(f"Resolving URI: {uri}")
+
             # Check if the URI is a file scheme
             if uri.getScheme() == "file":
                 file_path = uri.getPath()
@@ -1153,22 +1149,19 @@ class MainApp(MDApp):
                 return file_path
 
             # Handle content scheme URIs
-            if uri.getScheme() == "file":
-                file_path = uri.getPath()
-                print(f"File scheme URI resolved to path: {file_path}")
-                return file_path
-            # Query the content resolver for the file path
-            projection = [autoclass("android.provider.MediaStore$MediaColumns").DATA]
-            cursor = content_resolver.query(uri, projection, None, None, None)
-            if cursor is not None:
-                column_index = cursor.getColumnIndexOrThrow(projection[0])
-                cursor.moveToFirst()
-                file_path = cursor.getString(column_index)
-                cursor.close()
-                print(f"Content scheme URI resolved to path: {file_path}")
-                return file_path
-            else:
-                print("Cursor is None. Could not resolve content URI.")
+            elif uri.getScheme() == "content":
+                # Query the content resolver for the file path
+                projection = [autoclass("android.provider.MediaStore$MediaColumns").DATA]
+                cursor = content_resolver.query(uri, projection, None, None, None)
+                if cursor is not None:
+                    column_index = cursor.getColumnIndexOrThrow(projection[0])
+                    cursor.moveToFirst()
+                    file_path = cursor.getString(column_index)
+                    cursor.close()
+                    print(f"Content scheme URI resolved to path: {file_path}")
+                    return file_path
+                else:
+                    print("Cursor is None. Could not resolve content URI.")
         except Exception as e:
             print(f"Error resolving URI to path: {e}")
         return None
