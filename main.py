@@ -1603,7 +1603,22 @@ class MainApp(MDApp):
     def process_subject_content(self, subject_content):
         """Process the subject content received in the intent."""
         print(f"Processing subject content: {subject_content}")
-        # Add your logic to handle the subject content here
+
+        # Check if the subject content is "Range Card"
+        if subject_content == "Range Card":
+            # Extract the "Range Card" extra from the intent
+            try:
+                PythonActivity = autoclass('org.kivy.android.PythonActivity')
+                intent = PythonActivity.mActivity.getIntent()
+                extras = intent.getExtras()
+
+                if extras and extras.containsKey("Range Card"):
+                    range_card_data = extras.getString("Range Card")
+                    print(f"Range Card contents:\n{range_card_data}")
+                else:
+                    print("No 'Range Card' extra found in the intent.")
+            except Exception as e:
+                print(f"Error processing 'Range Card' extra: {e}")
 
 if __name__ == "__main__":
     MainApp().run()
