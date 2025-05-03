@@ -19,6 +19,11 @@ from PIL import Image, ImageDraw, ImageFont
 import platform
 from kivy.config import ConfigParser
 from configparser import ConfigParser
+from kivy.core.window import Window
+
+# Ensure the soft keyboard pushes the target widget above it
+Window.softinput_mode = "below_target"
+
 try:
     from android import mActivity
 except ImportError:
