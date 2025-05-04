@@ -1658,7 +1658,16 @@ class MainApp(MDApp):
                             content = file.read()
                             print(f"Contents of the stream:\n{content}")
                     else:
-                        print("Could not resolve the URI to a file path.")
+                        # Fallback: Read directly from the InputStream
+                        try:
+                            input_stream = content_resolver.openInputStream(stream_uri)
+                            if input_stream:
+                                content = input_stream.read().decode("utf-8")
+                                print(f"Contents of the stream (from InputStream):\n{content}")
+                            else:
+                                print("InputStream is None. Cannot read the file.")
+                        except Exception as e:
+                            print(f"Error reading from InputStream: {e}")
                 else:
                     print("No 'EXTRA_STREAM' extra found in the intent.")
             except Exception as e:
