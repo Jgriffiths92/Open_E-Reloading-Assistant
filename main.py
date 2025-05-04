@@ -1223,6 +1223,10 @@ class MainApp(MDApp):
                             stream_uri = extras.getParcelable("android.intent.extra.STREAM")
                             print(f"Stream URI type: {type(stream_uri)}")
                             print(f"Stream URI string: {str(stream_uri)}")
+                            if hasattr(stream_uri, "getScheme"):
+                                print(f"Stream URI scheme: {stream_uri.getScheme()}")
+                            else:
+                                print("Stream URI does not have a getScheme method.")
                             print(f"Received stream URI: {stream_uri}")
 
                             # Resolve the URI to a file path or input stream
@@ -1637,16 +1641,20 @@ class MainApp(MDApp):
         """Process the subject content received in the intent."""
         print(f"Processing subject content: {subject_content}")
 
-        # Check if the subject content is "Range Card"
         if subject_content == "Range Card":
-            # Extract the "Range Card" extra from the intent
             try:
                 PythonActivity = autoclass('org.kivy.android.PythonActivity')
                 intent = PythonActivity.mActivity.getIntent()
-                extras = intent.getExtras()
 
-                if extras and extras.containsKey("android.intent.extra.STREAM"):
-                    stream_uri = extras.getParcelable("android.intent.extra.STREAM")
+                # Try to get the URI from the intent's data
+                stream_uri = intent.getData()
+                if stream_uri is None:
+                    # Fallback to extras if getData() doesn't work
+                    extras = intent.getExtras()
+                    if extras and extras.containsKey("android.intent.extra.STREAM"):
+                        stream_uri = extras.getParcelable("android.intent.extra.STREAM")
+
+                if stream_uri:
                     print(f"Received stream URI: {stream_uri}")
 
                     # Cast the Parcelable to a Uri
@@ -1660,24 +1668,25 @@ class MainApp(MDApp):
 
                     if file_path:
                         # Read and print the file contents
+                        print(f"Resolved file path: {file_path}")
                         with open(file_path, "r", encoding="utf-8") as file:
                             content = file.read()
-                            print(f"Contents of the stream:\n{content}")
+                            print(f"Contents of the file:\n{content}")
                     else:
                         # Fallback: Read directly from the InputStream
                         try:
                             input_stream = content_resolver.openInputStream(stream_uri)
                             if input_stream:
                                 content = input_stream.read().decode("utf-8")
-                                print(f"Contents of the stream (from InputStream):\n{content}")
+                                print(f"Contents of the file (from InputStream):\n{content}")
                             else:
                                 print("InputStream is None. Cannot read the file.")
                         except Exception as e:
                             print(f"Error reading from InputStream: {e}")
                 else:
-                    print("No 'EXTRA_STREAM' extra found in the intent.")
+                    print("No valid URI found in the intent.")
             except Exception as e:
-                print(f"Error processing 'EXTRA_STREAM' extra: {e}")
+                print(f"Error processing subject content: {e}")
 
     def hide_nfc_button(self):
         """Hide the NFC button if running on Android."""
@@ -1690,6 +1699,52 @@ class MainApp(MDApp):
                 print("NFC button hidden on Android.")
             except Exception as e:
                 print(f"Error hiding NFC button: {e}")
+
+def handle_received_file(intent):
+    """Handle a file received via Intent.EXTRA_STREAM."""
+    if is_android() and autoclass:
+        try:
+            # Import necessary Android classes
+            Uri = autoclass('android.net.Uri')
+            ContentResolver = autoclass('android.content.ContentResolver')
+
+            # Check if the intent contains EXTRA_STREAM
+            if intent.hasExtra(Intent.EXTRA_STREAM):
+                # Get the Parcelable URI
+                stream_uri = intent.getParcelableExtra(Intent.EXTRA_STREAM)
+                print(f"Received Parcelable URI: {stream_uri}")
+
+                # Cast the Parcelable to a Uri
+                if not isinstance(stream_uri, Uri):
+                    stream_uri = Uri.parse(str(stream_uri))  # Ensure it's a Uri object
+
+                # Resolve the URI to a file path or read from InputStream
+                content_resolver = mActivity.getContentResolver()
+                file_path = resolve_uri_to_path(content_resolver, stream_uri)
+
+                if file_path:
+                    # File path resolved, read the file
+                    print(f"Resolved file path: {file_path}")
+                    with open(file_path, "r", encoding="utf-8") as file:
+                        content = file.read()
+                        print(f"File contents:\n{content}")
+                else:
+                    # Fallback: Read directly from InputStream
+                    try:
+                        input_stream = content_resolver.openInputStream(stream_uri)
+                        if input_stream:
+                            content = input_stream.read().decode("utf-8")
+                            print(f"File contents (from InputStream):\n{content}")
+                        else:
+                            print("InputStream is None. Cannot read the file.")
+                    except Exception as e:
+                        print(f"Error reading from InputStream: {e}")
+            else:
+                print("No EXTRA_STREAM found in the intent.")
+        except Exception as e:
+            print(f"Error handling received file: {e}")
+    else:
+        print("This functionality is only available on Android.")
 
 if __name__ == "__main__":
     MainApp().run()
