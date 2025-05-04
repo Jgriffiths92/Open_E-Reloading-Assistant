@@ -1720,7 +1720,7 @@ def handle_received_file(intent):
 
                 # Resolve the URI to a file path or read from InputStream
                 content_resolver = mActivity.getContentResolver()
-                file_path = resolve_uri_to_path(content_resolver, stream_uri)
+                file_path = MainApp().resolve_uri_to_path(content_resolver, stream_uri)
 
                 if file_path:
                     # File path resolved, read the file
