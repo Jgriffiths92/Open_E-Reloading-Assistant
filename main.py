@@ -1222,14 +1222,18 @@ class MainApp(MDApp):
                         elif extras.containsKey("android.intent.extra.STREAM"):
                             stream_uri = extras.getParcelable("android.intent.extra.STREAM")
                             print(f"Received stream URI: {stream_uri}")
-                            # Resolve the URI to a file path
+
+                            # Resolve the URI to a file path or input stream
                             content_resolver = mActivity.getContentResolver()
                             file_path = self.resolve_uri_to_path(content_resolver, stream_uri)
-                            if file_path and file_path.endswith(".csv" or ".html"):
-                                print(f"Resolved CSV file path: {file_path}")
-                                self.process_received_csv(file_path)
+
+                            if file_path:
+                                # Read and print the file contents
+                                with open(file_path, "r", encoding="utf-8") as file:
+                                    content = file.read()
+                                    print(f"Contents of the stream:\n{content}")
                             else:
-                                print("Received file is not a CSV or could not resolve the file path.")
+                                print("Could not resolve the URI to a file path.")
                     else:
                         print("Unsupported MIME type or no URI provided.")
             except Exception as e:
@@ -1241,6 +1245,10 @@ class MainApp(MDApp):
             if uri is None:
                 print("Error: URI is None. Cannot resolve path.")
                 return None
+
+            # Cast the Parcelable to a Uri
+            Uri = autoclass('android.net.Uri')
+            uri = Uri.parse(str(uri))  # Ensure it's a Uri object
 
             print(f"Resolving URI: {uri}")
 
