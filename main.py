@@ -213,6 +213,9 @@ class MainApp(MDApp):
         root.ids.settings_screen.ids.display_dropdown_button.text = self.selected_display
         root.ids.settings_screen.ids.orientation_dropdown_button.text = self.selected_orientation
 
+        # Hide the NFC button if on Android
+        self.hide_nfc_button()
+        
         return root
     
     global show_lead, show_range, show_2_wind_holds
@@ -1631,6 +1634,18 @@ class MainApp(MDApp):
                     print("No 'EXTRA_STREAM' extra found in the intent.")
             except Exception as e:
                 print(f"Error processing 'EXTRA_STREAM' extra: {e}")
+
+    def hide_nfc_button(self):
+        """Hide the NFC button if running on Android."""
+        if is_android():
+            try:
+                # Assuming the NFC button has an ID like 'nfc_button'
+                nfc_button = self.root.ids.home_screen.ids.nfc_button
+                nfc_button.opacity = 0  # Make the button invisible
+                nfc_button.disabled = True  # Disable the button
+                print("NFC button hidden on Android.")
+            except Exception as e:
+                print(f"Error hiding NFC button: {e}")
 
 if __name__ == "__main__":
     MainApp().run()
