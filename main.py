@@ -1448,7 +1448,7 @@ class MainApp(MDApp):
 
         # Define the available fields and their display options
         available_fields = {
-            "Target": {"hint_text": "Target", "show": True},  # Always show Target
+            "Target": {"hint_text": 'Target', "show": True},  # Always show Target
             "Range": {"hint_text": "Range", "show": show_range},  # Controlled by show_range
             "Elv": {"hint_text": "Elevation", "show": True},  # Always show Elevation
             "Wnd1": {"hint_text": "Wind 1", "show": True},  # Always show Wind 1
