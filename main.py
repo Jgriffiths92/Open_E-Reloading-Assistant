@@ -725,7 +725,7 @@ class MainApp(MDApp):
                     column_widths[header] = max(column_widths[header], len(str(value)))
 
             # Write headers to the image
-            headers = " | ".join(f"{'Tgt' if header == 'Target' else header:<{column_widths[header]}}" for header in filtered_data[0].keys())
+            headers = " | ".join(f"{'Tgt' if header == "Target" else header:<{column_widths[header]}}" for header in filtered_data[0].keys())
             text_bbox = draw.textbbox((0, 0), headers, font=font)  # Get the bounding box of the headers
             text_width = text_bbox[2] - text_bbox[0]  # Calculate the text width
             x = (display_width - text_width) // 2  # Center the text horizontally
@@ -1237,9 +1237,12 @@ class MainApp(MDApp):
                             else:
                                 # Fallback: Read directly from the InputStream
                                 try:
-                                    input_stream = content_resolver.openInputStream(uri)
-                                    content = input_stream.read().decode("utf-8")
-                                    print(f"Contents of the stream (from InputStream):\n{content}")
+                                    input_stream = content_resolver.openInputStream(stream_uri)
+                                    if input_stream:
+                                        content = input_stream.read().decode("utf-8")
+                                        print(f"Contents of the stream (from InputStream):\n{content}")
+                                    else:
+                                        print("InputStream is None. Cannot read the file.")
                                 except Exception as e:
                                     print(f"Error reading from InputStream: {e}")
                     else:
@@ -1263,8 +1266,8 @@ class MainApp(MDApp):
             # Check if the URI has a valid scheme
             scheme = uri.getScheme()
             if scheme is None:
-                print("Error: URI scheme is None. Cannot resolve path.")
-                return None
+                print("Error: URI scheme is None. Attempting to read directly from InputStream.")
+                return None  # Return None to indicate fallback to InputStream
 
             # Handle file scheme URIs
             if scheme == "file":
