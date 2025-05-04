@@ -725,7 +725,7 @@ class MainApp(MDApp):
                     column_widths[header] = max(column_widths[header], len(str(value)))
 
             # Write headers to the image
-            headers = " | ".join(f"{'Tgt' if header == "Target" else header:<{column_widths[header]}}" for header in filtered_data[0].keys())
+            headers = " | ".join(f"{'Tgt' if header == 'Target' else header:<{column_widths[header]}}" for header in filtered_data[0].keys())
             text_bbox = draw.textbbox((0, 0), headers, font=font)  # Get the bounding box of the headers
             text_width = text_bbox[2] - text_bbox[0]  # Calculate the text width
             x = (display_width - text_width) // 2  # Center the text horizontally
@@ -1448,7 +1448,7 @@ class MainApp(MDApp):
 
         # Define the available fields and their display options
         available_fields = {
-            "Target": {"hint_text": 'Target', "show": True},  # Always show Target
+            "Target": {"hint_text": "Target", "show": True},  # Always show Target
             "Range": {"hint_text": "Range", "show": show_range},  # Controlled by show_range
             "Elv": {"hint_text": "Elevation", "show": True},  # Always show Elevation
             "Wnd1": {"hint_text": "Wind 1", "show": True},  # Always show Wind 1
