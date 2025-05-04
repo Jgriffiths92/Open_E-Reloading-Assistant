@@ -1612,13 +1612,25 @@ class MainApp(MDApp):
                 intent = PythonActivity.mActivity.getIntent()
                 extras = intent.getExtras()
 
-                if extras and extras.containsKey("Range Card"):
-                    range_card_data = extras.getString("Range Card")
-                    print(f"Range Card contents:\n{range_card_data}")
+                if extras and extras.containsKey("android.intent.extra.STREAM"):
+                    stream_uri = extras.getParcelable("android.intent.extra.STREAM")
+                    print(f"Received stream URI: {stream_uri}")
+
+                    # Resolve the URI to a file path or input stream
+                    content_resolver = mActivity.getContentResolver()
+                    file_path = self.resolve_uri_to_path(content_resolver, stream_uri)
+
+                    if file_path:
+                        # Read and print the file contents
+                        with open(file_path, "r", encoding="utf-8") as file:
+                            content = file.read()
+                            print(f"Contents of the stream:\n{content}")
+                    else:
+                        print("Could not resolve the URI to a file path.")
                 else:
-                    print("No 'Range Card' extra found in the intent.")
+                    print("No 'EXTRA_STREAM' extra found in the intent.")
             except Exception as e:
-                print(f"Error processing 'Range Card' extra: {e}")
+                print(f"Error processing 'EXTRA_STREAM' extra: {e}")
 
 if __name__ == "__main__":
     MainApp().run()
