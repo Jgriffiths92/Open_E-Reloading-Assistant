@@ -1233,7 +1233,13 @@ class MainApp(MDApp):
                                     content = file.read()
                                     print(f"Contents of the stream:\n{content}")
                             else:
-                                print("Could not resolve the URI to a file path.")
+                                # Fallback: Read directly from the InputStream
+                                try:
+                                    input_stream = content_resolver.openInputStream(uri)
+                                    content = input_stream.read().decode("utf-8")
+                                    print(f"Contents of the stream (from InputStream):\n{content}")
+                                except Exception as e:
+                                    print(f"Error reading from InputStream: {e}")
                     else:
                         print("Unsupported MIME type or no URI provided.")
             except Exception as e:
@@ -1272,9 +1278,13 @@ class MainApp(MDApp):
                     return file_path
                 else:
                     print("Cursor is None. Could not resolve content URI.")
+                    return None
+            else:
+                print(f"Unsupported URI scheme: {uri.getScheme()}")
+                return None
         except Exception as e:
             print(f"Error resolving URI to path: {e}")
-        return None
+            return None
 
     def process_received_csv(self, file_path_or_uri):
         """Process the received CSV file."""
