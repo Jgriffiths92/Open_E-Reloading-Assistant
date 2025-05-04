@@ -1221,6 +1221,8 @@ class MainApp(MDApp):
                         # Check for stream URI
                         elif extras.containsKey("android.intent.extra.STREAM"):
                             stream_uri = extras.getParcelable("android.intent.extra.STREAM")
+                            print(f"Stream URI type: {type(stream_uri)}")
+                            print(f"Stream URI string: {str(stream_uri)}")
                             print(f"Received stream URI: {stream_uri}")
 
                             # Resolve the URI to a file path or input stream
@@ -1258,14 +1260,20 @@ class MainApp(MDApp):
 
             print(f"Resolving URI: {uri}")
 
-            # Check if the URI is a file scheme
-            if uri.getScheme() == "file":
+            # Check if the URI has a valid scheme
+            scheme = uri.getScheme()
+            if scheme is None:
+                print("Error: URI scheme is None. Cannot resolve path.")
+                return None
+
+            # Handle file scheme URIs
+            if scheme == "file":
                 file_path = uri.getPath()
                 print(f"File scheme URI resolved to path: {file_path}")
                 return file_path
 
             # Handle content scheme URIs
-            elif uri.getScheme() == "content":
+            elif scheme == "content":
                 # Query the content resolver for the file path
                 projection = [autoclass("android.provider.MediaStore$MediaColumns").DATA]
                 cursor = content_resolver.query(uri, projection, None, None, None)
@@ -1280,7 +1288,7 @@ class MainApp(MDApp):
                     print("Cursor is None. Could not resolve content URI.")
                     return None
             else:
-                print(f"Unsupported URI scheme: {uri.getScheme()}")
+                print(f"Unsupported URI scheme: {scheme}")
                 return None
         except Exception as e:
             print(f"Error resolving URI to path: {e}")
