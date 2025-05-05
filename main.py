@@ -843,17 +843,6 @@ class MainApp(MDApp):
         else:
             print("This functionality is only available on Android.")
 
-    def on_send_via_nfc(self):
-        """Convert CSV to bitmap and send it via an Android intent."""
-        if hasattr(self, "current_data") and self.current_data:
-            # Convert CSV data to bitmap
-            bitmap_path = self.csv_to_bitmap(self.current_data)
-            if bitmap_path:
-                # Send the bitmap via an Android intent
-                self.send_bitmap_via_intent(bitmap_path)
-        else:
-            print("No CSV data loaded to send.")
-
     def send_bitmap_as_byte_array_via_nfc(self):
         """Convert the generated bitmap to a byte array and send it via NFC."""
         if hasattr(self, "current_data") and self.current_data:
