@@ -769,6 +769,17 @@ class MainApp(MDApp):
             print(f"Error converting CSV to bitmap: {e}")
             return None
 
+    def bitmap_to_byte_array(self, bitmap_path):
+        """Convert the generated bitmap to a byte array."""
+        try:
+            with open(bitmap_path, "rb") as bitmap_file:
+                byte_array = bitmap_file.read()
+            print(f"Bitmap converted to byte array. Size: {len(byte_array)} bytes")
+            return byte_array
+        except Exception as e:
+            print(f"Error converting bitmap to byte array: {e}")
+            return None
+
     def send_bitmap_via_nfc(self, bitmap_path):
         """Send the bitmap image via NFC."""
         try:
@@ -842,6 +853,22 @@ class MainApp(MDApp):
                 self.send_bitmap_via_intent(bitmap_path)
         else:
             print("No CSV data loaded to send.")
+
+    def send_bitmap_as_byte_array_via_nfc(self):
+        """Convert the generated bitmap to a byte array and send it via NFC."""
+        if hasattr(self, "current_data") and self.current_data:
+            # Generate the bitmap
+            bitmap_path = self.csv_to_bitmap(self.current_data)
+            if bitmap_path:
+                # Convert the bitmap to a byte array
+                byte_array = self.bitmap_to_byte_array(bitmap_path)
+                if byte_array:
+                    # Send the byte array via NFC
+                    self.send_byte_array_via_nfc(byte_array)
+            else:
+                print("Failed to generate bitmap.")
+        else:
+            print("No data available to generate bitmap.")
 
     def navigate_to_home(self):
         """Navigate back to the home screen."""
@@ -1096,6 +1123,7 @@ class MainApp(MDApp):
         """Handle NFC tag detection and write the bitmap data."""
         if is_android() and autoclass:
             try:
+                # Import necessary Android classes
                 Tag = autoclass('android.nfc.Tag')
                 Ndef = autoclass('android.nfc.tech.Ndef')
                 NdefFormatable = autoclass('android.nfc.tech.NdefFormatable')
@@ -1130,8 +1158,9 @@ class MainApp(MDApp):
                 print(f"Error handling NFC tag: {e}")
 
     def write_to_ndef_tag(self, ndef):
-        """Write data to an NDEF tag."""
+        """Write the generated bitmap data to an NDEF tag."""
         try:
+            # Generate the bitmap
             if hasattr(self, "current_data") and self.current_data:
                 bitmap_path = self.csv_to_bitmap(self.current_data)
                 if bitmap_path:
