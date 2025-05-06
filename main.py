@@ -177,6 +177,10 @@ class MainApp(MDApp):
             print("Permissions can only be requested on Android.")
 
     def build(self):
+        """Build the app's UI and initialize settings."""
+        # Set the theme to Light
+        self.theme_cls.theme_style = "Light"
+
         # Load saved settings
         self.load_settings()
 
@@ -184,14 +188,12 @@ class MainApp(MDApp):
         if is_android():
             self.request_android_permissions()
 
-        # Load the KV file
-        root = Builder.load_file("layout.kv")
-
         # Initialize NFC
         if self.initialize_nfc():
             self.enable_nfc_foreground_dispatch()
 
         # Dynamically set the rootpath for the FileChooserListView
+        root = Builder.load_file("layout.kv")  # Load the root widget from the KV file
         saved_cards_screen = root.ids.screen_manager.get_screen("saved_cards")
         csv_directory = self.ensure_csv_directory()
         saved_cards_screen.ids.filechooser.rootpath = csv_directory
@@ -215,7 +217,7 @@ class MainApp(MDApp):
 
         # Hide the NFC button if on Android
         self.hide_nfc_button()
-        
+
         return root
     
     global show_lead, show_range, show_2_wind_holds
