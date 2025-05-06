@@ -772,13 +772,20 @@ class MainApp(MDApp):
             return None
 
     def bitmap_to_byte_array(self, bitmap_path):
-        """Convert the generated bitmap to a byte array and print it to the terminal."""
+        """Convert the generated bitmap to a byte array and print it as both raw bytes and a hex array."""
         try:
             with open(bitmap_path, "rb") as bitmap_file:
                 byte_array = bitmap_file.read()
+
+            # Print the raw byte array
             print(f"Bitmap converted to byte array. Size: {len(byte_array)} bytes")
-            print(f"Byte array: {byte_array}")  # Print the byte array to the terminal
-            return byte_array
+            print(f"Byte array: {byte_array}")
+
+            # Convert the byte array to a hex array
+            hex_array = [f"0x{byte:02X}" for byte in byte_array]
+            print(f"Hex array: {hex_array}")  # Print the hex array to the terminal
+
+            return byte_array  # Return the raw byte array for further processing
         except Exception as e:
             print(f"Error converting bitmap to byte array: {e}")
             return None
@@ -799,10 +806,13 @@ class MainApp(MDApp):
         else:
             print("No data available to generate bitmap.")
 
-    def send_byte_array_via_nfc(self, byte_array):
-        """Send the byte array via NFC."""
+    def send_hex_array_via_nfc(self, hex_array):
+        """Send the hex array via NFC."""
         if is_android() and autoclass:
             try:
+                # Convert the hex array back to a byte array
+                byte_array = bytes(int(byte, 16) for byte in hex_array)
+
                 # Import necessary Android classes
                 Tag = autoclass('android.nfc.Tag')
                 Ndef = autoclass('android.nfc.tech.Ndef')
@@ -822,7 +832,7 @@ class MainApp(MDApp):
                                     )]
                                 )
                                 ndef.writeNdefMessage(ndef_message)
-                                print("Byte array written to NFC tag.")
+                                print("Hex array written to NFC tag.")
                             else:
                                 print("NFC tag is not writable.")
                             ndef.close()
@@ -838,7 +848,7 @@ class MainApp(MDApp):
                                     )]
                                 )
                                 ndef_formatable.format(ndef_message)
-                                print("NFC tag formatted and byte array written.")
+                                print("NFC tag formatted and hex array written.")
                                 ndef_formatable.close()
                             else:
                                 print("NDEF is not supported by this tag.")
@@ -850,7 +860,7 @@ class MainApp(MDApp):
                 print("Waiting for NFC tag...")
                 self.nfc_adapter.setOnTagDiscoveredListener(on_tag_discovered)
             except Exception as e:
-                print(f"Error sending byte array via NFC: {e}")
+                print(f"Error sending hex array via NFC: {e}")
         else:
             print("This functionality is only available on Android.")
 
