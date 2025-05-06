@@ -133,7 +133,7 @@ MDNavigationLayout:
                         md_bg_color: 0.0, 0.5, 0.8, 1
                         size_hint: None, None
                         size: dp(56), dp(56)  # Standard FAB size
-                        on_release: app.on_send_via_nfc()
+                        on_release: app.send_bitmap_as_byte_array_via_nfc()
 
                     MDFloatingActionButton:
                         icon: "content-save"

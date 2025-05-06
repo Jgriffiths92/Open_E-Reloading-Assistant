@@ -770,78 +770,16 @@ class MainApp(MDApp):
             return None
 
     def bitmap_to_byte_array(self, bitmap_path):
-        """Convert the generated bitmap to a byte array."""
+        """Convert the generated bitmap to a byte array and print it to the terminal."""
         try:
             with open(bitmap_path, "rb") as bitmap_file:
                 byte_array = bitmap_file.read()
             print(f"Bitmap converted to byte array. Size: {len(byte_array)} bytes")
+            print(f"Byte array: {byte_array}")  # Print the byte array to the terminal
             return byte_array
         except Exception as e:
             print(f"Error converting bitmap to byte array: {e}")
             return None
-
-    def send_bitmap_via_nfc(self, bitmap_path):
-        """Send the bitmap image via NFC."""
-        try:
-            # Initialize NFC connection
-            clf = nfc.ContactlessFrontend("usb")
-            if not clf:
-                print("NFC reader not found.")
-                return
-
-            # Define the NFC tag write function
-            def on_connect(tag):
-                print("Tag connected. Writing data...")
-                with open(bitmap_path, "rb") as f:
-                    data = f.read()
-                if tag.ndef:
-                    tag.ndef.records = [nfc.ndef.TextRecord(data.decode("utf-8"))]
-                    print("Bitmap sent via NFC.")
-                else:
-                    print("Tag is not NDEF formatted.")
-                return True
-
-            # Wait for a tag and write the bitmap
-            clf.connect(rdwr={"on-connect": on_connect})
-            clf.close()
-        except Exception as e:
-            print(f"Error sending bitmap via NFC: {e}")
-
-    def send_bitmap_via_intent(self, bitmap_path):
-        """Send the generated bitmap via an Android intent."""
-        if is_android() and autoclass:
-            try:
-                # Get the Android context and classes
-                Intent = autoclass('android.content.Intent')
-                File = autoclass('java.io.File')
-                Uri = autoclass('android.net.Uri')
-                Build = autoclass('android.os.Build')
-                FileProvider = autoclass('androidx.core.content.FileProvider')
-
-                # Create a file object for the bitmap
-                bitmap_file = File(bitmap_path)
-
-                # Get the URI for the file
-                if Build.VERSION.SDK_INT >= 24:  # For Android 7.0+ (API level 24+)
-                    context = mActivity.getApplicationContext()
-                    uri = FileProvider.getUriForFile(context, f"{context.getPackageName()}.provider", bitmap_file)
-                else:
-                    uri = Uri.fromFile(bitmap_file)
-
-                # Create the intent
-                intent = Intent(Intent.ACTION_SEND)
-                intent.setType("image/bmp")  # Set the MIME type for the bitmap
-                intent.putExtra(Intent.EXTRA_STREAM, uri)
-                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)  # Grant read permission for the URI
-
-                # Start the intent
-                chooser = Intent.createChooser(intent, "Share Bitmap")
-                mActivity.startActivity(chooser)
-                print(f"Bitmap sent via intent: {bitmap_path}")
-            except Exception as e:
-                print(f"Error sending bitmap via intent: {e}")
-        else:
-            print("This functionality is only available on Android.")
 
     def send_bitmap_as_byte_array_via_nfc(self):
         """Convert the generated bitmap to a byte array and send it via NFC."""
@@ -858,6 +796,61 @@ class MainApp(MDApp):
                 print("Failed to generate bitmap.")
         else:
             print("No data available to generate bitmap.")
+
+    def send_byte_array_via_nfc(self, byte_array):
+        """Send the byte array via NFC."""
+        if is_android() and autoclass:
+            try:
+                # Import necessary Android classes
+                Tag = autoclass('android.nfc.Tag')
+                Ndef = autoclass('android.nfc.tech.Ndef')
+                NdefFormatable = autoclass('android.nfc.tech.NdefFormatable')
+
+                # Define the NFC tag write function
+                def on_tag_discovered(tag):
+                    try:
+                        ndef = Ndef.get(tag)
+                        if ndef is not None:
+                            ndef.connect()
+                            if ndef.isWritable():
+                                # Create an NDEF message with the byte array
+                                ndef_message = autoclass('android.nfc.NdefMessage')(
+                                    [autoclass('android.nfc.NdefRecord').createMime(
+                                        "application/octet-stream", byte_array
+                                    )]
+                                )
+                                ndef.writeNdefMessage(ndef_message)
+                                print("Byte array written to NFC tag.")
+                            else:
+                                print("NFC tag is not writable.")
+                            ndef.close()
+                        else:
+                            # If the tag is not NDEF-formatted, try formatting it
+                            ndef_formatable = NdefFormatable.get(tag)
+                            if ndef_formatable is not None:
+                                ndef_formatable.connect()
+                                # Format the tag and write the byte array
+                                ndef_message = autoclass('android.nfc.NdefMessage')(
+                                    [autoclass('android.nfc.NdefRecord').createMime(
+                                        "application/octet-stream", byte_array
+                                    )]
+                                )
+                                ndef_formatable.format(ndef_message)
+                                print("NFC tag formatted and byte array written.")
+                                ndef_formatable.close()
+                            else:
+                                print("NDEF is not supported by this tag.")
+                    except Exception as e:
+                        print(f"Error writing to NFC tag: {e}")
+
+                # Enable NFC foreground dispatch and wait for a tag
+                self.enable_nfc_foreground_dispatch()
+                print("Waiting for NFC tag...")
+                self.nfc_adapter.setOnTagDiscoveredListener(on_tag_discovered)
+            except Exception as e:
+                print(f"Error sending byte array via NFC: {e}")
+        else:
+            print("This functionality is only available on Android.")
 
     def navigate_to_home(self):
         """Navigate back to the home screen."""
