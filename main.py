@@ -1044,19 +1044,34 @@ class MainApp(MDApp):
             print("Not running on Android. External storage is not available.")
 
     def initialize_nfc(self):
-        """Initialize the NFC adapter and check if NFC is available."""
+        """Initialize the NFC adapter and enable foreground dispatch."""
         if is_android() and autoclass:
             try:
-                # Get the Android context and NFC adapter
                 NfcAdapter = autoclass('android.nfc.NfcAdapter')
-                self.nfc_adapter = NfcAdapter.getDefaultAdapter(mActivity)
+                PendingIntent = autoclass('android.app.PendingIntent')
+                Intent = autoclass('android.content.Intent')
+                IntentFilter = autoclass('android.content.IntentFilter')
 
+                # Get the NFC adapter
+                self.nfc_adapter = NfcAdapter.getDefaultAdapter(mActivity)
                 if self.nfc_adapter is None:
                     print("NFC is not available on this device.")
                     return False
-                else:
-                    print("NFC adapter initialized.")
-                    return True
+
+                # Create a pending intent for NFC
+                intent = Intent(mActivity, mActivity.getClass())
+                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                self.pending_intent = PendingIntent.getActivity(
+                    mActivity, 0, intent, PendingIntent.FLAG_MUTABLE
+                )
+
+                # Create intent filters for NFC
+                self.intent_filters = [
+                    IntentFilter("android.nfc.action.TAG_DISCOVERED")
+                ]
+
+                print("NFC adapter initialized.")
+                return True
             except Exception as e:
                 print(f"Error initializing NFC: {e}")
                 return False
@@ -1722,6 +1737,56 @@ class MainApp(MDApp):
             print(f"Error converting image to pixel array: {e}")
             return None, None, None
 
+    def get_picture_data_ssd(self, bitmap, mode=0):
+        """Convert the bitmap to a byte array for SSD series."""
+        width, height = bitmap.size
+        image_buffer = bytearray()
+        for i in range(width - 1, -1, -1):
+            temp = 0
+            for j in range(height // 8):
+                for k in range(8):
+                    temp = temp * 2
+                    pixel = bitmap.getpixel((i, j * 8 + k))
+                    r, g, b = pixel[:3]
+                    if mode == 0:  # Black and white mode
+                        temp += 0 if r <= 100 and g <= 100 and b <= 100 else 1
+                    elif mode == 1:  # Red and white mode
+                        temp += 0 if r >= 100 and g <= 100 and b <= 100 else 1
+            image_buffer.append(temp)
+        return image_buffer
+    
+    def send_image_data_via_nfc(self, image_buffer, width, height):
+        """Send the image data via NFC."""
+        if is_android() and autoclass:
+            try:
+                IsoDep = autoclass('android.nfc.tech.IsoDep')
+                Tag = autoclass('android.nfc.Tag')
+
+                # Get the detected NFC tag
+                tag = self.detected_tag
+                if tag is None:
+                    print("No NFC tag detected.")
+                    return
+
+                # Connect to the NFC tag
+                isodep = IsoDep.get(tag)
+                isodep.connect()
+
+                # Send initialization commands
+                cmd = bytearray([0xF0, 0xDB, 0x02, 0x00, 0x00])
+                response = isodep.transceive(cmd)
+
+                # Send image data in chunks
+                data_size = len(image_buffer)
+                for i in range(0, data_size, 250):
+                    chunk = image_buffer[i:i + 250]
+                    cmd = bytearray([0xF0, 0xD2, 0x00, i // 250, 0xFA]) + chunk
+                    response = isodep.transceive(cmd)
+
+                print(f"Image data sent successfully. Image size: {width}x{height}")
+                isodep.close()
+            except Exception as e:
+                print(f"Error sending image data via NFC: {e}")
 def handle_received_file(intent):
     """Handle a file received via Intent.EXTRA_STREAM."""
     if is_android() and autoclass:
@@ -1746,6 +1811,7 @@ def handle_received_file(intent):
 
                 if file_path:
                     # File path resolved, read the file
+
                     print(f"Resolved file path: {file_path}")
                     with open(file_path, "r", encoding="utf-8") as file:
                         content = file.read()
