@@ -329,7 +329,7 @@ class MainApp(MDApp):
             target_value = row.get("Tgt", "")
             # Check if the "Target" column contains a number
             if target_value:  # Check if the value contains data
-                # Shift the columns across by one
+                # Shift the columns across to the right by one
                 shifted_row = {}
                 keys = list(row.keys())
                 for i in range(len(keys) - 1):  # Shift all columns except the last one
@@ -772,22 +772,28 @@ class MainApp(MDApp):
             return None
 
     def send_bitmap_as_image_array_via_nfc(self):
-        """Convert the bitmap to a pixel array and send it via NFC."""
+        """Generate the bitmap, convert it to a byte array, and send it via NFC."""
+        print("Starting NFC transmission for bitmap...")
         if hasattr(self, "current_data") and self.current_data:
             # Generate the bitmap
             bitmap_path = self.csv_to_bitmap(self.current_data)
-            if bitmap_path:
-                # Convert the image to a pixel array
-                pixel_array, width, height = self.image_to_pixel_array(bitmap_path)
-                if pixel_array:
-                    print(f"Pixel array: {pixel_array[:10000]}...")  # Print the first 10000 pixel values for debugging
+            print(f"Bitmap path: {bitmap_path}")
+            if not os.path.exists(bitmap_path):
+                print("Bitmap file does not exist.")
+                return
+            try:
+                # Open the bitmap file
+                bitmap = Image.open(bitmap_path)
+                print(f"Bitmap opened successfully. Size: {bitmap.size}")
 
-                    # Send the pixel array via NFC
-                    self.send_image_array_via_nfc(pixel_array, width, height)
-                else:
-                    print("Failed to convert image to pixel array.")
-            else:
-                print("Failed to generate bitmap.")
+                # Convert the bitmap to a byte array
+                image_buffer = self.get_picture_data_ssd(bitmap)
+                print(f"Bitmap converted to byte array. Length: {len(image_buffer)}")
+
+                # Send the byte array via NFC
+                self.send_image_data_via_nfc(image_buffer, bitmap.width, bitmap.height)
+            except Exception as e:
+                print(f"Error processing bitmap file: {e}")
         else:
             print("No data available to generate bitmap.")
 
@@ -847,7 +853,7 @@ class MainApp(MDApp):
             except Exception as e:
                 print(f"Error sending image array via NFC: {e}")
         else:
-            print("This functionality is only available on Android.")
+             print("This functionality is only available on Android.")
 
     def navigate_to_home(self):
         """Navigate back to the home screen."""
@@ -1631,7 +1637,7 @@ class MainApp(MDApp):
                 if asset_manager.list(sub_source_path):  # Check if it's a directory
                     if not os.path.exists(sub_dest_path):
                         os.makedirs(sub_dest_path)
-                    self.copy_directory_from_assets(asset_manager, sub_source_path, sub_dest_path)
+                    self.copy_directory_from_assets(asset_manager, sub_source_path, dest_path)
                 else:
                     # Copy a single file
                     with asset_manager.open(sub_source_path) as asset_file:
@@ -1651,7 +1657,7 @@ class MainApp(MDApp):
                 if os.path.isdir(sub_src_path):
                     if not os.path.exists(sub_dest_path):
                         os.makedirs(sub_dest_path)
-                    self.copy_directory_locally(sub_src_path, sub_dest_path)
+                    self.copy_directory_locally(sub_src_path, dest_path)
                 else:
                     # Copy a single file
                     with open(sub_src_path, "rb") as src, open(sub_dest_path, "wb") as dest:
@@ -1739,24 +1745,27 @@ class MainApp(MDApp):
 
     def get_picture_data_ssd(self, bitmap, mode=0):
         """Convert the bitmap to a byte array for SSD series."""
+        print("Converting bitmap to byte array...")
         width, height = bitmap.size
+        print(f"Bitmap dimensions: {width}x{height}")
         image_buffer = bytearray()
         for i in range(width - 1, -1, -1):
-            temp = 0
             for j in range(height // 8):
+                temp = 0  # Reset temp for each byte
                 for k in range(8):
-                    temp = temp * 2
                     pixel = bitmap.getpixel((i, j * 8 + k))
                     r, g, b = pixel[:3]
                     if mode == 0:  # Black and white mode
-                        temp += 0 if r <= 100 and g <= 100 and b <= 100 else 1
+                        temp = (temp << 1) | (0 if r <= 100 and g <= 100 and b <= 100 else 1)
                     elif mode == 1:  # Red and white mode
-                        temp += 0 if r >= 100 and g <= 100 and b <= 100 else 1
-            image_buffer.append(temp)
+                        temp = (temp << 1) | (0 if r >= 100 and g <= 100 and b <= 100 else 1)
+                image_buffer.append(temp)  # Append the byte to the buffer
+        print(f"Byte array conversion complete. Length: {len(image_buffer)}")
         return image_buffer
     
     def send_image_data_via_nfc(self, image_buffer, width, height):
         """Send the image data via NFC."""
+        print("Preparing to send image data via NFC...")
         if is_android() and autoclass:
             try:
                 IsoDep = autoclass('android.nfc.tech.IsoDep')
@@ -1764,29 +1773,40 @@ class MainApp(MDApp):
 
                 # Get the detected NFC tag
                 tag = self.detected_tag
+                print("Checking for NFC tag...")
                 if tag is None:
                     print("No NFC tag detected.")
                     return
+                print("NFC tag detected.")
 
-                # Connect to the NFC tag
+                print("Connecting to NFC tag...")
                 isodep = IsoDep.get(tag)
                 isodep.connect()
+                print("Connected to NFC tag.")
 
                 # Send initialization commands
                 cmd = bytearray([0xF0, 0xDB, 0x02, 0x00, 0x00])
+                print(f"Sending initialization command: {cmd}")
                 response = isodep.transceive(cmd)
+                print(f"Initialization response: {response}")
 
                 # Send image data in chunks
                 data_size = len(image_buffer)
+                print(f"Sending image data in chunks. Total size: {data_size} bytes")
                 for i in range(0, data_size, 250):
                     chunk = image_buffer[i:i + 250]
                     cmd = bytearray([0xF0, 0xD2, 0x00, i // 250, 0xFA]) + chunk
+                    print(f"Sending chunk {i // 250 + 1}: {cmd[:10]}... (length: {len(chunk)})")
                     response = isodep.transceive(cmd)
+                    print(f"Chunk response: {response}")
 
                 print(f"Image data sent successfully. Image size: {width}x{height}")
                 isodep.close()
             except Exception as e:
-                print(f"Error sending image data via NFC: {e}")
+                 print(f"Error sending image data via NFC: {e}")
+        else:
+            print("This functionality is only available on Android.")
+
 def handle_received_file(intent):
     """Handle a file received via Intent.EXTRA_STREAM."""
     if is_android() and autoclass:
