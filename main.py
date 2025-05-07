@@ -771,47 +771,32 @@ class MainApp(MDApp):
             print(f"Error converting CSV to bitmap: {e}")
             return None
 
-    def bitmap_to_byte_array(self, bitmap_path):
-        """Convert the generated bitmap to a byte array and print it as both raw bytes and a hex array."""
-        try:
-            with open(bitmap_path, "rb") as bitmap_file:
-                byte_array = bitmap_file.read()
-
-            # Print the raw byte array
-            print(f"Bitmap converted to byte array. Size: {len(byte_array)} bytes")
-            print(f"Byte array: {byte_array}")
-
-            # Convert the byte array to a hex array
-            hex_array = [f"0x{byte:02X}" for byte in byte_array]
-            print(f"Hex array: {hex_array}")  # Print the hex array to the terminal
-
-            return byte_array  # Return the raw byte array for further processing
-        except Exception as e:
-            print(f"Error converting bitmap to byte array: {e}")
-            return None
-
-    def send_bitmap_as_byte_array_via_nfc(self):
-        """Convert the generated bitmap to a byte array and send it via NFC."""
+    def send_bitmap_as_image_array_via_nfc(self):
+        """Convert the bitmap to a pixel array and send it via NFC."""
         if hasattr(self, "current_data") and self.current_data:
             # Generate the bitmap
             bitmap_path = self.csv_to_bitmap(self.current_data)
             if bitmap_path:
-                # Convert the bitmap to a byte array
-                byte_array = self.bitmap_to_byte_array(bitmap_path)
-                if byte_array:
-                    # Send the byte array via NFC
-                    self.send_byte_array_via_nfc(byte_array)
+                # Convert the image to a pixel array
+                pixel_array, width, height = self.image_to_pixel_array(bitmap_path)
+                if pixel_array:
+                    print(f"Pixel array: {pixel_array[:10000]}...")  # Print the first 10000 pixel values for debugging
+
+                    # Send the pixel array via NFC
+                    self.send_image_array_via_nfc(pixel_array, width, height)
+                else:
+                    print("Failed to convert image to pixel array.")
             else:
                 print("Failed to generate bitmap.")
         else:
             print("No data available to generate bitmap.")
 
-    def send_hex_array_via_nfc(self, hex_array):
-        """Send the hex array via NFC."""
+    def send_image_array_via_nfc(self, pixel_array, width, height):
+        """Send the image array via NFC."""
         if is_android() and autoclass:
             try:
-                # Convert the hex array back to a byte array
-                byte_array = bytes(int(byte, 16) for byte in hex_array)
+                # Convert the pixel array to a byte array
+                byte_array = bytes(pixel_array)
 
                 # Import necessary Android classes
                 Tag = autoclass('android.nfc.Tag')
@@ -832,7 +817,7 @@ class MainApp(MDApp):
                                     )]
                                 )
                                 ndef.writeNdefMessage(ndef_message)
-                                print("Hex array written to NFC tag.")
+                                print(f"Image array written to NFC tag. Image size: {width}x{height}")
                             else:
                                 print("NFC tag is not writable.")
                             ndef.close()
@@ -848,7 +833,7 @@ class MainApp(MDApp):
                                     )]
                                 )
                                 ndef_formatable.format(ndef_message)
-                                print("NFC tag formatted and hex array written.")
+                                print(f"NFC tag formatted and image array written. Image size: {width}x{height}")
                                 ndef_formatable.close()
                             else:
                                 print("NDEF is not supported by this tag.")
@@ -860,7 +845,7 @@ class MainApp(MDApp):
                 print("Waiting for NFC tag...")
                 self.nfc_adapter.setOnTagDiscoveredListener(on_tag_discovered)
             except Exception as e:
-                print(f"Error sending hex array via NFC: {e}")
+                print(f"Error sending image array via NFC: {e}")
         else:
             print("This functionality is only available on Android.")
 
@@ -1722,6 +1707,20 @@ class MainApp(MDApp):
                 print("NFC button hidden on Android.")
             except Exception as e:
                 print(f"Error hiding NFC button: {e}")
+
+    def image_to_pixel_array(self, bitmap_path):
+        """Convert the bitmap image to a pixel array."""
+        try:
+            # Open the image using Pillow
+            image = Image.open(bitmap_path).convert("1")  # Convert to 1-bit black-and-white
+            pixel_array = list(image.getdata())  # Get pixel data as a flat list
+            width, height = image.size
+            print(f"Image size: {width}x{height}")
+            print(f"Pixel array length: {len(pixel_array)}")
+            return pixel_array, width, height
+        except Exception as e:
+            print(f"Error converting image to pixel array: {e}")
+            return None, None, None
 
 def handle_received_file(intent):
     """Handle a file received via Intent.EXTRA_STREAM."""
