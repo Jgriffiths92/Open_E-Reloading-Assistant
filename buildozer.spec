@@ -204,7 +204,7 @@ android.add_assets = ./assets/images:images, ./assets/fonts:fonts, ./assets/CSV:
 #android.add_resources =
 
 # (list) Gradle dependencies to add
-#android.gradle_dependencies =
+android.gradle_dependencies = "implementation 'androidx.core:core:1.10.1'"
 
 # (bool) Enable AndroidX support. Enable when 'android.gradle_dependencies'
 # contains an 'androidx' package, or any package from Kotlin source.
