@@ -158,6 +158,7 @@ class MainApp(MDApp):
                 permissions = [
                     "android.permission.WRITE_EXTERNAL_STORAGE",
                     "android.permission.READ_EXTERNAL_STORAGE",
+                    "android.permission.NFC",  # Add NFC permission explicitly
                 ]
 
                 activity = PythonActivity.mActivity
@@ -167,6 +168,7 @@ class MainApp(MDApp):
                 ]
 
                 if permissions_to_request:
+                    print(f"Permissions to request: {permissions_to_request}")
                     ActivityCompat.requestPermissions(activity, permissions_to_request, 0)
                     print(f"Requested permissions: {permissions_to_request}")
                 else:
@@ -1763,6 +1765,7 @@ class MainApp(MDApp):
                 image_buffer.append(temp)  # Append the byte to the buffer
         print(f"Byte array conversion complete. Length: {len(image_buffer)}")
         print(f"First 10 bytes: {list(image_buffer[:10])}")
+        print(f"Last 10 bytes: {list(image_buffer[-10:])}")
         return image_buffer
     
     def send_image_data_via_nfc(self, image_buffer, width, height):
@@ -1776,19 +1779,31 @@ class MainApp(MDApp):
                 tag = self.detected_tag
                 print("Checking for NFC tag...")
                 if tag is None:
-                    print("No NFC tag detected.")
+                    print("No NFC tag detected. Ensure the tag is in range and properly aligned.")
                     return
-                print("NFC tag detected.")
+                else:
+                    print(f"NFC tag detected: {tag}")
+                    print(f"Tag ID: {tag.getId() if hasattr(tag, 'getId') else 'Unknown'}")
+                    print(f"Tag Technologies: {tag.getTechList() if hasattr(tag, 'getTechList') else 'Unknown'}")
 
-                print("Connecting to NFC tag...")
-                isodep = IsoDep.get(tag)
-                isodep.connect()
-                print("Connected to NFC tag")
+                try:
+                    print("Connecting to NFC tag...")
+                    isodep = IsoDep.get(tag)
+                    isodep.connect()
+                    print("Connected to NFC tag successfully.")
+                except Exception as e:
+                    print(f"Error connecting to NFC tag: {e}")
+                    return
+
                 # Send initialization commands
-                cmd = bytearray([0xF0, 0xDB, 0x02, 0x00, 0x00])
-                print(f"Sending initialization command: {cmd}")
-                response = isodep.transceive(cmd)
-                print(f"Initialization response: {response}")
+                try:
+                    cmd = bytearray([0xF0, 0xDB, 0x02, 0x00, 0x00])
+                    print(f"Sending initialization command: {cmd}")
+                    response = isodep.transceive(cmd)
+                    print(f"Initialization response: {response}")
+                except Exception as e:
+                    print(f"Error during initialization command: {e}")
+                    return
 
                 # Send image data in chunks
                 data_size = len(image_buffer)
