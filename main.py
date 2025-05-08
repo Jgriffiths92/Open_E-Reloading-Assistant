@@ -691,6 +691,8 @@ class MainApp(MDApp):
             if output_path is None:
                 output_path = os.path.join(bitmap_directory, "output.bmp")
 
+            print(f"Bitmap output path: {output_path}")  # Debug statement
+
             # Default resolution if no display is selected
             display_width, display_height = 280, 416
 
@@ -763,7 +765,7 @@ class MainApp(MDApp):
             draw.text((x, y), stage_notes, fill="black", font=font)
 
             # Resize the image to fit within the display resolution while keeping the aspect ratio
-            image.thumbnail(self.selected_resolution, Image.Resampling.LANCZOS)
+            image.thumbnail(self.selected_resolution, Image.LANCZOS)
 
             # Save the resized image as a bitmap
             image.save(output_path)
@@ -781,8 +783,8 @@ class MainApp(MDApp):
             # Generate the bitmap
             bitmap_path = self.csv_to_bitmap(self.current_data)
             print(f"Bitmap path: {bitmap_path}")
-            if not os.path.exists(bitmap_path):
-                print("Bitmap file does not exist.")
+            if not bitmap_path or not os.path.exists(bitmap_path):
+                print("Bitmap file does not exist or path is invalid.")
                 return
             try:
                 # Open the bitmap file
@@ -1770,6 +1772,7 @@ class MainApp(MDApp):
         print(f"Byte array conversion complete. Length: {len(image_buffer)}")
         print(f"First 10 bytes: {list(image_buffer[:10])}")
        
+
         print(f"Last 10 bytes: {list(image_buffer[-10:])}")
         return image_buffer
     
