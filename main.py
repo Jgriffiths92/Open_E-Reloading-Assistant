@@ -144,6 +144,7 @@ class MainApp(MDApp):
         self.selected_resolution = (280, 416)  # Default resolution for 3.7-inch display
         self.selected_orientation = "Portrait"  # Default orientation
         self.selected_save_folder = None  # Store the selected folder for saving CSV files
+        self.detected_tag = None  # Initialize the detected_tag attribute
 
     dialog = None  # Store the dialog instance
     
