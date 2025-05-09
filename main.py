@@ -763,7 +763,7 @@ class MainApp(MDApp):
             draw.text((x, y), stage_notes, fill="black", font=font)
 
             # Resize the image to fit within the display resolution while keeping the aspect ratio
-            image.thumbnail(self.selected_resolution, Image.Resampling.LANCZOS)
+            image.thumbnail(self.selected_resolution, Image.LANCZOS)
 
             # Save the resized image as a bitmap
             image.save(output_path)
