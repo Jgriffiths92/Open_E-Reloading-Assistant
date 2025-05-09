@@ -144,6 +144,7 @@ class MainApp(MDApp):
         self.selected_resolution = (280, 416)  # Default resolution for 3.7-inch display
         self.selected_orientation = "Portrait"  # Default orientation
         self.selected_save_folder = None  # Store the selected folder for saving CSV files
+        self.detected_tag = None  # Initialize the detected_tag attribute
 
     dialog = None  # Store the dialog instance
     
@@ -1136,7 +1137,15 @@ class MainApp(MDApp):
                 if tag is None:
                     print("No NFC tag detected.")
                     return
+                # Update the detected_tag attribute
+                self.detected_tag = tag
+                print(f"NFC tag detected: {tag}")
 
+                # Proceed with writing data to the tag
+                self.write_to_ndef_tag(tag)
+                 
+            except Exception as e:
+                print(f"Error handling NFC tag: {e}")
                 # Check if the tag supports NDEF
                 ndef = Ndef.get(tag)
                 if ndef is not None:
