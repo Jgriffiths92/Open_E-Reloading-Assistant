@@ -144,7 +144,6 @@ class MainApp(MDApp):
         self.selected_resolution = (280, 416)  # Default resolution for 3.7-inch display
         self.selected_orientation = "Portrait"  # Default orientation
         self.selected_save_folder = None  # Store the selected folder for saving CSV files
-        self.detected_tag = None  # Initialize the detected_tag attribute
 
     dialog = None  # Store the dialog instance
     
@@ -692,8 +691,6 @@ class MainApp(MDApp):
             if output_path is None:
                 output_path = os.path.join(bitmap_directory, "output.bmp")
 
-            print(f"Bitmap output path: {output_path}")  # Debug statement
-
             # Default resolution if no display is selected
             display_width, display_height = 280, 416
 
@@ -784,8 +781,8 @@ class MainApp(MDApp):
             # Generate the bitmap
             bitmap_path = self.csv_to_bitmap(self.current_data)
             print(f"Bitmap path: {bitmap_path}")
-            if not bitmap_path or not os.path.exists(bitmap_path):
-                print("Bitmap file does not exist or path is invalid.")
+            if not os.path.exists(bitmap_path):
+                print("Bitmap file does not exist.")
                 return
             try:
                 # Open the bitmap file
@@ -1773,7 +1770,6 @@ class MainApp(MDApp):
         print(f"Byte array conversion complete. Length: {len(image_buffer)}")
         print(f"First 10 bytes: {list(image_buffer[:10])}")
        
-
         print(f"Last 10 bytes: {list(image_buffer[-10:])}")
         return image_buffer
     
