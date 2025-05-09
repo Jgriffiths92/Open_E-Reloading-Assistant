@@ -763,7 +763,7 @@ class MainApp(MDApp):
             draw.text((x, y), stage_notes, fill="black", font=font)
 
             # Resize the image to fit within the display resolution while keeping the aspect ratio
-            image.thumbnail(self.selected_resolution, Image.LANCZOS)
+            image.thumbnail(self.selected_resolution, Image.Resampling.LANCZOS)
 
             # Save the resized image as a bitmap
             image.save(output_path)
@@ -1067,10 +1067,6 @@ class MainApp(MDApp):
                     print("NFC is not available on this device.")
                     return False
 
-                # Debug: Check if NFC is enabled
-                if not self.nfc_adapter.isEnabled():
-                    print("NFC is available but currently disabled. Please enable it in device settings.")
-
                 # Create a pending intent for NFC
                 intent = Intent(mActivity, mActivity.getClass())
                 intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
@@ -1083,7 +1079,7 @@ class MainApp(MDApp):
                     IntentFilter("android.nfc.action.TAG_DISCOVERED")
                 ]
 
-                print("NFC adapter initialized successfully.")
+                print("NFC adapter initialized.")
                 return True
             except Exception as e:
                 print(f"Error initializing NFC: {e}")
@@ -1769,7 +1765,6 @@ class MainApp(MDApp):
                 image_buffer.append(temp)  # Append the byte to the buffer
         print(f"Byte array conversion complete. Length: {len(image_buffer)}")
         print(f"First 10 bytes: {list(image_buffer[:10])}")
-       
         print(f"Last 10 bytes: {list(image_buffer[-10:])}")
         return image_buffer
     
