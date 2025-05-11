@@ -1064,7 +1064,7 @@ class MainApp(MDApp):
                 PendingIntent = autoclass('android.app.PendingIntent')
                 Intent = autoclass('android.content.Intent')
                 IntentFilter = autoclass('android.content.IntentFilter')
-                
+
                 # Get the NFC adapter
                 self.nfc_adapter = NfcAdapter.getDefaultAdapter(mActivity)
                 if self.nfc_adapter is None:
@@ -1073,11 +1073,12 @@ class MainApp(MDApp):
 
                 # Create a pending intent for NFC
                 intent = Intent(mActivity, mActivity.getClass())
-                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                # Set the required flags
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 self.pending_intent = PendingIntent.getActivity(
-                    mActivity, 0, intent, PendingIntent.FLAG_MUTABLE
+                    mActivity, 0, intent, PendingIntent.FLAG_IMMUTABLE
                 )
-                print("Pending intent created for NFC.")
+                print("Pending intent created for NFC with required flags.")
 
                 # Create intent filters for NFC
                 self.intent_filters = [
@@ -1775,7 +1776,6 @@ class MainApp(MDApp):
             return None, None, None
 
     def get_picture_data_ssd(self, bitmap, mode=0):
-        """Convert the bitmap to a byte array for SSD series."""
         print("Converting bitmap to byte array...")
         width, height = bitmap.size
         print(f"Bitmap dimensions: {width}x{height}")

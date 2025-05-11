@@ -14,3 +14,9 @@
     <category android:name="android.intent.category.DEFAULT" />
     <data android:scheme="vnd.android.nfc" />
 </intent-filter>
+
+<application>
+    <meta-data
+        android:name="android.allowBalOptIn"
+        android:value="true" />
+</application>
