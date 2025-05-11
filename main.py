@@ -1077,7 +1077,9 @@ class MainApp(MDApp):
 
                 # Create intent filters for NFC
                 self.intent_filters = [
-                    IntentFilter("android.nfc.action.TAG_DISCOVERED")
+                    IntentFilter("android.nfc.action.TAG_DISCOVERED"),
+                    IntentFilter("android.nfc.action.NDEF_DISCOVERED"),
+                    IntentFilter("android.nfc.action.TECH_DISCOVERED"),
                 ]
 
                 print("NFC adapter initialized.")
