@@ -770,6 +770,7 @@ class MainApp(MDApp):
             image.save(output_path)
             print(f"Bitmap saved to {output_path}")
             print(f"Bitmap dimensions: {image.size}")
+            print(f"First 10 pixels: {list(image.getdata()[:10])}")
             return output_path
         except Exception as e:
             print(f"Error converting CSV to bitmap: {e}")
@@ -830,6 +831,7 @@ class MainApp(MDApp):
                                 print(f"Image array written to NFC tag. Image size: {width}x{height}")
                             else:
                                 print("NFC tag is not writable.")
+                                return
                             ndef.close()
                         else:
                             # If the tag is not NDEF-formatted, try formatting it
@@ -1057,11 +1059,12 @@ class MainApp(MDApp):
         """Initialize the NFC adapter and enable foreground dispatch."""
         if is_android() and autoclass:
             try:
+                print("Initializing NFC adapter...")
                 NfcAdapter = autoclass('android.nfc.NfcAdapter')
                 PendingIntent = autoclass('android.app.PendingIntent')
                 Intent = autoclass('android.content.Intent')
                 IntentFilter = autoclass('android.content.IntentFilter')
-
+                
                 # Get the NFC adapter
                 self.nfc_adapter = NfcAdapter.getDefaultAdapter(mActivity)
                 if self.nfc_adapter is None:
@@ -1074,6 +1077,7 @@ class MainApp(MDApp):
                 self.pending_intent = PendingIntent.getActivity(
                     mActivity, 0, intent, PendingIntent.FLAG_MUTABLE
                 )
+                print("Pending intent created for NFC.")
 
                 # Create intent filters for NFC
                 self.intent_filters = [
@@ -1081,8 +1085,9 @@ class MainApp(MDApp):
                     IntentFilter("android.nfc.action.NDEF_DISCOVERED"),
                     IntentFilter("android.nfc.action.TECH_DISCOVERED"),
                 ]
+                print("Intent filters created for NFC.")
 
-                print("NFC adapter initialized.")
+                print("NFC adapter initialized successfully.")
                 return True
             except Exception as e:
                 print(f"Error initializing NFC: {e}")
@@ -1095,6 +1100,7 @@ class MainApp(MDApp):
         """Enable NFC foreground dispatch to handle NFC intents."""
         if is_android() and autoclass:
             try:
+                print("Enabling NFC foreground dispatch...")
                 PendingIntent = autoclass('android.app.PendingIntent')
                 Intent = autoclass('android.content.Intent')
                 IntentFilter = autoclass('android.content.IntentFilter')
@@ -1108,6 +1114,7 @@ class MainApp(MDApp):
                     intent,
                     PendingIntent.FLAG_IMMUTABLE  # Add FLAG_IMMUTABLE to comply with Android 12+
                 )
+                print("Pending intent created for NFC foreground dispatch.")
 
                 # Create intent filters for NFC
                 ndef_filter = IntentFilter("android.nfc.action.NDEF_DISCOVERED")
@@ -1121,7 +1128,7 @@ class MainApp(MDApp):
                     [ndef_filter, tech_filter, tag_filter],
                     None
                 )
-                print("NFC foreground dispatch enabled.")
+                print("NFC foreground dispatch enabled successfully.")
             except Exception as e:
                 print(f"Error enabling NFC foreground dispatch: {e}")
 
@@ -1129,6 +1136,7 @@ class MainApp(MDApp):
         """Handle NFC tag detection and write the bitmap data."""
         if is_android() and autoclass:
             try:
+                print("Handling NFC tag...")
                 # Import necessary Android classes
                 Tag = autoclass('android.nfc.Tag')
                 Ndef = autoclass('android.nfc.tech.Ndef')
@@ -1139,13 +1147,17 @@ class MainApp(MDApp):
                 if tag is None:
                     print("No NFC tag detected.")
                     return
+
+                # Log tag details
+                print(f"NFC tag detected: {tag}")
+                print(f"Tag ID: {tag.getId() if hasattr(tag, 'getId') else 'Unknown'}")
+                print(f"Tag Technologies: {tag.getTechList() if hasattr(tag, 'getTechList') else 'Unknown'}")
+
                 # Update the detected_tag attribute
                 self.detected_tag = tag
-                print(f"NFC tag detected: {tag}")
 
                 # Proceed with writing data to the tag
                 self.write_to_ndef_tag(tag)
-                 
             except Exception as e:
                 print(f"Error handling NFC tag: {e}")
                 # Check if the tag supports NDEF
@@ -1157,6 +1169,7 @@ class MainApp(MDApp):
                         self.write_to_ndef_tag(ndef)
                     else:
                         print("NFC tag is not writable.")
+                        return
                     ndef.close()
                 else:
                     # If the tag is not NDEF-formatted, try formatting it
@@ -1174,6 +1187,7 @@ class MainApp(MDApp):
     def write_to_ndef_tag(self, ndef):
         """Write the generated bitmap data to an NDEF tag."""
         try:
+            print("Preparing to write data to NFC tag...")
             # Generate the bitmap
             if hasattr(self, "current_data") and self.current_data:
                 bitmap_path = self.csv_to_bitmap(self.current_data)
@@ -1187,8 +1201,11 @@ class MainApp(MDApp):
                             "image/bmp", bitmap_data
                         )]
                     )
+                    print("NDEF message created successfully.")
+
+                    # Write the NDEF message to the tag
                     ndef.writeNdefMessage(ndef_message)
-                    print("Bitmap data written to NFC tag.")
+                    print("Bitmap data written to NFC tag successfully.")
                 else:
                     print("Failed to generate bitmap.")
             else:
@@ -1797,6 +1814,7 @@ class MainApp(MDApp):
                     print(f"Tag ID: {tag.getId() if hasattr(tag, 'getId') else 'Unknown'}")
                     print(f"Tag Technologies: {tag.getTechList() if hasattr(tag, 'getTechList') else 'Unknown'}")
 
+                # Connect to the NFC tag
                 try:
                     print("Connecting to NFC tag...")
                     isodep = IsoDep.get(tag)
@@ -1806,7 +1824,7 @@ class MainApp(MDApp):
                     print(f"Error connecting to NFC tag: {e}")
                     return
 
-                # Send initialization commands
+# Send initialization commands
                 try:
                     cmd = bytearray([0xF0, 0xDB, 0x02, 0x00, 0x00])
                     print(f"Sending initialization command: {cmd}")
