@@ -37,7 +37,7 @@ except ImportError:
 def is_android():
     """Check if the app is running on an Android device."""
     try:
-        from android import mActivity # type: ignore
+        from android import mActivity
         return True
     except ImportError:
         return False
