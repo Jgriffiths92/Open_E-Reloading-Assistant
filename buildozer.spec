@@ -107,7 +107,7 @@ android.permissions = INTERNET, WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE, N
 android.api = 31
 
 # (int) Minimum API your APK / AAB will support.
-android.minapi = 28
+android.minapi = 21
 
 # (int) Android SDK version to use
 #android.sdk = 20
@@ -204,7 +204,7 @@ android.add_assets = ./assets/images:images, ./assets/fonts:fonts, ./assets/CSV:
 #android.add_resources =
 
 # (list) Gradle dependencies to add
-android.gradle_dependencies = "implementation 'androidx.core:core:1.10.1'"
+#android.gradle_dependencies =
 
 # (bool) Enable AndroidX support. Enable when 'android.gradle_dependencies'
 # contains an 'androidx' package, or any package from Kotlin source.
