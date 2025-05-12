@@ -1073,12 +1073,11 @@ class MainApp(MDApp):
 
                 # Create a pending intent for NFC
                 intent = Intent(mActivity, mActivity.getClass())
-                # Set the required flags
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 self.pending_intent = PendingIntent.getActivity(
                     mActivity, 0, intent, PendingIntent.FLAG_IMMUTABLE
                 )
-                print("Pending intent created for NFC with required flags.")
+                print("Pending intent created for NFC.")
 
                 # Create intent filters for NFC
                 self.intent_filters = [
