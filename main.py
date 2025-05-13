@@ -187,12 +187,12 @@ class MainApp(MDApp):
         # Load saved settings
         self.load_settings()
 
-        # Request permissions on Android if running on Android
+        # Request permissions on Android
         if is_android():
             self.request_android_permissions()
 
-        # Initialize NFC
-        if self.initialize_nfc():
+        # Initialize NFC only on Android
+        if is_android() and self.initialize_nfc():
             self.enable_nfc_foreground_dispatch()
 
         # Dynamically set the rootpath for the FileChooserListView
