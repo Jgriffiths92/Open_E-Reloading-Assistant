@@ -263,7 +263,7 @@ android.manifest.intent_filters = extra_manifest.xml
 #android.wakelock = False
 
 # (list) Android application meta-data to set (key=value format)
-#android.meta_data =
+android.meta_data = android.allowBalOptIn=true
 
 # (list) Android library project to add (will be added in the
 # project.properties automatically.)
