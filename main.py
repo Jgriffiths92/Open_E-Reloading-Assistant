@@ -1568,7 +1568,12 @@ class MainApp(MDApp):
         try:
             # Collect data from all rows of text fields
             for row_fields in self.manual_data_rows:
-                manual_data = {key: field.text for key, field in row_fields.items()}
+                # Initialize the row with all columns, defaulting to "0"
+                manual_data = {key: "0" for key in self.available_fields.keys()}
+
+                # Populate the row with data from the input fields
+                for key, field in row_fields.items():
+                    manual_data[key] = field.text if field.text.strip() else "0"
 
                 # Validate the data (optional)
                 if not manual_data["Target"]:
