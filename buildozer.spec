@@ -204,12 +204,12 @@ android.add_assets = ./assets/images:images, ./assets/fonts:fonts, ./assets/CSV:
 #android.add_resources =
 
 # (list) Gradle dependencies to add
-android.gradle_dependencies = "implementation 'androidx.core:core:1.10.1'"
+#android.gradle_dependencies =
 
 # (bool) Enable AndroidX support. Enable when 'android.gradle_dependencies'
 # contains an 'androidx' package, or any package from Kotlin source.
 # android.enable_androidx requires android.api >= 28
-android.enable_androidx = True
+#android.enable_androidx = True
 
 # (list) add java compile options
 # this can for example be necessary when importing certain java libraries using the 'android.gradle_dependencies' option
@@ -219,7 +219,7 @@ android.enable_androidx = True
 # (list) Gradle repositories to add {can be necessary for some android.gradle_dependencies}
 # please enclose in double quotes 
 # e.g. android.gradle_repositories = "maven { url 'https://kotlin.bintray.com/ktor' }"
-android.add_gradle_repositories = "maven { url 'https://maven.google.com' }"
+#android.add_gradle_repositories =
 
 # (list) packaging options to add 
 # see https://google.github.io/android-gradle-dsl/current/com.android.build.gradle.internal.dsl.PackagingOptions.html
