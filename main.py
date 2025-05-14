@@ -586,24 +586,29 @@ class MainApp(MDApp):
             # Determine the storage path
             storage_path = self.get_external_storage_path()
             if storage_path:
-                # Construct the file name and path
-                file_name = f"{self.root.ids.home_screen.ids.stage_name_field.text}.csv"
-                if new_event_name:
-                    # Use the new event name to create a folder
-                    event_folder_path = os.path.join(storage_path, new_event_name)
-                    if not os.path.exists(event_folder_path):
-                        os.makedirs(event_folder_path)  # Create the folder if it doesn't exist
-                    file_path = os.path.join(event_folder_path, file_name)
-                elif self.selected_save_folder:
-                    # Use the selected folder
-                    if not os.path.exists(self.selected_save_folder):
-                        os.makedirs(self.selected_save_folder)  # Create the folder if it doesn't exist
-                    file_path = os.path.join(self.selected_save_folder, file_name)
-                else:
-                    print("No folder selected or created. Cannot save data.")
-                    return
-
                 try:
+                    # Ensure the CSV folder exists
+                    csv_folder_path = os.path.join(storage_path, "CSV")
+                    if not os.path.exists(csv_folder_path):
+                        os.makedirs(csv_folder_path)
+
+                    # Construct the file name and path
+                    file_name = f"{self.root.ids.home_screen.ids.stage_name_field.text}.csv"
+                    if new_event_name:
+                        # Use the new event name to create a folder inside the CSV folder
+                        event_folder_path = os.path.join(csv_folder_path, new_event_name)
+                        if not os.path.exists(event_folder_path):
+                            os.makedirs(event_folder_path)  # Create the folder if it doesn't exist
+                        file_path = os.path.join(event_folder_path, file_name)
+                    elif self.selected_save_folder:
+                        # Use the selected folder inside the CSV folder
+                        if not os.path.exists(self.selected_save_folder):
+                            os.makedirs(self.selected_save_folder)  # Create the folder if it doesn't exist
+                        file_path = os.path.join(self.selected_save_folder, file_name)
+                    else:
+                        print("No folder selected or created. Cannot save data.")
+                        return
+
                     # Write the data to the CSV file
                     with open(file_path, mode="w", encoding="utf-8", newline="") as csv_file:
                         writer = csv.writer(csv_file)
@@ -1757,7 +1762,7 @@ class MainApp(MDApp):
                         temp = (temp << 1) | (0 if r >= 100 and g <= 100 and b <= 100 else 1)
                 image_buffer.append(temp)  # Append the byte to the buffer
         print(f"Byte array conversion complete. Length: {len(image_buffer)}")
-        print(f"First 10 bytes: {list(image_buffer[:10])}")
+        print(f"First  10 bytes: {list(image_buffer[:10])}")
         print(f"Last 10 bytes: {list(image_buffer[-10:])}")
         return image_buffer
     
