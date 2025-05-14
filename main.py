@@ -20,6 +20,7 @@ import platform
 from kivy.config import ConfigParser
 from configparser import ConfigParser
 from kivy.core.window import Window
+import shutil
 
 # Ensure the soft keyboard pushes the target widget above it
 Window.softinput_mode = "below_target"
@@ -1839,6 +1840,15 @@ class MainApp(MDApp):
                 print(f"Error detecting or connecting to NFC tag: {e}")
         else:
             print("This functionality is only available on Android.")
+
+    def verify_copied_files():
+        """Verify the contents of the copied CSV files."""
+        dest_dir = os.path.join(os.environ.get("ANDROID_PRIVATE", ""), "CSV")
+        for file_name in os.listdir(dest_dir):
+            dest_file = os.path.join(dest_dir, file_name)
+            print(f"Verifying file: {dest_file}")
+            with open(dest_file, "r", encoding="utf-8") as file:
+                print(file.read())
 
 def handle_received_file(intent):
     """Handle a file received via Intent.EXTRA_STREAM."""
