@@ -180,6 +180,24 @@ class MainApp(MDApp):
         else:
             print("Permissions can only be requested on Android.")
 
+
+    def request_bal_exemption():
+        if is_android() and autoclass:
+            try:
+                ActivityCompat = autoclass('androidx.core.app.ActivityCompat')
+                PythonActivity = autoclass('org.kivy.android.PythonActivity')
+                activity = PythonActivity.mActivity
+
+            # Request BAL exemption
+                ActivityCompat.requestPermissions(
+                activity,
+                ["android.permission.BAL_EXEMPTION"],
+                0
+                )
+                print("Requested BAL exemption.")
+            except Exception as e:
+                print(f"Error requesting BAL exemption: {e}")
+                
     def build(self):
         """Build the app's UI and initialize settings."""
         # Set the theme to Light
@@ -1078,10 +1096,11 @@ class MainApp(MDApp):
                 # Create a pending intent for NFC
                 intent = Intent(mActivity, mActivity.getClass())
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                print(f"Intent flags: {intent.getFlags()}")  # Log the intent flags
                 self.pending_intent = PendingIntent.getActivity(
                     mActivity, 0, intent, PendingIntent.FLAG_IMMUTABLE
                 )
-                print("Pending intent created for NFC.")
+                print(f"PendingIntent created: {self.pending_intent}")
 
                 # Create intent filters for NFC
                 self.intent_filters = [
