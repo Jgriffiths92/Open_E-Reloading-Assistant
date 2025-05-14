@@ -21,6 +21,7 @@ from kivy.config import ConfigParser
 from configparser import ConfigParser
 from kivy.core.window import Window
 import shutil
+from plyer import notification
 
 # Ensure the soft keyboard pushes the target widget above it
 Window.softinput_mode = "below_target"
@@ -209,6 +210,10 @@ class MainApp(MDApp):
         # Request permissions on Android
         if is_android():
             self.request_android_permissions()
+
+        # Start the foreground service
+        if is_android():
+            self.start_foreground_service()
 
         # Initialize NFC only on Android
         if is_android() and self.initialize_nfc():
@@ -1772,7 +1777,7 @@ class MainApp(MDApp):
         image_buffer = bytearray()
         for i in range(width - 1, -1, -1):
             for j in range(height // 8):
-                temp = 0  # Reset temp for each byte
+                temp = 0   # Reset temp for each byte
                 for k in range(8):
                     pixel = bitmap.getpixel((i, j * 8 + k))
                     r, g, b = pixel[:3]
@@ -1915,6 +1920,22 @@ def handle_received_file(intent):
             print(f"Error handling received file: {e}")
     else:
         print("This functionality is only available on Android.")
+
+    def start_foreground_service(self):
+        """Start a foreground service with a persistent notification."""
+        if is_android():
+            try:
+                # Create a persistent notification
+                notification.notify(
+                    title="Open E-Dope Service",
+                    message="The app is running in the background.",
+                    timeout=10  # Notification timeout in seconds
+                )
+                print("Foreground service started with a persistent notification.")
+            except Exception as e:
+                print(f"Error starting foreground service: {e}")
+        else:
+            print("Foreground service is only available on Android.")
 
 if __name__ == "__main__":
     MainApp().run()
