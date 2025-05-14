@@ -161,6 +161,7 @@ class MainApp(MDApp):
                 permissions = [
                     "android.permission.WRITE_EXTERNAL_STORAGE",
                     "android.permission.READ_EXTERNAL_STORAGE",
+                    "android.permission.MANAGE_EXTERNAL_STORAGE",
                     "android.permission.NFC",  # Add NFC permission explicitly
                 ]
 
