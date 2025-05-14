@@ -600,10 +600,10 @@ class MainApp(MDApp):
         self.dialog.open()
 
     def save_data(self, new_event_name=None):
-        """Save the current data to a CSV file in the selected folder, creating it if it doesn't exist."""
+        """Save the current data to a CSV file in the private storage directory, creating it if it doesn't exist."""
         if hasattr(self, "current_data") and self.current_data:
-            # Determine the storage path
-            storage_path = self.get_external_storage_path()
+            # Determine the private storage path
+            storage_path = self.get_private_storage_path()
             if storage_path:
                 try:
                     # Ensure the CSV folder exists
@@ -661,7 +661,7 @@ class MainApp(MDApp):
                 except Exception as e:
                     print(f"Error saving data to CSV: {e}")
             else:
-                print("Storage path is not available.")
+                print("Private storage path is not available.")
         else:
             print("No data available to save.")
 
