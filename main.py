@@ -211,10 +211,6 @@ class MainApp(MDApp):
         if is_android():
             self.request_android_permissions()
 
-        # Start the foreground service
-        if is_android():
-            self.start_foreground_service()
-
         # Initialize NFC only on Android
         if is_android() and self.initialize_nfc():
             self.enable_nfc_foreground_dispatch()
@@ -1777,7 +1773,7 @@ class MainApp(MDApp):
         image_buffer = bytearray()
         for i in range(width - 1, -1, -1):
             for j in range(height // 8):
-                temp = 0   # Reset temp for each byte
+                temp = 0  # Reset temp for each byte
                 for k in range(8):
                     pixel = bitmap.getpixel((i, j * 8 + k))
                     r, g, b = pixel[:3]
