@@ -1136,7 +1136,7 @@ class MainApp(MDApp):
                     mActivity,
                     0,
                     intent,
-                    PendingIntent.FLAG_IMMUTABLE  # Add FLAG_IMMUTABLE to comply with Android 12+
+                    PendingIntent.FLAG_IMMUTABLE
                 )
 
                 # Create intent filters for NFC
@@ -1934,5 +1934,23 @@ def handle_received_file(intent):
         else:
             print("Foreground service is only available on Android.")
 
+        def on_pause(self):
+            """Handle app pause event."""
+        if is_android() and hasattr(self, "nfc_adapter"):
+            try:
+                self.nfc_adapter.disableForegroundDispatch(mActivity)
+                print("NFC foreground dispatch disabled on pause.")
+            except Exception as e:
+                print(f"Error disabling NFC foreground dispatch: {e}")
+        return True  # Return True to prevent the app from pausing completely
+    
+    def on_resume(self):
+        """Handle app resume event."""
+        if is_android() and hasattr(self, "nfc_adapter"):
+            try:
+                self.enable_nfc_foreground_dispatch()
+                print("NFC foreground dispatch re-enabled on resume.")
+            except Exception as e:
+                print(f"Error re-enabling NFC foreground dispatch: {e}")
 if __name__ == "__main__":
     MainApp().run()
