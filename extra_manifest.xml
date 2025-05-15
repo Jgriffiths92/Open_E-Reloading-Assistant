@@ -5,7 +5,7 @@
     <action android:name="android.intent.action.VIEW" />
         <category android:name="android.intent.category.DEFAULT" />
         <category android:name="android.intent.category.BROWSABLE" />
-        <data android:mimeType="text/plain" /> <!-- Match all text file types -->
+        <data android:mimeType="text/*" /> <!-- Match all text file types -->
 </intent-filter>
 
 <intent-filter>
