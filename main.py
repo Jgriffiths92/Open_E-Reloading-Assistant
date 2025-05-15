@@ -1235,13 +1235,16 @@ class MainApp(MDApp):
 
                 # Handle file-sharing intents
                 if action in ["android.intent.action.SEND", "android.intent.action.VIEW"]:
-                    uri = intent.getData()
-                    mime_type = intent.getType()
-                    print(f"Received URI: {uri}, MIME type: {mime_type}")
-
-                    # Check for extras
                     extras = intent.getExtras()
-                    if extras and extras.containsKey("android.intent.extra.STREAM"):
+                    if extras and extras.containsKey("android.intent.extra.TEXT"):
+                        # Extract the text data
+                        text_data = extras.getString("android.intent.extra.TEXT")
+                        print(f"Received text data: {text_data}")
+
+                        # Process the received text data
+                        self.process_received_text(text_data)
+                    elif extras and extras.containsKey("android.intent.extra.STREAM"):
+                        # Handle file-sharing via stream
                         stream_uri = extras.getParcelable("android.intent.extra.STREAM")
                         print(f"Received stream URI: {stream_uri}")
 
@@ -1265,7 +1268,7 @@ class MainApp(MDApp):
                             except Exception as e:
                                 print(f"Error reading from InputStream: {e}")
                     else:
-                        print("No EXTRA_STREAM found in the intent.")
+                        print("No valid data found in the intent.")
             except Exception as e:
                 print(f"Error handling new intent: {e}")
 
@@ -1769,6 +1772,7 @@ class MainApp(MDApp):
                 # Connect to the NFC tag using IsoDep
                 isodep = IsoDep.get(tag)
                 isodep.connect()
+               
                 print("Connected to NFC tag successfully.")
 
                 # Send initialization commands
@@ -1886,5 +1890,29 @@ def handle_received_file(intent):
         except Exception as e:
             print(f"Error processing received file: {e}")
             
+    def process_received_text(self, text_data):
+        """Process the received text data."""
+        try:
+            # Split the data into lines
+            lines = text_data.strip().split("\n")
+
+            # Extract the headers from the second line (after the metadata)
+            headers = lines[1].split(",")
+
+            # Parse the rows into dictionaries
+            data = []
+            for line in lines[2:]:  # Skip the first two lines (metadata and headers)
+                row = line.split(",")
+                data.append({headers[i]: row[i] for i in range(len(headers))})
+
+            # Store the data for filtering or other operations
+            self.current_data = data
+
+            # Display the data in the table
+            self.display_table(data)
+            print("Text data processed and displayed successfully.")
+        except Exception as e:
+            print(f"Error processing text data: {e}")
+
 if __name__ == "__main__":
     MainApp().run()
