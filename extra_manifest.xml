@@ -2,7 +2,9 @@
     <!-- Handle text file sharing -->
     <action android:name="android.intent.action.SEND" />
     <action android:name="android.intent.action.SEND_MULTIPLE" />
-    <category android:name="android.intent.category.DEFAULT" />
+    <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
     <data android:mimeType="text/*" /> <!-- Match all text file types -->
 </intent-filter>
 

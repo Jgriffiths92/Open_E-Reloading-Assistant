@@ -1318,17 +1318,8 @@ class MainApp(MDApp):
 
             # Check if the URI has a valid scheme
             scheme = uri.getScheme()
-            if scheme is None:
-                print("Error: URI scheme is None. Attempting to read directly from InputStream.")
-                return None  # Return None to indicate fallback to InputStream
-
-            # Handle file scheme URIs
             if scheme == "file":
-                file_path = uri.getPath()
-                print(f"File scheme URI resolved to path: {file_path}")
-                return file_path
-
-            # Handle content scheme URIs
+                return uri.getPath()
             elif scheme == "content":
                 # Query the content resolver for the file path
                 projection = [autoclass("android.provider.MediaStore$MediaColumns").DATA]
@@ -1790,6 +1781,7 @@ class MainApp(MDApp):
         return image_buffer
     
     def send_image_data_via_nfc(self, image_buffer, width, height):
+        """Send the image data via NFC using the IsoDep protocol."""
         print("Preparing to send image data via NFC...")
         if is_android() and autoclass:
             try:
@@ -1807,26 +1799,20 @@ class MainApp(MDApp):
                     print(f"Tag ID: {tag.getId() if hasattr(tag, 'getId') else 'Unknown'}")
                     print(f"Tag Technologies: {tag.getTechList() if hasattr(tag, 'getTechList') else 'Unknown'}")
 
-                try:
-                    print("Connecting to NFC tag...")
-                    isodep = IsoDep.get(tag)
-                    isodep.connect()
-                    print("Connected to NFC tag successfully.")
-                except Exception as e:
-                    print(f"Error connecting to NFC tag: {e}")
-                    print("Retrying connection...")
-                    time.sleep(1)  # Wait for 1 second before retrying
-                    isodep.connect()
-                    return
+                # Connect to the NFC tag using IsoDep
+                isodep = IsoDep.get(tag)
+                isodep.connect()
+                print("Connected to NFC tag successfully.")
 
                 # Send initialization commands
                 try:
-                    cmd = bytearray([0xF0, 0xDB, 0x02, 0x00, 0x00])
-                    print(f"Sending initialization command: {cmd}")
-                    response = isodep.transceive(cmd)
+                    init_cmd = bytearray([0x00, 0xA4, 0x04, 0x00, 0x00])  # Example APDU command
+                    print(f"Sending initialization command: {init_cmd}")
+                    response = isodep.transceive(init_cmd)
                     print(f"Initialization response: {response}")
                 except Exception as e:
                     print(f"Error during initialization command: {e}")
+                    isodep.close()
                     return
 
                 # Send image data in chunks
@@ -1834,29 +1820,9 @@ class MainApp(MDApp):
                 print(f"Sending image data in chunks. Total size: {data_size} bytes")
                 for i in range(0, data_size, 250):
                     chunk = image_buffer[i:i + 250]
-                    cmd = bytearray([0xF0, 0xD2, 0x00, i // 250, 0xFA]) + chunk
-                    print(f"Sending chunk {i // 250 + 1}: {cmd[:10]}... (length: {len(chunk)})")
-                    response = isodep.transceive(cmd)
-                    print(f"Chunk response: {response}")
-
-                print(f"Image data sent successfully. Image size: {width}x{height}")
-                isodep.close()
-
-
-                # Send initialization commands
-                cmd = bytearray([0xF0, 0xDB, 0x02, 0x00, 0x00])
-                print(f"Sending initialization command: {cmd}")
-                response = isodep.transceive(cmd)
-                print(f"Initialization response: {response}")
-
-                # Send image data in chunks
-                data_size = len(image_buffer)
-                print(f"Sending image data in chunks. Total size: {data_size} bytes")
-                for i in range(0, data_size, 250):
-                    chunk = image_buffer[i:i + 250]
-                    cmd = bytearray([0xF0, 0xD2, 0x00, i // 250, 0xFA]) + chunk
-                    print(f"Sending chunk {i // 250 + 1}: {cmd[:10]}... (length: {len(chunk)})")
-                    response = isodep.transceive(cmd)
+                    apdu_cmd = bytearray([0x00, 0xB0, 0x00, i // 250, 0xFA]) + chunk
+                    print(f"Sending chunk {i // 250 + 1}: {apdu_cmd[:10]}... (length: {len(chunk)})")
+                    response = isodep.transceive(apdu_cmd)
                     print(f"Chunk response: {response}")
 
                 print(f"Image data sent successfully. Image size: {width}x{height}")
@@ -1937,6 +1903,21 @@ def handle_received_file(intent):
                 print(f"Error starting foreground service: {e}")
         else:
             print("Foreground service is only available on Android.")
-
+    def process_received_file(self, file_path):
+        """Process the received file."""
+        try:
+            print(f"Processing received file: {file_path}")
+            if file_path.endswith(".csv"):
+            # Read and process the CSV file
+                with open(file_path, "r", encoding="utf-8") as csv_file:
+                    data = self.read_csv_to_dict(csv_file)
+                    self.current_data = data
+                    self.display_table(data)
+                    print("CSV file processed successfully.")
+            else:
+                print("Unsupported file type.")
+        except Exception as e:
+            print(f"Error processing received file: {e}")
+            
 if __name__ == "__main__":
     MainApp().run()
