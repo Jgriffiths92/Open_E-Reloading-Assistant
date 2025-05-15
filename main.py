@@ -1233,72 +1233,39 @@ class MainApp(MDApp):
                 action = intent.getAction()
                 print(f"Intent action: {action}")
 
-                # Handle NFC intents
-                if action in ["android.nfc.action.NDEF_DISCOVERED", "android.nfc.action.TECH_DISCOVERED", "android.nfc.action.TAG_DISCOVERED"]:
-                    self.handle_nfc_tag(intent)
-                    print("NFC tag detected and handled.")
-
-                # Handle file or text intents
-                elif action in ["android.intent.action.VIEW", "android.intent.action.SEND"]:
+                # Handle file-sharing intents
+                if action in ["android.intent.action.SEND", "android.intent.action.VIEW"]:
                     uri = intent.getData()
                     mime_type = intent.getType()
                     print(f"Received URI: {uri}, MIME type: {mime_type}")
 
                     # Check for extras
                     extras = intent.getExtras()
-                    if extras:
-                        print(f"Intent extras: {extras.keySet()}")
-                        # Iterate through all extras to inspect their values
-                        for key in extras.keySet().toArray():
-                            value = extras.get(key)
-                            print(f"Extra key: {key}, value: {value}")
+                    if extras and extras.containsKey("android.intent.extra.STREAM"):
+                        stream_uri = extras.getParcelable("android.intent.extra.STREAM")
+                        print(f"Received stream URI: {stream_uri}")
 
-                        # Check for subject content
-                        if extras.containsKey("android.intent.extra.SUBJECT"):
-                            subject_content = extras.getString("android.intent.extra.SUBJECT")
-                            print(f"Received subject content: {subject_content}")
-                            # Process the subject content
-                            self.process_subject_content(subject_content)
+                        # Resolve the URI to a file path or read directly from InputStream
+                        content_resolver = mActivity.getContentResolver()
+                        file_path = self.resolve_uri_to_path(content_resolver, stream_uri)
 
-                        # Check for text content
-                        elif extras.containsKey("android.intent.extra.TEXT"):
-                            text_content = extras.getString("android.intent.extra.TEXT")
-                            print(f"Received text content: {text_content}")
-                            # Process the text content if needed
-
-                        # Check for stream URI
-                        elif extras.containsKey("android.intent.extra.STREAM"):
-                            stream_uri = extras.getParcelable("android.intent.extra.STREAM")
-                            print(f"Stream URI type: {type(stream_uri)}")
-                            print(f"Stream URI string: {str(stream_uri)}")
-                            if hasattr(stream_uri, "getScheme"):
-                                print(f"Stream URI scheme: {stream_uri.getScheme()}")
-                            else:
-                                print("Stream URI does not have a getScheme method.")
-                            print(f"Received stream URI: {stream_uri}")
-
-                            # Resolve the URI to a file path or input stream
-                            content_resolver = mActivity.getContentResolver()
-                            file_path = self.resolve_uri_to_path(content_resolver, stream_uri)
-
-                            if file_path:
-                                # Read and print the file contents
-                                with open(file_path, "r", encoding="utf-8") as file:
-                                    content = file.read()
-                                    print(f"Contents of the stream:\n{content}")
-                            else:
-                                # Fallback: Read directly from the InputStream
-                                try:
-                                    input_stream = content_resolver.openInputStream(stream_uri)
-                                    if input_stream:
-                                        content = input_stream.read().decode("utf-8")
-                                        print(f"Contents of the stream (from InputStream):\n{content}")
-                                    else:
-                                        print("InputStream is None. Cannot read the file.")
-                                except Exception as e:
-                                    print(f"Error reading from InputStream: {e}")
+                        if file_path:
+                            # Process the file
+                            self.process_received_file(file_path)
+                        else:
+                            # Fallback: Read directly from InputStream
+                            try:
+                                input_stream = content_resolver.openInputStream(stream_uri)
+                                if input_stream:
+                                    content = input_stream.read().decode("utf-8")
+                                    print(f"File contents (from InputStream):\n{content}")
+                                    self.process_csv_content(content)
+                                else:
+                                    print("InputStream is None. Cannot read the file.")
+                            except Exception as e:
+                                print(f"Error reading from InputStream: {e}")
                     else:
-                        print("Unsupported MIME type or no URI provided.")
+                        print("No EXTRA_STREAM found in the intent.")
             except Exception as e:
                 print(f"Error handling new intent: {e}")
 
