@@ -1248,6 +1248,11 @@ class MainApp(MDApp):
                         stream_uri = extras.getParcelable("android.intent.extra.STREAM")
                         print(f"Received stream URI: {stream_uri}")
 
+                        # Cast the Parcelable to a Uri
+                        Uri = autoclass('android.net.Uri')
+                        if not isinstance(stream_uri, Uri):
+                            stream_uri = Uri.parse(str(stream_uri))  # Ensure it's a Uri object
+
                         # Resolve the URI to a file path or read directly from InputStream
                         content_resolver = mActivity.getContentResolver()
                         file_path = self.resolve_uri_to_path(content_resolver, stream_uri)
