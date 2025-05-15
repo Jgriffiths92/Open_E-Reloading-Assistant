@@ -1,5 +1,6 @@
 import csv
 import itertools
+import time
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivymd.app import MDApp
@@ -1813,6 +1814,9 @@ class MainApp(MDApp):
                     print("Connected to NFC tag successfully.")
                 except Exception as e:
                     print(f"Error connecting to NFC tag: {e}")
+                    print("Retrying connection...")
+                    time.sleep(1)  # Wait for 1 second before retrying
+                    isodep.connect()
                     return
 
                 # Send initialization commands
