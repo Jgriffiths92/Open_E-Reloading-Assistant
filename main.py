@@ -1271,7 +1271,6 @@ class MainApp(MDApp):
                             stream_uri = extras.getParcelable("android.intent.extra.STREAM")
                             print(f"Stream URI type: {type(stream_uri)}")
                             print(f"Stream URI string: {str(stream_uri)}")
-                            print(f"Stream URI: {stream_uri}")
                             if hasattr(stream_uri, "getScheme"):
                                 print(f"Stream URI scheme: {stream_uri.getScheme()}")
                             else:
@@ -1773,10 +1772,6 @@ class MainApp(MDApp):
                     r, g, b = pixel[:3]
                     if mode == 0:  # Black and white mode
                         temp = (temp << 1) | (0 if r <= 100 and g <= 100 and b <= 100 else 1)
-
-
-
-
                     elif mode == 1:  # Red and white mode
                         temp = (temp << 1) | (0 if r >= 100 and g <= 100 and b <= 100 else 1)
                 image_buffer.append(temp)  # Append the byte to the buffer
@@ -1846,8 +1841,8 @@ class MainApp(MDApp):
             with open(dest_file, "r", encoding="utf-8") as file:
                 print(file.read())
 
-def handle_received_file(self, intent):
-    """Handle a file received via Intent.EXTRA_STREAM and print its content."""
+def handle_received_file(intent):
+    """Handle a file received via Intent.EXTRA_STREAM."""
     if is_android() and autoclass:
         try:
             # Import necessary Android classes
@@ -1855,9 +1850,9 @@ def handle_received_file(self, intent):
             ContentResolver = autoclass('android.content.ContentResolver')
 
             # Check if the intent contains EXTRA_STREAM
-            if intent.hasExtra("android.intent.extra.STREAM"):
+            if intent.hasExtra(Intent.EXTRA_STREAM):
                 # Get the Parcelable URI
-                stream_uri = intent.getParcelableExtra("android.intent.extra.STREAM")
+                stream_uri = intent.getParcelableExtra(Intent.EXTRA_STREAM)
                 print(f"Received Parcelable URI: {stream_uri}")
 
                 # Cast the Parcelable to a Uri
@@ -1866,12 +1861,15 @@ def handle_received_file(self, intent):
 
                 # Resolve the URI to a file path or read from InputStream
                 content_resolver = mActivity.getContentResolver()
-                file_path = self.resolve_uri_to_path(content_resolver, stream_uri)
+                file_path = MainApp().resolve_uri_to_path(content_resolver, stream_uri)
 
                 if file_path:
-                    # File path resolved, read and print the file
+                    # File path resolved, read the file
+
                     print(f"Resolved file path: {file_path}")
-                    self.process_received_file(file_path)
+                    with open(file_path, "r", encoding="utf-8") as file:
+                        content = file.read()
+                        print(f"File contents:\n{content}")
                 else:
                     # Fallback: Read directly from InputStream
                     try:
@@ -1905,17 +1903,14 @@ def handle_received_file(self, intent):
                 print(f"Error starting foreground service: {e}")
         else:
             print("Foreground service is only available on Android.")
-            
     def process_received_file(self, file_path):
-        """Process the received file and print its content."""
+        """Process the received file."""
         try:
             print(f"Processing received file: {file_path}")
             if file_path.endswith(".csv"):
-                # Read and process the CSV file
+            # Read and process the CSV file
                 with open(file_path, "r", encoding="utf-8") as csv_file:
-                    content = csv_file.read()
-                    print(f"File contents:\n{content}")
-                    data = self.read_csv_to_dict(file_path)
+                    data = self.read_csv_to_dict(csv_file)
                     self.current_data = data
                     self.display_table(data)
                     print("CSV file processed successfully.")
@@ -1923,39 +1918,6 @@ def handle_received_file(self, intent):
                 print("Unsupported file type.")
         except Exception as e:
             print(f"Error processing received file: {e}")
-
-    def save_stream_to_internal_storage(content_resolver, stream_uri, file_name="received_file.csv"):
-        """Save the file from the stream URI to internal storage."""
-        try:
-            input_stream = content_resolver.openInputStream(stream_uri)
-            if input_stream:
-                private_storage_path = self.get_private_storage_path()
-                file_path = os.path.join(private_storage_path, file_name)
-
-                with open(file_path, "wb") as output_file:
-                    output_file.write(input_stream.read())
-                print(f"File saved to internal storage: {file_path}")
-                return file_path
-            else:
-                print("InputStream is None. Cannot save the file.")
-                return None
-        except Exception as e:
-            print(f"Error saving stream to internal storage: {e}")
-            return None
-            
-    def save_to_temp_file(input_stream, file_name="temp_file.csv"):
-        """Save the InputStream to a temporary file."""
-        try:
-            temp_dir = self.get_private_storage_path()
-            temp_file_path = os.path.join(temp_dir, file_name)
-
-            with open(temp_file_path, "wb") as temp_file:
-                temp_file.write(input_stream.read())
-            print(f"Temporary file saved: {temp_file_path}")
-            return temp_file_path
-        except Exception as e:
-            print(f"Error saving to temporary file: {e}")
-            return None
             
 if __name__ == "__main__":
     MainApp().run()
