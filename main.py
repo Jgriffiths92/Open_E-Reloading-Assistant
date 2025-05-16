@@ -30,9 +30,13 @@ Window.softinput_mode = "below_target"
 
 try:
     from android import mActivity
+    from jnius import autoclass, cast
+    from android.permissions import request_permissions, Permission
 except ImportError:
     mActivity = None  # Handle cases where the app is not running on Android
-
+    autoclass = None  # Handle cases where pyjnius is not available
+    request_permissions = None
+    Permission = None
 try:
     from jnius import autoclass
 except ImportError:
@@ -43,8 +47,6 @@ def is_android():
     try:
         from android import mActivity
         from jnius import autoclass, cast
-        from android.permissions import request_permissions, Permission
-        from android.permissions import check_permission
         print("Running on Android")
         # Print if these modules are imported
         print("android imported:", 'mActivity' in globals() and mActivity is not None)
