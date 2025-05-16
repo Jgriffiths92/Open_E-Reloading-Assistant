@@ -1332,10 +1332,13 @@ class MainApp(MDApp):
 
     def process_received_csv(self, file_path_or_uri):
         """Process the received CSV file or CSV text."""
+        import io
         try:
             # If it's CSV text (not a path or URI), parse directly
-            if not file_path_or_uri.startswith("/") and not file_path_or_uri.startswith("content://"):
-                import io
+            if (
+                "\n" in file_path_or_uri or "\r" in file_path_or_uri
+            ) and not file_path_or_uri.startswith("/") and not file_path_or_uri.startswith("content://"):
+                # Looks like CSV text, not a path or URI
                 csv_file = io.StringIO(file_path_or_uri)
                 data = self.read_csv_to_dict(csv_file)
             else:
@@ -1352,20 +1355,19 @@ class MainApp(MDApp):
                 else:  # If it's a content URI
                     content_resolver = mActivity.getContentResolver()
                     input_stream = content_resolver.openInputStream(file_path_or_uri)
-                    import io
                     content = input_stream.read().decode("utf-8")
                     csv_file = io.StringIO(content)
                     data = self.read_csv_to_dict(csv_file)
 
             self.current_data = data  # Store the data for filtering or other operations
 
-        # Preprocess the data
+            # Preprocess the data
             processed_data = self.preprocess_data(data)
 
-        # Display the data as a table on the Home Screen
+            # Display the data as a table on the Home Screen
             self.display_table(processed_data)
 
-        # Navigate to the Home Screen
+            # Navigate to the Home Screen
             self.root.ids.screen_manager.current = "home"
             print(f"Processed received CSV: {file_path_or_uri}")
         except Exception as e:
@@ -1776,7 +1778,7 @@ class MainApp(MDApp):
                 for k in range(8):
                     pixel = bitmap.getpixel((i, j * 8 + k))
                     r, g, b = pixel[:3]
-                    if mode == 0:  # Black and white mode
+                    if mode == 0:   # Black and white mode
                         temp = (temp << 1) | (0 if r <= 100 and g <= 100 and b <= 100 else 1)
                     elif mode == 1:  # Red and white mode
                         temp = (temp << 1) | (0 if r >= 100 and g <= 100 and b <= 100 else 1)
