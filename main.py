@@ -216,7 +216,7 @@ class MainApp(MDApp):
             self.enable_nfc_foreground_dispatch()
 
         # Dynamically set the rootpath for the FileChooserListView
-        root = Builder.load_file("layout.kv")  # Load the root widget from the KV file
+        self.root = Builder.load_file("layout.kv")  # Load the root widget from the KV file
         saved_cards_screen = root.ids.screen_manager.get_screen("saved_cards")
         csv_directory = self.ensure_csv_directory()
         saved_cards_screen.ids.filechooser.rootpath = csv_directory
