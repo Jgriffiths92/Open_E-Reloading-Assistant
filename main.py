@@ -23,6 +23,7 @@ from configparser import ConfigParser
 from kivy.core.window import Window
 import shutil
 from plyer import notification
+from kivy.clock import Clock
 
 
 # Ensure the soft keyboard pushes the target widget above it
@@ -225,7 +226,8 @@ class MainApp(MDApp):
             try:
                 PythonActivity = autoclass('org.kivy.android.PythonActivity')
                 intent = PythonActivity.mActivity.getIntent()
-                self.on_new_intent(intent)  # Use the existing on_new_intent method
+                # Delay intent handling to ensure UI is ready
+                Clock.schedule_once(lambda dt: self.on_new_intent(intent), 0)
             except Exception as e:
                 print(f"Error handling startup intent: {e}")
 
@@ -1976,7 +1978,9 @@ def handle_received_file(intent):
             PythonActivity = autoclass('org.kivy.android.PythonActivity')
             intent = PythonActivity.mActivity.getIntent()
             print("Checking for new intent on resume...")
-            self.on_new_intent(intent)
+            # Delay intent handling to ensure UI is ready
+            from kivy.clock import Clock
+            Clock.schedule_once(lambda dt: self.on_new_intent(intent), 0)
         except Exception as e:
             print(f"Error checking intent on resume: {e}")
     
