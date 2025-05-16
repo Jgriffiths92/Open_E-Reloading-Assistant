@@ -1325,14 +1325,6 @@ class MainApp(MDApp):
     def process_received_csv(self, file_path_or_uri):
         """Process the received CSV file."""
         try:
-            # Fix for Android: prepend storage root if needed
-            if file_path_or_uri.startswith("/external_files/"):
-                # Try to get the external storage root
-                storage_root = "/storage/emulated/0"
-                abs_path = storage_root + file_path_or_uri
-                print(f"Trying absolute path: {abs_path}")
-                file_path_or_uri = abs_path
-
             if file_path_or_uri.startswith("/"):  # If it's a file path
                 with open(file_path_or_uri, mode="r", encoding="utf-8") as csv_file:
                     data = self.read_csv_to_dict(csv_file)
