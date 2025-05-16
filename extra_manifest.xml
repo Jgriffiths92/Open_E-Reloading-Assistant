@@ -1,5 +1,3 @@
-<activity android:name="org.kivy.android.PythonActivity"
-          android:launchMode="singleTop">
     <intent-filter>
         <!-- Handle text file sharing -->
         <action android:name="android.intent.action.SEND" />
@@ -22,4 +20,3 @@
         <category android:name="android.intent.category.DEFAULT" />
         <data android:scheme="vnd.android.nfc" />
     </intent-filter>
-</activity>
