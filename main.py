@@ -1694,7 +1694,8 @@ class MainApp(MDApp):
                             input_stream = content_resolver.openInputStream(stream_uri)
                             if input_stream:
                                 content = input_stream.read().decode("utf-8")
-                                print(f"Contents of the file (from InputStream):\n{content}")
+                                print(f"File contents (from InputStream):\n{content}")
+                                self.process_received_text(content)
                             else:
                                 print("InputStream is None. Cannot read the file.")
                         except Exception as e:
@@ -1771,6 +1772,8 @@ class MainApp(MDApp):
                     print(f"Tag ID: {tag.getId() if hasattr(tag, 'getId') else 'Unknown'}")
                     print(f"Tag Technologies: {tag.getTechList() if hasattr(tag, 'getTechList') else 'Unknown'}")
 
+               
+
                 # Connect to the NFC tag using IsoDep
                 isodep = IsoDep.get(tag)
                 isodep.connect()
@@ -1844,12 +1847,13 @@ def handle_received_file(intent):
                         content = file.read()
                         print(f"File contents:\n{content}")
                 else:
-                    # Fallback: Read directly from InputStream
+                    # Fallback: Read directly from the InputStream
                     try:
                         input_stream = content_resolver.openInputStream(stream_uri)
                         if input_stream:
                             content = input_stream.read().decode("utf-8")
                             print(f"File contents (from InputStream):\n{content}")
+                            self.process_received_text(content)
                         else:
                             print("InputStream is None. Cannot read the file.")
                     except Exception as e:
