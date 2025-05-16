@@ -380,11 +380,14 @@ class MainApp(MDApp):
 
         # Filter headers based on the show/hide options
         headers = ["Elv", "Wnd1"]  # Start with these columns
-        # Include "Target" only if the data contains values for it
-        if any(row.get("Target") for row in data):
+        target_present = any(row.get("Target") for row in data)
+        if target_present:
             headers.insert(0, "Target")
         if show_range:
-            headers.insert(1, "Range")  # Insert "Range" after "Target" and before "Elv"
+            if target_present:
+                headers.insert(1, "Range")  # After Target
+            else:
+                headers.insert(0, "Range")  # At the start if Target is not present
         if show_2_wind_holds:
             headers.append("Wnd2")
         if show_lead:
@@ -1779,6 +1782,7 @@ class MainApp(MDApp):
             for j in range(height // 8):
                 temp = 0  # Reset temp for each byte
                 for k in range(8):
+
                     pixel = bitmap.getpixel((i, j * 8 + k))
                     r, g, b = pixel[:3]
                     if mode == 1:  # Red and white mode
