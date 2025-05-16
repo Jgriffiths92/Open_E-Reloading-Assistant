@@ -1243,32 +1243,41 @@ class MainApp(MDApp):
                         stream_uri = extras.getParcelable("android.intent.extra.STREAM")
                         print(f"Received stream URI: {stream_uri}")
 
-                        Uri = autoclass('android.net.Uri')
-
-                        # Try casting first
-                        try:
-                            stream_uri = cast('android.net.Uri', stream_uri)
-                        except Exception:
-                            # Fallback: parse from string
-                            stream_uri = Uri.parse(str(stream_uri))
-
-                        # Now stream_uri is a Uri object
-                        content_resolver = mActivity.getContentResolver()
-                        file_path = self.resolve_uri_to_path(content_resolver, stream_uri)
-
-                        if file_path:
-                            self.process_received_file(file_path)
+                        # If the stream_uri is a string path, open it directly
+                        if isinstance(stream_uri, str) and stream_uri.startswith("/"):
+                            print(f"Received file path: {stream_uri}")
+                            self.process_received_file(stream_uri)
                         else:
+                            Uri = autoclass('android.net.Uri')
                             try:
-                                input_stream = content_resolver.openInputStream(stream_uri)
-                                if input_stream:
-                                    content = input_stream.read().decode("utf-8")
-                                    print(f"File contents (from InputStream):\n{content}")
-                                    self.process_received_text(content)
-                                else:
-                                    print("InputStream is None. Cannot read the file.")
-                            except Exception as e:
-                                print(f"Error reading from InputStream: {e}")
+                                stream_uri = cast('android.net.Uri', stream_uri)
+                            except Exception:
+                                stream_uri = Uri.parse(str(stream_uri))
+
+                            content_resolver = mActivity.getContentResolver()
+                            file_path = self.resolve_uri_to_path(content_resolver, stream_uri)
+
+                            if file_path:
+                                self.process_received_file(file_path)
+                            else:
+                                try:
+                                    input_stream = content_resolver.openInputStream(stream_uri)
+                                    if input_stream:
+                                        # Read all bytes from the Java InputStream
+                                        ByteArrayOutputStream = autoclass('java.io.ByteArrayOutputStream')
+                                        buffer = ByteArrayOutputStream()
+                                        byte = input_stream.read()
+                                        while byte != -1:
+                                            buffer.write(byte)
+                                            byte = input_stream.read()
+                                        input_stream.close()
+                                        content = bytes(buffer.toByteArray()).decode("utf-8")
+                                        print(f"File contents (from InputStream):\n{content}")
+                                        self.process_received_text(content)
+                                    else:
+                                        print("InputStream is None. Cannot read the file.")
+                                except Exception as e:
+                                    print(f"Error reading from InputStream: {e}")
                     else:
                         print("No valid data found in the intent.")
             except Exception as e:
