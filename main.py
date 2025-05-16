@@ -1331,36 +1331,46 @@ class MainApp(MDApp):
             return None
 
     def process_received_csv(self, file_path_or_uri):
-        """Process the received CSV file."""
+        """Process the received CSV file or CSV text."""
         try:
-            # Fix for Android: prepend storage root if needed
-            if file_path_or_uri.startswith("/Documents/"):
-                storage_root = "/storage/emulated/0"
-                abs_path = storage_root + file_path_or_uri
-                print(f"Trying absolute path: {abs_path}")
-                file_path_or_uri = abs_path
+            # If it's CSV text (not a path or URI), parse directly
+            if not file_path_or_uri.startswith("/") and not file_path_or_uri.startswith("content://"):
+                import io
+                csv_file = io.StringIO(file_path_or_uri)
+                data = self.read_csv_to_dict(csv_file)
+            else:
+                # Fix for Android: prepend storage root if needed
+                if file_path_or_uri.startswith("/Documents/"):
+                    storage_root = "/storage/emulated/0"
+                    abs_path = storage_root + file_path_or_uri
+                    print(f"Trying absolute path: {abs_path}")
+                    file_path_or_uri = abs_path
 
-            if file_path_or_uri.startswith("/"):  # If it's a file path
-                with open(file_path_or_uri, mode="r", encoding="utf-8") as csv_file:
+                if file_path_or_uri.startswith("/"):  # If it's a file path
+                    with open(file_path_or_uri, mode="r", encoding="utf-8") as csv_file:
+                        data = self.read_csv_to_dict(csv_file)
+                else:  # If it's a content URI
+                    content_resolver = mActivity.getContentResolver()
+                    input_stream = content_resolver.openInputStream(file_path_or_uri)
+                    import io
+                    content = input_stream.read().decode("utf-8")
+                    csv_file = io.StringIO(content)
                     data = self.read_csv_to_dict(csv_file)
-            else:  # If it's a content URI
-                content_resolver = mActivity.getContentResolver()
-                input_stream = content_resolver.openInputStream(file_path_or_uri)
-                data = self.read_csv_to_dict(input_stream)
 
             self.current_data = data  # Store the data for filtering or other operations
 
-            # Preprocess the data
+        # Preprocess the data
             processed_data = self.preprocess_data(data)
 
-            # Display the data as a table on the Home Screen
+        # Display the data as a table on the Home Screen
             self.display_table(processed_data)
 
-            # Navigate to the Home Screen
+        # Navigate to the Home Screen
             self.root.ids.screen_manager.current = "home"
             print(f"Processed received CSV: {file_path_or_uri}")
         except Exception as e:
             print(f"Error processing received CSV: {e}")
+        
     def read_csv_from_assets(self, file_name):
         """Read a CSV file from the assets/CSV folder."""
         if is_android():
