@@ -44,6 +44,11 @@ def is_android():
         from android import mActivity
         from jnius import autoclass, cast
         from android.permissions import request_permissions, Permission
+        from android.permissions import check_permission
+        print("Running on Android")
+        # Print if these modules are imported
+        print("android imported:", 'mActivity' in globals() and mActivity is not None)
+        print("jnius imported:", 'autoclass' in globals() and autoclass is not None)
         return True
     except ImportError:
         return False
@@ -1236,12 +1241,16 @@ class MainApp(MDApp):
                         stream_uri = extras.getParcelable("android.intent.extra.STREAM")
                         print(f"Received stream URI: {stream_uri}")
 
-                        # --- FIX: Cast Parcelable to Uri ---
                         Uri = autoclass('android.net.Uri')
-                        if not isinstance(stream_uri, Uri):
-                            stream_uri = Uri.parse(str(stream_uri))  # Ensure it's a Uri object
 
-                        # Now you can use stream_uri safely
+                        # Try casting first
+                        try:
+                            stream_uri = cast('android.net.Uri', stream_uri)
+                        except Exception:
+                            # Fallback: parse from string
+                            stream_uri = Uri.parse(str(stream_uri))
+
+                        # Now stream_uri is a Uri object
                         content_resolver = mActivity.getContentResolver()
                         file_path = self.resolve_uri_to_path(content_resolver, stream_uri)
 
