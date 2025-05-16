@@ -1,18 +1,25 @@
-<intent-filter>
-    <!-- Handle text file sharing -->
-    <action android:name="android.intent.action.SEND" />
-    <action android:name="android.intent.action.SEND_MULTIPLE" />
-    <action android:name="android.intent.action.VIEW" />
+<activity android:name="org.kivy.android.PythonActivity"
+          android:launchMode="singleTop">
+    <intent-filter>
+        <!-- Handle text file sharing -->
+        <action android:name="android.intent.action.SEND" />
+        <action android:name="android.intent.action.SEND_MULTIPLE" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <data android:mimeType="*/*" />
+    </intent-filter>
+    <intent-filter>
+        <!-- Handle viewing files -->
+        <action android:name="android.intent.action.VIEW" />
         <category android:name="android.intent.category.DEFAULT" />
         <category android:name="android.intent.category.BROWSABLE" />
-        <data android:mimeType="text/*" /> <!-- Match all text file types -->
-</intent-filter>
-
-<intent-filter>
-    <!-- Handle NFC intents -->
-    <action android:name="android.nfc.action.NDEF_DISCOVERED" />
-    <action android:name="android.nfc.action.TECH_DISCOVERED" />
-    <action android:name="android.nfc.action.TAG_DISCOVERED" />
-    <category android:name="android.intent.category.DEFAULT" />
-    <data android:scheme="vnd.android.nfc" />
-</intent-filter>
+        <data android:mimeType="*/*" />
+    </intent-filter>
+    <intent-filter>
+        <!-- Handle NFC intents -->
+        <action android:name="android.nfc.action.NDEF_DISCOVERED" />
+        <action android:name="android.nfc.action.TECH_DISCOVERED" />
+        <action android:name="android.nfc.action.TAG_DISCOVERED" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <data android:scheme="vnd.android.nfc" />
+    </intent-filter>
+</activity>

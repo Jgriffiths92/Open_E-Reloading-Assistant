@@ -1226,32 +1226,25 @@ class MainApp(MDApp):
             print(f"Error formatting and writing to NFC tag: {e}")
 
     def on_new_intent(self, intent):
-        """Handle new intents, including NFC intents and file/text intents."""
+        """Handle new intents, including shared data."""
         if is_android() and autoclass:
             try:
                 # Get the action from the intent
                 action = intent.getAction()
                 print(f"Intent action: {action}")
 
-                # Handle file-sharing intents
+                # Handle shared data
                 if action in ["android.intent.action.SEND", "android.intent.action.VIEW"]:
                     extras = intent.getExtras()
                     if extras and extras.containsKey("android.intent.extra.TEXT"):
-                        # Extract the text data
-                        text_data = extras.getString("android.intent.extra.TEXT")
-                        print(f"Received text data: {text_data}")
-
-                        # Process the received text data
-                        self.process_received_text(text_data)
+                        # Handle shared text
+                        shared_text = extras.getString("android.intent.extra.TEXT")
+                        print(f"Received shared text: {shared_text}")
+                        self.process_received_text(shared_text)
                     elif extras and extras.containsKey("android.intent.extra.STREAM"):
-                        # Handle file-sharing via stream
+                        # Handle shared file
                         stream_uri = extras.getParcelable("android.intent.extra.STREAM")
                         print(f"Received stream URI: {stream_uri}")
-
-                        # Cast the Parcelable to a Uri
-                        Uri = autoclass('android.net.Uri')
-                        if not isinstance(stream_uri, Uri):
-                            stream_uri = Uri.parse(str(stream_uri))  # Ensure it's a Uri object
 
                         # Resolve the URI to a file path or read directly from InputStream
                         content_resolver = mActivity.getContentResolver()
@@ -1267,7 +1260,7 @@ class MainApp(MDApp):
                                 if input_stream:
                                     content = input_stream.read().decode("utf-8")
                                     print(f"File contents (from InputStream):\n{content}")
-                                    self.process_csv_content(content)
+                                    self.process_received_text(content)
                                 else:
                                     print("InputStream is None. Cannot read the file.")
                             except Exception as e:
