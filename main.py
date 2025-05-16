@@ -313,35 +313,36 @@ class MainApp(MDApp):
         else:
             print("No file selected")
 
-    def read_csv_to_dict(self, file_path):
-        """Reads a CSV file and maps it to static column names, ignoring the headers and skipping the first 4 lines."""
+    def read_csv_to_dict(self, file_or_path):
+        """Reads a CSV file or file-like object and maps it to static column names, ignoring the headers and skipping the first 6 lines."""
         static_columns = ["Target", "Range", "Elv", "Wnd1", "Wnd2", "Lead"]  # Static column names
         data = []
         try:
-            print(f"Reading CSV file: {file_path}")
-            with open(file_path, mode="r", encoding="utf-8") as csv_file:
-                reader = csv.reader(csv_file)  # Use csv.reader to read the file
-                # Skip the first 4 lines
-                for _ in range(6):
-                    next(reader, None)
-                for index, row in enumerate(reader, start=1):
-                    # Skip empty rows
-                    if not row:
-                        continue
+            print(f"Reading CSV: {file_or_path}")
+            # Detect if file_or_path is a path or file-like object
+            if isinstance(file_or_path, str):
+                csv_file = open(file_or_path, mode="r", encoding="utf-8")
+                close_after = True
+            else:
+                csv_file = file_or_path
+                close_after = False
 
-                    # Skip footer if it exists (e.g., rows starting with "Stage Notes:")
-                    if row[0].strip().lower() == "stage notes:":
-                        break
-                    if not row:
-                        continue
-
-                    # Map the row to the static column names
-                    mapped_row = {static_columns[i]: row[i] if i < len(row) else "" for i in range(len(static_columns))}
-                    data.append(mapped_row)
-                print(f"CSV data read successfully: {data}")
+            reader = csv.reader(csv_file)
+            # Skip the first 6 lines
+            for _ in range(6):
+                next(reader, None)
+            for index, row in enumerate(reader, start=1):
+                if not row:
+                    continue
+                if row[0].strip().lower() == "stage notes:":
+                    break
+                mapped_row = {static_columns[i]: row[i] if i < len(row) else "" for i in range(len(static_columns))}
+                data.append(mapped_row)
+            if close_after:
+                csv_file.close()
+            print(f"CSV data read successfully: {data}")
         except Exception as e:
             print(f"Error reading CSV file: {e}")
-
         return data
 
     def preprocess_data(self, data):
@@ -1778,9 +1779,7 @@ class MainApp(MDApp):
                 for k in range(8):
                     pixel = bitmap.getpixel((i, j * 8 + k))
                     r, g, b = pixel[:3]
-                    if mode == 0:   # Black and white mode
-                        temp = (temp << 1) | (0 if r <= 100 and g <= 100 and b <= 100 else 1)
-                    elif mode == 1:  # Red and white mode
+                    if mode == 1:  # Red and white mode
                         temp = (temp << 1) | (0 if r >= 100 and g <= 100 and b <= 100 else 1)
                 image_buffer.append(temp)  # Append the byte to the buffer
         print(f"Byte array conversion complete. Length: {len(image_buffer)}")
