@@ -24,6 +24,7 @@ from kivy.core.window import Window
 import shutil
 from plyer import notification
 
+
 # Ensure the soft keyboard pushes the target widget above it
 Window.softinput_mode = "below_target"
 
@@ -40,7 +41,9 @@ except ImportError:
 def is_android():
     """Check if the app is running on an Android device."""
     try:
-        from android import mActivity # type: ignore
+        from android import mActivity
+        from jnius import autoclass, cast
+        from android.permissions import request_permissions, Permission
         return True
     except ImportError:
         return False
@@ -153,31 +156,18 @@ class MainApp(MDApp):
     
     def request_android_permissions(self):
         """Request necessary permissions on Android."""
-        if is_android() and autoclass:
+        if is_android():
             try:
-                PythonActivity = autoclass('org.kivy.android.PythonActivity')
-                ActivityCompat = autoclass('androidx.core.app.ActivityCompat')
-                PackageManager = autoclass('android.content.pm.PackageManager')
-
+                # List of permissions to request
                 permissions = [
-                    "android.permission.WRITE_EXTERNAL_STORAGE",
-                    "android.permission.READ_EXTERNAL_STORAGE",
-                    "android.permission.MANAGE_EXTERNAL_STORAGE",
-                    "android.permission.NFC",  # Add NFC permission explicitly
+                    Permission.READ_EXTERNAL_STORAGE,
+                    Permission.WRITE_EXTERNAL_STORAGE,
+                    Permission.MANAGE_EXTERNAL_STORAGE,
+                    Permission.NFC,
                 ]
 
-                activity = PythonActivity.mActivity
-                permissions_to_request = [
-                    permission for permission in permissions
-                    if ActivityCompat.checkSelfPermission(activity, permission) != PackageManager.PERMISSION_GRANTED
-                ]
-
-                if permissions_to_request:
-                    print(f"Permissions to request: {permissions_to_request}")
-                    ActivityCompat.requestPermissions(activity, permissions_to_request, 0)
-                    print(f"Requested permissions: {permissions_to_request}")
-                else:
-                    print("All required permissions are already granted.")
+                # Request permissions
+                request_permissions(permissions, self.on_permissions_result)
             except Exception as e:
                 print(f"Error requesting permissions: {e}")
         else:
@@ -1912,5 +1902,20 @@ def handle_received_file(intent):
         except Exception as e:
             print(f"Error processing text data: {e}")
 
+    def on_permissions_result(self, permissions, grant_results):
+        """Handle the result of the permission request."""
+        for permission, granted in zip(permissions, grant_results):
+            if permission == Permission.NFC:
+                if granted:
+                    print("NFC permission granted.")
+                    self.initialize_nfc()
+                else:
+                    print("NFC permission denied.")
+            elif permission == Permission.READ_EXTERNAL_STORAGE:
+                if granted:
+                    print("Read external storage permission granted.")
+                else:
+                    print("Read external storage permission denied.")
+            
 if __name__ == "__main__":
     MainApp().run()
