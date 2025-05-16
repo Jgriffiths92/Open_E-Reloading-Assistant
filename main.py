@@ -321,7 +321,7 @@ class MainApp(MDApp):
             print(f"Reading CSV: {file_or_path}")
             # Detect if file_or_path is a path or file-like object
             if isinstance(file_or_path, str):
-                csv_file = open(file_or_path, mode="r", encoding="utf-8")
+                csv_file = open(file_or_path, mode="r", encoding="latin-1")
                 close_after = True
             else:
                 csv_file = file_or_path
