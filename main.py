@@ -1246,7 +1246,7 @@ class MainApp(MDApp):
                         # If the stream_uri is a string path, open it directly
                         if isinstance(stream_uri, str) and stream_uri.startswith("/"):
                             print(f"Received file path: {stream_uri}")
-                            self.process_received_file(stream_uri)
+                            self.process_received_csv(stream_uri)  # <-- Use process_received_csv here
                         else:
                             Uri = autoclass('android.net.Uri')
                             try:
@@ -1258,7 +1258,7 @@ class MainApp(MDApp):
                             file_path = self.resolve_uri_to_path(content_resolver, stream_uri)
 
                             if file_path:
-                                self.process_received_file(file_path)
+                                self.process_received_csv(file_path)  # <-- Use process_received_csv here
                             else:
                                 try:
                                     input_stream = content_resolver.openInputStream(stream_uri)
@@ -1894,7 +1894,7 @@ def handle_received_file(intent):
         try:
             print(f"Processing received file: {file_path}")
             if file_path.endswith(".csv"):
-            # Read and process the CSV file
+                # Read and process the CSV file
                 with open(file_path, "r", encoding="utf-8") as csv_file:
                     data = self.read_csv_to_dict(csv_file)
                     self.current_data = data
