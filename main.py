@@ -1271,7 +1271,15 @@ class MainApp(MDApp):
                                             buffer.write(byte)
                                             byte = input_stream.read()
                                         input_stream.close()
-                                        content = bytes(buffer.toByteArray()).decode("utf-8")
+                                        content_bytes = bytes(buffer.toByteArray())
+
+                                        # Try decoding the content bytes
+                                        try:
+                                            content = content_bytes.decode("utf-8")
+                                        except UnicodeDecodeError:
+                                            print("UTF-8 decode failed, trying latin-1...")
+                                            content = content_bytes.decode("latin-1")
+
                                         print(f"File contents (from InputStream):\n{content}")
                                         self.process_received_text(content)
                                     else:
