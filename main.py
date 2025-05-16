@@ -225,7 +225,8 @@ class MainApp(MDApp):
             try:
                 PythonActivity = autoclass('org.kivy.android.PythonActivity')
                 intent = PythonActivity.mActivity.getIntent()
-                self.on_new_intent(intent)  # Use the existing on_new_intent method
+                # Instead of processing immediately, store the intent for later
+                self.pending_intent = intent
             except Exception as e:
                 print(f"Error handling startup intent: {e}")
 
@@ -241,7 +242,13 @@ class MainApp(MDApp):
         self.hide_nfc_button()
 
         return root
-    
+
+    def on_start(self):
+        # This method is called after build() and self.root are set
+        if hasattr(self, "pending_intent") and self.pending_intent:
+            self.on_new_intent(self.pending_intent)
+            self.pending_intent = None
+
     global show_lead, show_range, show_2_wind_holds
     show_lead = False
     show_range = False
@@ -1331,49 +1338,47 @@ class MainApp(MDApp):
             print(f"Error resolving URI to path: {e}")
             return None
 
-    def process_received_csv(self, file_path_or_uri):
-        """Process the received CSV file or CSV text."""
-        import io
-        try:
-            # If it's CSV text (not a path or URI), parse directly
-            if (
-                "\n" in file_path_or_uri or "\r" in file_path_or_uri
-            ) and not file_path_or_uri.startswith("/") and not file_path_or_uri.startswith("content://"):
-                # Looks like CSV text, not a path or URI
-                csv_file = io.StringIO(file_path_or_uri)
-                data = self.read_csv_to_dict(csv_file)
-            else:
-                # Fix for Android: prepend storage root if needed
-                if file_path_or_uri.startswith("/Documents/"):
-                    storage_root = "/storage/emulated/0"
-                    abs_path = storage_root + file_path_or_uri
-                    print(f"Trying absolute path: {abs_path}")
-                    file_path_or_uri = abs_path
+def process_received_csv(self, file_path_or_uri):
+    """Process the received CSV file or CSV text."""
+    import io
+    try:
+        # If UI is not ready, defer processing
+        if not self.root:
+            print("UI not ready, deferring CSV processing.")
+            self._pending_csv = file_path_or_uri
+            return
 
-                if file_path_or_uri.startswith("/"):  # If it's a file path
-                    with open(file_path_or_uri, mode="r", encoding="utf-8") as csv_file:
-                        data = self.read_csv_to_dict(csv_file)
-                else:  # If it's a content URI
-                    content_resolver = mActivity.getContentResolver()
-                    input_stream = content_resolver.openInputStream(file_path_or_uri)
-                    content = input_stream.read().decode("utf-8")
-                    csv_file = io.StringIO(content)
+        # If it's CSV text (not a path or URI), parse directly
+        if (
+            "\n" in file_path_or_uri or "\r" in file_path_or_uri
+        ) and not file_path_or_uri.startswith("/") and not file_path_or_uri.startswith("content://"):
+            csv_file = io.StringIO(file_path_or_uri)
+            data = self.read_csv_to_dict(csv_file)
+        else:
+            if file_path_or_uri.startswith("/Documents/"):
+                storage_root = "/storage/emulated/0"
+                abs_path = storage_root + file_path_or_uri
+                print(f"Trying absolute path: {abs_path}")
+                file_path_or_uri = abs_path
+
+            if file_path_or_uri.startswith("/"):
+                with open(file_path_or_uri, mode="r", encoding="utf-8") as csv_file:
                     data = self.read_csv_to_dict(csv_file)
+            else:
+                content_resolver = mActivity.getContentResolver()
+                input_stream = content_resolver.openInputStream(file_path_or_uri)
+                content = input_stream.read().decode("utf-8")
+                csv_file = io.StringIO(content)
+                data = self.read_csv_to_dict(csv_file)
 
-            self.current_data = data  # Store the data for filtering or other operations
+        self.current_data = data
+        processed_data = self.preprocess_data(data)
+        self.display_table(processed_data)
+        self.root.ids.screen_manager.current = "home"
+        print(f"Processed received CSV: {file_path_or_uri}")
+    except Exception as e:
+        print(f"Error processing received CSV: {e}")
 
-            # Preprocess the data
-            processed_data = self.preprocess_data(data)
-
-            # Display the data as a table on the Home Screen
-            self.display_table(processed_data)
-
-            # Navigate to the Home Screen
-            self.root.ids.screen_manager.current = "home"
-            print(f"Processed received CSV: {file_path_or_uri}")
-        except Exception as e:
-            print(f"Error processing received CSV: {e}")
-        
     def read_csv_from_assets(self, file_name):
         """Read a CSV file from the assets/CSV folder."""
         if is_android():
