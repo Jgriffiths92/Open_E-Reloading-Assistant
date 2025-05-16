@@ -1281,7 +1281,7 @@ class MainApp(MDApp):
                                             content = content_bytes.decode("latin-1")
 
                                         print(f"File contents (from InputStream):\n{content}")
-                                        self.process_received_text(content)
+                                        self.process_received_csv(content)
                                     else:
                                         print("InputStream is None. Cannot read the file.")
                                 except Exception as e:
