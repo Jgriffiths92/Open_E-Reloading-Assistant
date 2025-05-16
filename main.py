@@ -217,7 +217,7 @@ class MainApp(MDApp):
 
         # Dynamically set the rootpath for the FileChooserListView
         self.root = Builder.load_file("layout.kv")  # Load the root widget from the KV file
-        saved_cards_screen = root.ids.screen_manager.get_screen("saved_cards")
+        saved_cards_screen = self.root.ids.screen_manager.get_screen("saved_cards")
         csv_directory = self.ensure_csv_directory()
         saved_cards_screen.ids.filechooser.rootpath = csv_directory
 
@@ -236,13 +236,13 @@ class MainApp(MDApp):
         self.orientation_menu = None
 
         # Set the default text for the display and orientation dropdown buttons
-        root.ids.settings_screen.ids.display_dropdown_button.text = self.selected_display
-        root.ids.settings_screen.ids.orientation_dropdown_button.text = self.selected_orientation
+        self.root.ids.settings_screen.ids.display_dropdown_button.text = self.selected_display
+        self.root.ids.settings_screen.ids.orientation_dropdown_button.text = self.selected_orientation
 
         # Hide the NFC button if on Android
         self.hide_nfc_button()
 
-        return root
+        return self.root
     
     global show_lead, show_range, show_2_wind_holds
     show_lead = False
