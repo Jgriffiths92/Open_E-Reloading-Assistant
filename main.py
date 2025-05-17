@@ -1696,77 +1696,75 @@ def handle_received_file(intent):
     else:
         print("This functionality is only available on Android.")
 
-    def start_foreground_service(self):
-        """Start a foreground service with a persistent notification."""
-        if is_android():
-            try:
-                # Create a persistent notification
-                notification.notify(
-                    title="Open E-Dope Service",
-                    message="The app is running in the background.",
-                    timeout=10  # Notification timeout in seconds
-                )
-                print("Foreground service started with a persistent notification.")
-            except Exception as e:
+def start_foreground_service(self):
+    """Start a foreground service with a persistent notification."""
+    if is_android():
+        try:
+            # Create a persistent notification
+            notification.notify(
+                title="Open E-Dope Service",
+                message="The app is running in the background.",
+                timeout=10  # Notification timeout in seconds
+            )
+            print("Foreground service started with a persistent notification.")
+        except Exception as e:
                 print(f"Error starting foreground service: {e}")
+    else:
+        print("Foreground service is only available on Android.")
+def process_received_file(self, file_path):
+    """Process the received file."""
+    try:
+        print(f"Processing received file: {file_path}")
+        if file_path.endswith(".csv"):
+            # Read and process the CSV file
+            with open(file_path, "r", encoding="utf-8") as csv_file:
+                data = self.read_csv_to_dict(csv_file)
+                self.current_data = data
+                self.display_table(data)
+                print("CSV file processed successfully.")
         else:
-            print("Foreground service is only available on Android.")
-    def process_received_file(self, file_path):
-        """Process the received file."""
-        try:
-            print(f"Processing received file: {file_path}")
-            if file_path.endswith(".csv"):
-                # Read and process the CSV file
-                with open(file_path, "r", encoding="utf-8") as csv_file:
-                    data = self.read_csv_to_dict(csv_file)
-                    self.current_data = data
-                    self.display_table(data)
-                    print("CSV file processed successfully.")
-            else:
-                print("Unsupported file type.")
-        except Exception as e:
-            print(f"Error processing received file: {e}")
+            print("Unsupported file type.")
+    except Exception as e:
+        print(f"Error processing received file: {e}")
             
-    def process_received_text(self, text_data):
-        """Process the received text data."""
-        try:
-            # Split the data into lines
-            lines = text_data.strip().split("\n")
+def process_received_text(self, text_data):
+    """Process the received text data."""
+    try:
+        # Split the data into lines
+        lines = text_data.strip().split("\n")
+        # Extract the headers from the second line (after the metadata)
+        headers = lines[1].split(",")
+        # Parse the rows into dictionaries
+        data = []
+        for line in lines[2:]:  # Skip the first two lines (metadata and headers)
+            row = line.split(",")
+            data.append({headers[i]: row[i] for i in range(len(headers))})
 
-            # Extract the headers from the second line (after the metadata)
-            headers = lines[1].split(",")
+        # Store the data for filtering or other operations
+        self.current_data = data
 
-            # Parse the rows into dictionaries
-            data = []
-            for line in lines[2:]:  # Skip the first two lines (metadata and headers)
-                row = line.split(",")
-                data.append({headers[i]: row[i] for i in range(len(headers))})
+        # Display the data in the table
+        self.display_table(data)
+        print("Text data processed and displayed successfully.")
+    except Exception as e:
+        print(f"Error processing text data: {e}")
 
-            # Store the data for filtering or other operations
-            self.current_data = data
+def on_permissions_result(self, permissions, grant_results):
+    """Handle the result of the permission request."""
+    for permission, granted in zip(permissions, grant_results):
+        if permission == Permission.NFC:
+            if granted:
+                print("NFC permission granted.")
+                self.initialize_nfc()
+            else:
+                print("NFC permission denied.")
+        elif permission == Permission.READ_EXTERNAL_STORAGE:
+            if granted:
+                print("Read external storage permission granted.")
+            else:
+                print("Read external storage permission denied.")
 
-            # Display the data in the table
-            self.display_table(data)
-            print("Text data processed and displayed successfully.")
-        except Exception as e:
-            print(f"Error processing text data: {e}")
-
-    def on_permissions_result(self, permissions, grant_results):
-        """Handle the result of the permission request."""
-        for permission, granted in zip(permissions, grant_results):
-            if permission == Permission.NFC:
-                if granted:
-                    print("NFC permission granted.")
-                    self.initialize_nfc()
-                else:
-                    print("NFC permission denied.")
-            elif permission == Permission.READ_EXTERNAL_STORAGE:
-                if granted:
-                    print("Read external storage permission granted.")
-                else:
-                    print("Read external storage permission denied.")
-
-def on_resume(self):
+def on_start(self):
     print("on_resume CALLED")
     if is_android() and autoclass:
         try:
