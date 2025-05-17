@@ -811,6 +811,32 @@ class MainApp(MDApp):
             print(f"Error converting CSV to bitmap: {e}")
             return None
 
+    def send_bitmap_as_image_array_via_nfc(self):
+        """Generate the bitmap, convert it to a byte array, and send it via NFC."""
+        print("Starting NFC transmission for bitmap...")
+        if hasattr(self, "current_data") and self.current_data:
+            # Generate the bitmap
+            bitmap_path = self.csv_to_bitmap(self.current_data)
+            print(f"Bitmap path: {bitmap_path}")
+            if not os.path.exists(bitmap_path):
+                print("Bitmap file does not exist.")
+                return
+            try:
+                # Open the bitmap file
+                bitmap = Image.open(bitmap_path)
+                print(f"Bitmap opened successfully. Size: {bitmap.size}")
+
+                # Convert the bitmap to a byte array
+                image_buffer = self.get_picture_data_ssd(bitmap)
+                print(f"Bitmap converted to byte array. Length: {len(image_buffer)}")
+
+                # Send the byte array via NFC
+                self.send_image_data_via_nfc(image_buffer, bitmap.width, bitmap.height)
+            except Exception as e:
+                print(f"Error processing bitmap file: {e}")
+        else:
+            print("No data available to generate bitmap.")
+
     def navigate_to_home(self):
         """Navigate back to the home screen."""
         self.root.ids.screen_manager.current = "home"
@@ -1047,7 +1073,41 @@ class MainApp(MDApp):
             print("NFC functionality is only available on Android.")
             return False
 
-   
+    def enable_nfc_foreground_dispatch(self):
+        """Enable NFC foreground dispatch to handle NFC intents."""
+        if is_android() and autoclass:
+            try:
+                PendingIntent = autoclass('android.app.PendingIntent')
+                Intent = autoclass('android.content.Intent')
+                IntentFilter = autoclass('android.content.IntentFilter')
+
+                # Create a pending intent for NFC
+                intent = Intent(mActivity, mActivity.getClass())
+                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                pending_intent = PendingIntent.getActivity(
+                    mActivity,
+                    0,
+                    intent,
+                    PendingIntent.FLAG_IMMUTABLE
+                )
+
+                # Create intent filters for NFC
+                ndef_filter = IntentFilter("android.nfc.action.NDEF_DISCOVERED")
+                tech_filter = IntentFilter("android.nfc.action.TECH_DISCOVERED")
+                tag_filter = IntentFilter("android.nfc.action.TAG_DISCOVERED")
+
+                # Enable foreground dispatch
+                self.nfc_adapter.enableForegroundDispatch(
+                    mActivity,
+                    pending_intent,
+                    [ndef_filter, tech_filter, tag_filter],
+                    None
+                )
+                print("NFC foreground dispatch enabled.")
+            except Exception as e:
+                print(f"Error enabling NFC foreground dispatch: {e}")
+
+    
     def on_new_intent(self, intent):
         """Handle new intents, including shared data."""
         if is_android() and autoclass:
@@ -1578,6 +1638,7 @@ class MainApp(MDApp):
             except Exception as e:
                 print(f"Error hiding NFC button: {e}")
 
+    
     def verify_copied_files():
         """Verify the contents of the copied CSV files."""
         dest_dir = os.path.join(os.environ.get("ANDROID_PRIVATE", ""), "CSV")
@@ -1712,9 +1773,11 @@ def handle_received_file(intent):
                 PythonActivity = autoclass('org.kivy.android.PythonActivity')
                 intent = PythonActivity.mActivity.getIntent()
                 print("Checking for new intent on resume...")
+                # Delay intent handling to ensure UI is ready
                 from kivy.clock import Clock
                 Clock.schedule_once(lambda dt: self.on_new_intent(intent), 0)
             except Exception as e:
                 print(f"Error checking intent on resume: {e}")
+    
 if __name__ == "__main__":
     MainApp().run()
