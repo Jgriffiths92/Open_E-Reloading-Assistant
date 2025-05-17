@@ -246,7 +246,7 @@ MDNavigationLayout:
             width: dp(24)
             halign: "left"
             valign: "middle"
-            opacity: 1 if ctx.name == "..\\" else 0  # Show only for the parent directory
+            opacity: 1 if ctx.name == "..\\" or ctx.name == "../" else 0  # Show only for the parent directory
         Label:
             color: 0, 0, 0, 1
             id: filename
@@ -254,7 +254,7 @@ MDNavigationLayout:
             halign: 'center'  # Center the file names horizontally
             valign: 'middle'  # Center the file names vertically
             shorten: True
-            text: "Back" if ctx.name == "..\\" else ctx.name.split('.csv')[0] if '.csv' in ctx.name else ctx.name  # Display "Back" for parent directory
+            text: "Back" if ctx.name == "..\\" or ctx.name == "../" else ctx.name.split('.csv')[0] if '.csv' in ctx.name else ctx.name  # Display "Back" for parent directory
         Label:
             color: 0, 0, 0, 0  # Make the file size label invisible
             text_size: self.width, None
@@ -265,6 +265,6 @@ MDNavigationLayout:
             icon: "delete"
             size_hint_x: None
             width: dp(24)
-            opacity: 0 if ctx.name == "..\\" else 1  # Hide the delete button for the back option
-            disabled: True if ctx.name == "..\\" else False  # Disable the delete button for the back option
+            opacity: 0 if ctx.name == "..\\" or ctx.name == "../" else 1  # Hide the delete button for the back option
+            disabled: True if ctx.name == "..\\" or ctx.name == "../" else False  # Disable the delete button for the back option
             on_release: app.delete_file_or_folder(ctx.path) # Call the delete function
