@@ -1049,19 +1049,12 @@ class MainApp(MDApp):
 
    
     def on_new_intent(self, intent):
-        """Handle new intents, including NFC tag detection."""
+        """Handle new intents, including shared data."""
         if is_android() and autoclass:
             try:
+                # Get the action from the intent
                 action = intent.getAction()
                 print(f"Intent action: {action}")
-
-                # NFC tag detected
-                if action == "android.nfc.action.TAG_DISCOVERED":
-                    print("NFC tag detected! Sending output.bmp via NFC...")
-                    # Call the method to send the bitmap via NFC
-                    self.csv_to_bitmap(self.current_data)
-                    self.send_output_bitmap_via_nfc(intent)
-                    return
 
                 # Handle shared data
                 if action in ["android.intent.action.SEND", "android.intent.action.VIEW"]:
@@ -1725,40 +1718,5 @@ def handle_received_file(intent):
         except Exception as e:
             print(f"Error checking intent on resume: {e}")
     
-    def send_output_bitmap_via_nfc(self, intent):
-        """Send output.bmp via NFC using the detected tag and NfcImageSender Java class."""
-        if not is_android() or not autoclass:
-            print("NFC sending is only available on Android.")
-            return
-
-        try:
-            # 1. Load output.bmp as Android Bitmap
-            bitmap_path = os.path.join(os.path.dirname(__file__), "assets", "bitmap", "output.bmp")
-            if not os.path.exists(bitmap_path):
-                print(f"Bitmap not found: {bitmap_path}")
-                return
-
-            BitmapFactory = autoclass('android.graphics.BitmapFactory')
-            FileInputStream = autoclass('java.io.FileInputStream')
-            bitmap_java = BitmapFactory.decodeStream(FileInputStream(bitmap_path))
-
-            # 2. Prepare NfcImageSender Java class
-            PythonActivity = autoclass('org.kivy.android.PythonActivity')
-            activity = PythonActivity.mActivity
-            NfcImageSender = autoclass('com.example.myapplication.NfcImageSender')
-
-            # 3. Instantiate NfcImageSender (pass None for TextView if not needed)
-            nfc_sender = NfcImageSender(activity, None)
-
-            # 4. Set your e-paper parameters as needed
-            epdColor = 0
-            epdInch = 0
-            epdIC = 0
-
-            # 5. Call the onNewIntent method to send the bitmap via NFC
-            nfc_sender.onNewIntent(intent, bitmap_java, epdColor, epdInch, epdIC)
-            print("NFC send initiated.")
-        except Exception as e:
-            print(f"Error sending bitmap via NFC: {e}")
 if __name__ == "__main__":
     MainApp().run()
