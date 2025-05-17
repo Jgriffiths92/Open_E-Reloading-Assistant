@@ -1707,16 +1707,14 @@ def handle_received_file(intent):
 
     def on_resume(self):
         """Called when the app resumes from background."""
-    if is_android() and autoclass:
-        try:
-            PythonActivity = autoclass('org.kivy.android.PythonActivity')
-            intent = PythonActivity.mActivity.getIntent()
-            print("Checking for new intent on resume...")
-            # Delay intent handling to ensure UI is ready
-            from kivy.clock import Clock
-            Clock.schedule_once(lambda dt: self.on_new_intent(intent), 0)
-        except Exception as e:
-            print(f"Error checking intent on resume: {e}")
-    
+        if is_android() and autoclass:
+            try:
+                PythonActivity = autoclass('org.kivy.android.PythonActivity')
+                intent = PythonActivity.mActivity.getIntent()
+                print("Checking for new intent on resume...")
+                from kivy.clock import Clock
+                Clock.schedule_once(lambda dt: self.on_new_intent(intent), 0)
+            except Exception as e:
+                print(f"Error checking intent on resume: {e}")
 if __name__ == "__main__":
     MainApp().run()
