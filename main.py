@@ -380,7 +380,7 @@ class MainApp(MDApp):
 
         # Filter headers based on the show/hide options
         headers = ["Elv", "Wnd1"]  # Start with these columns
-        target_present = any(row.get("Target") for row in data)
+        target_present = any(row.get("Tgt") for row in data)
         if target_present:
             headers.insert(0, "Target")
         if show_range:
