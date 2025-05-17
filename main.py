@@ -1768,6 +1768,7 @@ def handle_received_file(intent):
 
     def on_resume(self):
         """Called when the app resumes from background."""
+        print("on_resume CALLED")
         if is_android() and autoclass:
             try:
                 PythonActivity = autoclass('org.kivy.android.PythonActivity')
