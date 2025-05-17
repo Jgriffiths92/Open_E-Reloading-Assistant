@@ -348,16 +348,22 @@ class MainApp(MDApp):
         return data
 
     def preprocess_data(self, data):
-        """Preprocess the data to shift columns if the 'Target' column contains a number."""
+        """Shift columns to the right by one if 'Target' contains a number."""
         processed_data = []
         for row in data:
             target_value = row.get("Target", "")
             # Check if the "Target" column contains a number
-            if target_value:  # Check if the value contains data
+            try:
+                float(target_value)
+                is_number = True
+            except (ValueError, TypeError):
+                is_number = False
+
+            if is_number:
                 # Shift the columns across to the right by one
                 shifted_row = {}
                 keys = list(row.keys())
-                for i in range(len(keys) - 1):  # Shift all columns except the last one
+                for i in range(len(keys) - 1):
                     shifted_row[keys[i + 1]] = row[keys[i]]
                 shifted_row[keys[0]] = ""  # Set the first column to empty
                 processed_data.append(shifted_row)
@@ -378,22 +384,22 @@ class MainApp(MDApp):
         # Define the static column order
         static_headers = ["Target", "Range", "Elv", "Wnd1", "Wnd2", "Lead"]
 
-        # Filter headers based on the show/hide options
+         # Filter headers based on the show/hide options
         headers = ["Elv", "Wnd1"]  # Start with these columns
-        target_present = any(row.get("Tgt") for row in data)
+        target_present = any(row.get("Target") for row in data)
         if target_present:
             headers.insert(0, "Target")
         if show_range:
-            if target_present:
-                headers.insert(1, "Range")  # After Target
+            if not target_present:
+                headers.insert(0, "Range")  # Move Range to position 0 if Target is not displayed
             else:
-                headers.insert(0, "Range")  # At the start if Target is not present
+                headers.insert(1, "Range")  # Otherwise, after Target
         if show_2_wind_holds:
             headers.append("Wnd2")
         if show_lead:
             headers.append("Lead")
 
-        # Filter the data rows based on the selected headers
+    # Filter the data rows based on the selected headers
         filtered_data = [
             {header: row.get(header, "") for header in headers} for row in data
         ]
@@ -1782,7 +1788,6 @@ class MainApp(MDApp):
             for j in range(height // 8):
                 temp = 0  # Reset temp for each byte
                 for k in range(8):
-
                     pixel = bitmap.getpixel((i, j * 8 + k))
                     r, g, b = pixel[:3]
                     if mode == 1:  # Red and white mode
