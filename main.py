@@ -1766,19 +1766,17 @@ def handle_received_file(intent):
                 else:
                     print("Read external storage permission denied.")
 
-    def on_resume(self):
-        """Called when the app resumes from background."""
-        print("on_resume CALLED")
-        if is_android() and autoclass:
-            try:
-                PythonActivity = autoclass('org.kivy.android.PythonActivity')
-                intent = PythonActivity.mActivity.getIntent()
-                print("Checking for new intent on resume...")
-                # Delay intent handling to ensure UI is ready
-                from kivy.clock import Clock
-                Clock.schedule_once(lambda dt: self.on_new_intent(intent), 0)
-            except Exception as e:
-                print(f"Error checking intent on resume: {e}")
+def on_resume(self):
+    print("on_resume CALLED")
+    if is_android() and autoclass:
+        try:
+            PythonActivity = autoclass('org.kivy.android.PythonActivity')
+            intent = PythonActivity.mActivity.getIntent()
+            print("Checking for new intent on resume...")
+            from kivy.clock import Clock
+            Clock.schedule_once(lambda dt: self.on_new_intent(intent), 0)
+        except Exception as e:
+            print(f"Error checking intent on resume: {e}")
     
 if __name__ == "__main__":
     MainApp().run()
