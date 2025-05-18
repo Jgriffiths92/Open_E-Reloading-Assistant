@@ -1,7 +1,7 @@
 import os
 
 # Adjust this path if your architecture is different
-gradle_path = ".buildozer/android/platform/build-arm64-v8a/dists/open_edope/app/build.gradle"
+gradle_path = "/content/.buildozer/android/platform/build-arm64-v8a_armeabi-v7a/dists/open_edope/build.gradle"
 
 if not os.path.exists(gradle_path):
     print("Gradle file not found. Build your app once first.")
