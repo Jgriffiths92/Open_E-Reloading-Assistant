@@ -186,7 +186,7 @@ class MainApp(MDApp):
     def send_nfc_image(self, width, height, image_buffer, epd_init):
         PythonActivity = autoclass('org.kivy.android.PythonActivity')
         intent = PythonActivity.mActivity.getIntent()
-        NfcHelper = autoclass('com.example.myapplication.NfcHelper')
+        NfcHelper = autoclass('com.openedope.open_edope.NfcHelper')
 
         # Convert Python bytes to Java byte[]
         ByteBuffer = autoclass('java.nio.ByteBuffer')
