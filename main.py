@@ -148,6 +148,23 @@ class SettingsScreen(Screen):
     pass
 
 class MainApp(MDApp):
+    EPD_INIT_MAP = {
+        "Good Display 3.7-inch": [
+            "F0DB000069A00603300190012C...",  # Replace with actual string for 3.7"
+            "F0DA000003F00330"
+        ],
+        "Good Display 4.2-inch": [
+            "F0DB0000...4.2...",  # Replace with actual string for 4.2"
+            "F0DA0000...4.2..."
+        ],
+        "Good Display 2.9-inch": [
+            # Typical SSD1680 2.9" init commands (hex string, no spaces)
+            # These are EXAMPLES. Replace with your vendor's actual values if needed.
+            "012701000CD7D69D2CA83A1A3B08110344000F45270100004E004F2701",  # Initialization sequence
+            "2200"  # Display update command (example)
+        ],
+    }
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.config_parser = ConfigParser()  # Initialize ConfigParser
@@ -161,6 +178,37 @@ class MainApp(MDApp):
         self.detected_tag = None  # Initialize the detected_tag attribute
 
     dialog = None  # Store the dialog instance
+
+                    
+    def send_csv_bitmap_via_nfc(self):
+           # 1. Convert CSV to bitmap
+        output_path = self.csv_to_bitmap(self.current_data)
+        if not output_path:
+            print("Failed to create bitmap.")
+            return
+
+        # 2. Read bitmap as bytes
+        with open(output_path, "rb") as f:
+            image_buffer = f.read()
+
+        # 3. Get bitmap dimensions
+        from PIL import Image
+        img = Image.open(output_path)
+        width, height = img.size
+
+        # 4. Prepare epd_init (replace with your actual values)
+
+        # Get epd_init for the selected display
+        epd_init = self.EPD_INIT_MAP.get(self.selected_display)
+        if not epd_init:
+            print(f"No epd_init found for display: {self.selected_display}")
+            return
+
+        self.send_nfc_image(width, height, image_buffer, epd_init)
+        
+    def on_pause(self):
+        print("on_pause CALLED")
+        return True  # Returning True allows the app to be paused
 
     def on_resume(self):
         print("on_resume CALLED")
