@@ -149,13 +149,17 @@ class SettingsScreen(Screen):
 
 class MainApp(MDApp):
     EPD_INIT_MAP = {
+                # Good Display 3.7-inch (SSD1680, 280x480)
         "Good Display 3.7-inch": [
-            "F0DB000069A00603300190012C...",  # Replace with actual string for 3.7"
-            "F0DA000003F00330"
+            # Initialization sequence (hex string, no spaces)
+            "120101DF01001103440023450000DF014E004F0000",  # SWRESET, DRIVER_OUTPUT, DATA_ENTRY, RAM X/Y, etc.
+            "2200"  # Display update command (example)
         ],
+        # Good Display 4.2-inch (SSD1680, 400x300)
         "Good Display 4.2-inch": [
-            "F0DB0000...4.2...",  # Replace with actual string for 4.2"
-            "F0DA0000...4.2..."
+            # Initialization sequence (hex string, no spaces)
+            "12012B010011034400314500002B014E004F0000",  # SWRESET, DRIVER_OUTPUT, DATA_ENTRY, RAM X/Y, etc.
+            "2200"  # Display update command (example)
         ],
         "Good Display 2.9-inch": [
             # Typical SSD1680 2.9" init commands (hex string, no spaces)
@@ -179,7 +183,23 @@ class MainApp(MDApp):
 
     dialog = None  # Store the dialog instance
 
-                    
+    def send_nfc_image(self, width, height, image_buffer, epd_init):
+        PythonActivity = autoclass('org.kivy.android.PythonActivity')
+        intent = PythonActivity.mActivity.getIntent()
+        NfcHelper = autoclass('com.example.myapplication.NfcHelper')
+
+        # Convert Python bytes to Java byte[]
+        ByteBuffer = autoclass('java.nio.ByteBuffer')
+        image_buffer_java = ByteBuffer.wrap(bytes(image_buffer))
+
+        # Convert Python list of strings to Java String[]
+        String = autoclass('java.lang.String')
+        Array = autoclass('java.lang.reflect.Array')
+        epd_init_java_array = Array.newInstance(String, len(epd_init))
+        for i, s in enumerate(epd_init):
+            epd_init_java_array[i] = String(s)
+
+        NfcHelper.processNfcIntent(intent, width, height, image_buffer_java, epd_init_java_array)                
     def send_csv_bitmap_via_nfc(self):
            # 1. Convert CSV to bitmap
         output_path = self.csv_to_bitmap(self.current_data)
@@ -205,7 +225,32 @@ class MainApp(MDApp):
             return
 
         self.send_nfc_image(width, height, image_buffer, epd_init)
-        
+
+    def send_csv_bitmap_via_nfc(self):
+    # 1. Convert CSV to bitmap
+        output_path = self.csv_to_bitmap(self.current_data)
+        if not output_path:
+            print("Failed to create bitmap.")
+            return
+
+        # 2. Read bitmap as bytes
+        with open(output_path, "rb") as f:
+            image_buffer = f.read()
+
+        # 3. Get bitmap dimensions
+        from PIL import Image
+        img = Image.open(output_path)
+        width, height = img.size
+
+        # 4. Get epd_init for the selected display
+        epd_init = self.EPD_INIT_MAP.get(self.selected_display)
+        if not epd_init:
+            print(f"No epd_init found for display: {self.selected_display}")
+            return
+
+        # 5. Send via NFC
+        self.send_nfc_image(width, height, image_buffer, epd_init)
+            
     def on_pause(self):
         print("on_pause CALLED")
         return True  # Returning True allows the app to be paused
