@@ -179,7 +179,7 @@ android.private_storage = True
 
 # (list) List of Java files to add to the android project (can be java or a
 # directory containing the files)
-android.add_src = app/src/main/java
+android.add_src = app/src/
 
 # (list) Android AAR archives to add
 #android.add_aars =
@@ -453,5 +453,3 @@ warn_on_root = 1
 #    Then, invoke the command line with the "demo" profile:
 #
 #buildozer --profile demo android debug
-
-postbuild = python patch_gradle.py
