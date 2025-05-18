@@ -199,7 +199,8 @@ class MainApp(MDApp):
         for i, s in enumerate(epd_init):
             epd_init_java_array[i] = String(s)
 
-        NfcHelper.processNfcIntent(intent, width, height, image_buffer_java, epd_init_java_array)                
+        NfcHelper.processNfcIntent(intent, width, height, image_buffer_java, epd_init_java_array)
+
     def send_csv_bitmap_via_nfc(self):
            # 1. Convert CSV to bitmap
         output_path = self.csv_to_bitmap(self.current_data)
@@ -257,15 +258,10 @@ class MainApp(MDApp):
 
     def on_resume(self):
         print("on_resume CALLED")
-        if is_android() and autoclass:
-            try:
-                PythonActivity = autoclass('org.kivy.android.PythonActivity')
-                intent = PythonActivity.mActivity.getIntent()
-                print("Checking for new intent on resume...")
-                from kivy.clock import Clock
-                Clock.schedule_once(lambda dt: self.on_new_intent(intent), 0)
-            except Exception as e:
-                print(f"Error checking intent on resume: {e}")
+        PythonActivity = autoclass('org.kivy.android.PythonActivity')
+        intent = PythonActivity.mActivity.getIntent()
+        print("Checking for new intent on resume...")
+        self.on_new_intent(intent)
     
             
     def request_android_permissions(self):

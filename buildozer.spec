@@ -179,7 +179,7 @@ android.private_storage = True
 
 # (list) List of Java files to add to the android project (can be java or a
 # directory containing the files)
-android.add_src = app/src/
+android.add_src = src
 
 # (list) Android AAR archives to add
 #android.add_aars =
