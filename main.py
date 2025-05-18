@@ -161,7 +161,20 @@ class MainApp(MDApp):
         self.detected_tag = None  # Initialize the detected_tag attribute
 
     dialog = None  # Store the dialog instance
+
+    def on_resume(self):
+        print("on_resume CALLED")
+        if is_android() and autoclass:
+            try:
+                PythonActivity = autoclass('org.kivy.android.PythonActivity')
+                intent = PythonActivity.mActivity.getIntent()
+                print("Checking for new intent on resume...")
+                from kivy.clock import Clock
+                Clock.schedule_once(lambda dt: self.on_new_intent(intent), 0)
+            except Exception as e:
+                print(f"Error checking intent on resume: {e}")
     
+            
     def request_android_permissions(self):
         """Request necessary permissions on Android."""
         if is_android():
@@ -811,32 +824,7 @@ class MainApp(MDApp):
             print(f"Error converting CSV to bitmap: {e}")
             return None
 
-    def send_bitmap_as_image_array_via_nfc(self):
-        """Generate the bitmap, convert it to a byte array, and send it via NFC."""
-        print("Starting NFC transmission for bitmap...")
-        if hasattr(self, "current_data") and self.current_data:
-            # Generate the bitmap
-            bitmap_path = self.csv_to_bitmap(self.current_data)
-            print(f"Bitmap path: {bitmap_path}")
-            if not os.path.exists(bitmap_path):
-                print("Bitmap file does not exist.")
-                return
-            try:
-                # Open the bitmap file
-                bitmap = Image.open(bitmap_path)
-                print(f"Bitmap opened successfully. Size: {bitmap.size}")
-
-                # Convert the bitmap to a byte array
-                image_buffer = self.get_picture_data_ssd(bitmap)
-                print(f"Bitmap converted to byte array. Length: {len(image_buffer)}")
-
-                # Send the byte array via NFC
-                self.send_image_data_via_nfc(image_buffer, bitmap.width, bitmap.height)
-            except Exception as e:
-                print(f"Error processing bitmap file: {e}")
-        else:
-            print("No data available to generate bitmap.")
-
+    
     def navigate_to_home(self):
         """Navigate back to the home screen."""
         self.root.ids.screen_manager.current = "home"
@@ -1763,18 +1751,5 @@ def on_permissions_result(self, permissions, grant_results):
                 print("Read external storage permission granted.")
             else:
                 print("Read external storage permission denied.")
-
-def on_start(self):
-    print("on_resume CALLED")
-    if is_android() and autoclass:
-        try:
-            PythonActivity = autoclass('org.kivy.android.PythonActivity')
-            intent = PythonActivity.mActivity.getIntent()
-            print("Checking for new intent on resume...")
-            from kivy.clock import Clock
-            Clock.schedule_once(lambda dt: self.on_new_intent(intent), 0)
-        except Exception as e:
-            print(f"Error checking intent on resume: {e}")
-    
 if __name__ == "__main__":
     MainApp().run()
