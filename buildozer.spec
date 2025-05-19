@@ -16,7 +16,7 @@ source.dir = .
 source.main = Main.py
 
 # (list) Source files to include (let empty to include all the files)
-source.include_exts = py,png,jpg,jpeg,kv,atlas,ttf,xml,json,html,css,js,txt,md,toml,csv,bmp
+source.include_exts = py,png,jpg,jpeg,kv,atlas,ttf,xml,json,html,css,js,txt,md,toml,csv,bmp,java
 
 # (list) List of inclusions using pattern matching
 #source.include_patterns = assets/*,images/*.png
@@ -179,7 +179,7 @@ android.private_storage = True
 
 # (list) List of Java files to add to the android project (can be java or a
 # directory containing the files)
-android.add_src = ./com/openedope/open_edope/NfcHelper.java
+android.add_src = app/src/main/java
 
 # (list) Android AAR archives to add
 #android.add_aars =
