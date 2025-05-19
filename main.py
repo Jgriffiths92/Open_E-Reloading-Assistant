@@ -199,6 +199,7 @@ class MainApp(MDApp):
         for i, s in enumerate(epd_init):
             epd_init_java_array[i] = String(s)
 
+        # Call your Java static method
         NfcHelper.processNfcIntent(intent, width, height, image_buffer_java, epd_init_java_array)
 
     def send_csv_bitmap_via_nfc(self):
@@ -1186,14 +1187,24 @@ class MainApp(MDApp):
 
     
     def on_new_intent(self, intent):
-        """Handle new intents, including shared data."""
+        """Handle new intents, including shared data and NFC tags."""
         if is_android() and autoclass:
             try:
                 # Get the action from the intent
                 action = intent.getAction()
                 print(f"Intent action: {action}")
 
-                # Handle shared data
+                # NFC tag detected
+                if action in [
+                    "android.nfc.action.TAG_DISCOVERED",
+                    "android.nfc.action.NDEF_DISCOVERED",
+                    "android.nfc.action.TECH_DISCOVERED",
+                ]:
+                    print("NFC tag detected!")
+                    self.send_csv_bitmap_via_nfc()
+                    return  # Optionally return here if you don't want to process further
+
+                # Handle shared data (SEND/VIEW)
                 if action in ["android.intent.action.SEND", "android.intent.action.VIEW"]:
                     extras = intent.getExtras()
                     if extras and extras.containsKey("android.intent.extra.TEXT"):
@@ -1209,7 +1220,7 @@ class MainApp(MDApp):
                         # If the stream_uri is a string path, open it directly
                         if isinstance(stream_uri, str) and stream_uri.startswith("/"):
                             print(f"Received file path: {stream_uri}")
-                            self.process_received_csv(stream_uri)  # <-- Use process_received_csv here
+                            self.process_received_csv(stream_uri)
                         else:
                             Uri = autoclass('android.net.Uri')
                             try:
@@ -1221,12 +1232,11 @@ class MainApp(MDApp):
                             file_path = self.resolve_uri_to_path(content_resolver, stream_uri)
 
                             if file_path:
-                                self.process_received_csv(file_path)  # <-- Use process_received_csv here
+                                self.process_received_csv(file_path)
                             else:
                                 try:
                                     input_stream = content_resolver.openInputStream(stream_uri)
                                     if input_stream:
-                                        # Read all bytes from the Java InputStream
                                         ByteArrayOutputStream = autoclass('java.io.ByteArrayOutputStream')
                                         buffer = ByteArrayOutputStream()
                                         byte = input_stream.read()
@@ -1235,22 +1245,19 @@ class MainApp(MDApp):
                                             byte = input_stream.read()
                                         input_stream.close()
                                         content_bytes = bytes(buffer.toByteArray())
-
-                                        # Try decoding the content bytes
                                         try:
                                             content = content_bytes.decode("utf-8")
                                         except UnicodeDecodeError:
                                             print("UTF-8 decode failed, trying latin-1...")
                                             content = content_bytes.decode("latin-1")
-
                                         print(f"File contents (from InputStream):\n{content}")
                                         self.process_received_csv(content)
                                     else:
                                         print("InputStream is None. Cannot read the file.")
                                 except Exception as e:
                                     print(f"Error reading from InputStream: {e}")
-                    else:
-                        print("No valid data found in the intent.")
+                else:
+                    print("No valid data found in the intent.")
             except Exception as e:
                 print(f"Error handling new intent: {e}")
 
