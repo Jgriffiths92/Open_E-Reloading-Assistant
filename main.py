@@ -1163,30 +1163,11 @@ class MainApp(MDApp):
         """Enable NFC foreground dispatch to handle NFC intents."""
         if is_android() and autoclass:
             try:
-                PendingIntent = autoclass('android.app.PendingIntent')
-                Intent = autoclass('android.content.Intent')
-                IntentFilter = autoclass('android.content.IntentFilter')
-
-                # Create a pending intent for NFC
-                intent = Intent(mActivity, mActivity.getClass())
-                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                pending_intent = PendingIntent.getActivity(
-                    mActivity,
-                    0,
-                    intent,
-                    PendingIntent.FLAG_IMMUTABLE
-                )
-
-                # Create intent filters for NFC
-                ndef_filter = IntentFilter("android.nfc.action.NDEF_DISCOVERED")
-                tech_filter = IntentFilter("android.nfc.action.TECH_DISCOVERED")
-                tag_filter = IntentFilter("android.nfc.action.TAG_DISCOVERED")
-
-                # Enable foreground dispatch
+                # Use the same PendingIntent and intent filters as in initialize_nfc
                 self.nfc_adapter.enableForegroundDispatch(
                     mActivity,
-                    pending_intent,
-                    [ndef_filter, tech_filter, tag_filter],
+                    self.pending_intent,
+                    self.intent_filters,
                     None
                 )
                 print("NFC foreground dispatch enabled.")
