@@ -201,7 +201,7 @@ android.add_assets = ./assets/images:images, ./assets/fonts:fonts, ./assets/CSV:
 # 3) A directory, here 'legal_resources' must contain one or more directories, 
 # each of a resource kind:  drawable, xml, etc...
 # android.add_resources = legal_resources
-#android.add_resources =
+android.add_resources = res/xml/nfc_tech_filter.xml
 
 # (list) Gradle dependencies to add
 #android.gradle_dependencies =
@@ -263,7 +263,8 @@ android.manifest.intent_filters = extra_manifest.xml
 #android.wakelock = False
 
 # (list) Android application meta-data to set (key=value format)
-android.meta_data = android.allowBalOptIn=true
+android.meta_data = android.allowBalOptIn=true, android:name="android.nfc.action.TECH. DISCOVERED", android: resource="@xml/nfc_tech_filter"
+
 
 # (list) Android library project to add (will be added in the
 # project.properties automatically.)
