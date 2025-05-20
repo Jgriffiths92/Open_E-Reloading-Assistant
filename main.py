@@ -184,6 +184,7 @@ class MainApp(MDApp):
     dialog = None  # Store the dialog instance
 
     def send_nfc_image(self, width, height, image_buffer, epd_init):
+        print("send_nfc_image called")
         PythonActivity = autoclass('org.kivy.android.PythonActivity')
         intent = PythonActivity.mActivity.getIntent()
         NfcHelper = autoclass('com.openedope.open_edope.NfcHelper')
@@ -259,10 +260,17 @@ class MainApp(MDApp):
 
     def on_resume(self):
         print("on_resume CALLED")
+        self.enable_nfc_foreground_dispatch()
         PythonActivity = autoclass('org.kivy.android.PythonActivity')
         intent = PythonActivity.mActivity.getIntent()
-        print("Checking for new intent on resume...")
-        self.on_new_intent(intent)
+        action = intent.getAction()
+        print(f"Checking for new intent on resume... Action: {action}")
+
+        # Only process if it's a SEND or VIEW intent (i.e., a file/text was shared)
+        if action in ["android.intent.action.SEND", "android.intent.action.VIEW"]:
+            self.on_new_intent(intent)
+        else:
+            print("No shared file/text intent to process on resume.")
     
             
     def request_android_permissions(self):
@@ -1187,6 +1195,7 @@ class MainApp(MDApp):
 
     
     def on_new_intent(self, intent):
+        print("on_new_intent called")
         """Handle new intents, including shared data and NFC tags."""
         if is_android() and autoclass:
             try:

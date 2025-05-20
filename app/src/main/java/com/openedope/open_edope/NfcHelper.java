@@ -30,6 +30,7 @@ public class NfcHelper {
     };
 
     public static void processNfcIntent(Intent intent, int width0, int height0, byte[] image_buffer, String[] epd_init) {
+          Log.e("NfcHelper", "processNfcIntent CALLED");
         Parcelable p = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
         if (p == null) return;
         Tag tag = (Tag) p;
