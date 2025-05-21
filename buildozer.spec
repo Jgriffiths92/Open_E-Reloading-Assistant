@@ -242,7 +242,7 @@ android.add_resources = res/xml/nfc_tech_filter.xml
 android.manifest.intent_filters = extra_manifest.xml
 
 # (list) Copy these files to src/main/res/xml/ (used for example with intent-filters)
-android.res_xml = nfc_tech_filter.xml
+android.res_xml = ./res/xml/nfc_tech_filter.xml
 
 # (str) launchMode to set for the main activity
 #android.manifest.launch_mode = standard
