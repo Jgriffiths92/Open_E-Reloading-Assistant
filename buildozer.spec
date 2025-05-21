@@ -101,7 +101,7 @@ android.presplash_color = #016586
 android.permissions = INTERNET, WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE, NFC, FOREGROUND_SERVICE
 
 # (list) features (adds uses-feature -tags to manifest)
-android.features = android:name="android.hardware.nfc" android:requred = "true"
+android.features = android.hardware.nfc:required
 
 # (int) Target Android API, should be as high as possible.
 android.api = 31
