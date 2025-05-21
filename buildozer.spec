@@ -101,7 +101,7 @@ android.presplash_color = #016586
 android.permissions = INTERNET, WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE, NFC, FOREGROUND_SERVICE
 
 # (list) features (adds uses-feature -tags to manifest)
-#android.features = android.hardware.nfc
+android.features = android.hardware.nfc
 
 # (int) Target Android API, should be as high as possible.
 android.api = 31
@@ -201,7 +201,7 @@ android.add_assets = ./assets/images:images, ./assets/fonts:fonts, ./assets/CSV:
 # 3) A directory, here 'legal_resources' must contain one or more directories, 
 # each of a resource kind:  drawable, xml, etc...
 # android.add_resources = legal_resources
-android.add_resources = res/xml/nfc_tech_filter.xml
+#android.add_resources = res/xml/nfc_tech_filter.xml
 
 # (list) Gradle dependencies to add
 #android.gradle_dependencies =
