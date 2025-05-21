@@ -238,7 +238,7 @@ android.add_assets = ./assets/images:images, ./assets/fonts:fonts, ./assets/CSV:
 #android.ouya.icon.filename = %(source.dir)s/data/ouya_icon.png
 
 # (str) XML file to include as an intent filters in <activity> tag
-#android.manifest.intent_filters = extra_manifest.xml
+android.manifest.intent_filters = extra_intents.xml
 
 # (list) Copy these files to src/main/res/xml/ (used for example with intent-filters)
 android.res_xml = ./res/xml/nfc_tech_filter.xml
