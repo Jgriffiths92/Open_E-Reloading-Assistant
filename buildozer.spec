@@ -101,7 +101,7 @@ android.presplash_color = #016586
 android.permissions = INTERNET, WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE, NFC, FOREGROUND_SERVICE
 
 # (list) features (adds uses-feature -tags to manifest)
-android.features = android.hardware.nfc:required
+#android.features = android.hardware.nfc:required
 
 # (int) Target Android API, should be as high as possible.
 android.api = 31
@@ -149,7 +149,7 @@ android.private_storage = True
 #android.activity_class_name = org.kivy.android.PythonActivity
 
 # (str) Extra xml to write directly inside the <manifest> element of AndroidManifest.xml
-#android.extra_manifest_xml = ./extra_manifest.xml
+android.extra_manifest_xml = ./extra_manifest.xml
 
 # (str) Extra xml to write directly inside the <manifest><application> tag of AndroidManifest.xml
 # use that parameter to provide a filename from where to load your custom XML arguments:
@@ -239,7 +239,7 @@ android.add_assets = ./assets/images:images, ./assets/fonts:fonts, ./assets/CSV:
 #android.ouya.icon.filename = %(source.dir)s/data/ouya_icon.png
 
 # (str) XML file to include as an intent filters in <activity> tag
-android.manifest.intent_filters = extra_manifest.xml
+#android.manifest.intent_filters = extra_manifest.xml
 
 # (list) Copy these files to src/main/res/xml/ (used for example with intent-filters)
 android.res_xml = ./res/xml/nfc_tech_filter.xml
