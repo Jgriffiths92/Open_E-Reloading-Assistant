@@ -286,6 +286,7 @@ class MainApp(MDApp):
                 ]
 
                 # Request permissions
+                print("Requesting Android permissions...")
                 request_permissions(permissions, self.on_permissions_result)
             except Exception as e:
                 print(f"Error requesting permissions: {e}")
