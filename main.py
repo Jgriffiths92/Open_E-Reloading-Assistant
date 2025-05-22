@@ -1212,6 +1212,19 @@ class MainApp(MDApp):
                     "android.nfc.action.TECH_DISCOVERED",
                 ]:
                     print("NFC tag detected!")
+
+                    # Get the Tag object from the intent
+                    Tag = autoclass('android.nfc.Tag')
+                    tag = intent.getParcelableExtra("android.nfc.extra.TAG")
+                    if tag:
+                        # Get the list of supported techs
+                        tech_list = tag.getTechList()
+                        print("Tag technologies detected by Android:")
+                        for tech in tech_list:
+                            print(f" - {tech}")
+                    else:
+                        print("No Tag object found in intent.")
+
                     self.send_csv_bitmap_via_nfc(intent)
                     return  # Optionally return here if you don't want to process further
 
