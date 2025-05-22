@@ -147,7 +147,7 @@ MDNavigationLayout:
         MDTopAppBar:
             title: "Saved Cards"
             left_action_items: [["menu", lambda x: app.root.ids.drawer.set_state("open")]]
-            right_action_items: [["sort", lambda x: app.open_sort_menu(x)], ["dots-vertical", lambda x: app.on_dots_press(x)]]
+            right_action_items: [["sort", lambda x: root.open_sort_menu(x)], ["dots-vertical", lambda x: app.on_dots_press(x)]]
             md_bg_color: 0.678, 0.0, 0.969, 1
         MDTextField:
             id: search_field

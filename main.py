@@ -141,6 +141,41 @@ class SavedCardsScreen(Screen):
         except Exception as e:
             print(f"Error refreshing file and folder list: {e}")
 
+    def sort_filechooser(self, sort_by="name", reverse=False):
+        try:
+            filechooser = self.ids.filechooser
+        except Exception as e:
+            print(f"Error accessing filechooser: {e}")
+            return
+
+        if sort_by == "name":
+            filechooser.sort_func = lambda items: sorted(items, key=lambda item: item[0].lower(), reverse=reverse)
+        elif sort_by == "date":
+            import os
+            filechooser.sort_func = lambda items: sorted(
+                items, key=lambda item: os.path.getmtime(item[1]), reverse=reverse
+            )
+        elif sort_by == "type":
+            import os
+            filechooser.sort_func = lambda items: sorted(
+                items, key=lambda item: (not os.path.isdir(item[1]), item[0].lower()), reverse=reverse
+            )
+        filechooser._update_files()
+
+    def open_sort_menu(self, caller):
+        from kivymd.uix.menu import MDDropdownMenu
+        menu_items = [
+            {"text": "Name", "on_release": lambda x="name": self.sort_filechooser(x)},
+            {"text": "Date", "on_release": lambda x="date": self.sort_filechooser(x)},
+            {"text": "Type", "on_release": lambda x="type": self.sort_filechooser(x)},
+        ]
+        self.sort_menu = MDDropdownMenu(
+            caller=caller,
+            items=menu_items,
+            width_mult=3,
+        )
+        self.sort_menu.open()
+
 class ManageDataScreen(Screen):
     pass
 
@@ -543,39 +578,6 @@ class MainApp(MDApp):
             font_name="assets/fonts/RobotoMono-Regular.ttf",  # Path to the font file
         )
         table_container.add_widget(table_label)
-    def sort_filechooser(self, sort_by="name", reverse=False):
-        try:
-            filechooser = self.ids.filechooser
-        except Exception as e:
-            print(f"Error accessing filechooser: {e}")
-            return
-
-        if sort_by == "name":
-            filechooser.sort_func = lambda items: sorted(items, key=lambda item: item[0].lower(), reverse=reverse)
-        elif sort_by == "date":
-            import os
-            filechooser.sort_func = lambda items: sorted(
-                items, key=lambda item: os.path.getmtime(item[1]), reverse=reverse
-            )
-        elif sort_by == "type":
-            import os
-            filechooser.sort_func = lambda items: sorted(
-                items, key=lambda item: (not os.path.isdir(item[1]), item[0].lower()), reverse=reverse
-            )
-        filechooser._update_files()
-
-    def open_sort_menu(self, caller):
-        menu_items = [
-            {"text": "Name", "on_release": lambda x="name": self.sort_filechooser(x)},
-            {"text": "Date", "on_release": lambda x="date": self.sort_filechooser(x)},
-            {"text": "Type", "on_release": lambda x="type": self.sort_filechooser(x)},
-        ]
-        self.sort_menu = MDDropdownMenu(
-            caller=caller,
-            items=menu_items,
-            width_mult=3,
-        )
-        self.sort_menu.open()
         
     def on_dots_press(self, instance):
         global show_lead, show_range, show_2_wind_holds
