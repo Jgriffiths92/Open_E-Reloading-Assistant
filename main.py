@@ -239,7 +239,8 @@ class MainApp(MDApp):
         NfcHelper.processNfcIntent(intent, width, height, image_buffer_java, epd_init_java_array)
 
     def send_csv_bitmap_via_nfc(self):
-           # 1. Convert CSV to bitmap
+        print("send_csv_bitmap_via_nfc called")
+        # 1. Convert CSV to bitmap
         output_path = self.csv_to_bitmap(self.current_data)
         if not output_path:
             print("Failed to create bitmap.")
