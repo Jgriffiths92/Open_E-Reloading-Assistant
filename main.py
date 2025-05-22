@@ -1843,6 +1843,36 @@ def on_new_nfc_intent_from_java(intent):
     app = App.get_running_app()
     if hasattr(app, "on_new_intent"):
         app.on_new_intent(intent)
-        
+
+def sort_filechooser(self, sort_by="name", reverse=False):
+    saved_cards_screen = self.root.ids.screen_manager.get_screen("saved_cards")
+    filechooser = saved_cards_screen.ids.filechooser
+
+    if sort_by == "name":
+        filechooser.sort_func = lambda items: sorted(items, key=lambda item: item[0].lower(), reverse=reverse)
+    elif sort_by == "date":
+        import os
+        filechooser.sort_func = lambda items: sorted(
+            items, key=lambda item: os.path.getmtime(item[1]), reverse=reverse
+        )
+    elif sort_by == "type":
+        filechooser.sort_func = lambda items: sorted(
+            items, key=lambda item: (not os.path.isdir(item[1]), item[0].lower()), reverse=reverse
+        )
+    filechooser._update_files()
+
+def open_sort_menu(self, caller):
+    menu_items = [
+        {"text": "Name", "on_release": lambda x="name": self.sort_filechooser(x)},
+        {"text": "Date", "on_release": lambda x="date": self.sort_filechooser(x)},
+        {"text": "Type", "on_release": lambda x="type": self.sort_filechooser(x)},
+    ]
+    self.sort_menu = MDDropdownMenu(
+        caller=caller,
+        items=menu_items,
+        width_mult=3,
+    )
+    self.sort_menu.open()
+            
 if __name__ == "__main__":
     MainApp().run()

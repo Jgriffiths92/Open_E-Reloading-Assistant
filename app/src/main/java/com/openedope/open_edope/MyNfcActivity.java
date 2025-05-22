@@ -1,4 +1,4 @@
-package org.kivy.openedope;
+package com.openedope.open_edope;
 
 import org.kivy.android.PythonActivity;
 import android.content.Intent;
