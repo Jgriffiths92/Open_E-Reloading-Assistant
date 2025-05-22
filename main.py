@@ -338,7 +338,10 @@ class MainApp(MDApp):
 
         # Request permissions on Android
         if is_android():
-            self.request_android_permissions()
+            request_permissions(
+        [Permission.NFC, Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE],
+        self.on_permissions_result
+    )
 
         # Initialize NFC only on Android
         if is_android() and self.initialize_nfc():
@@ -1779,6 +1782,7 @@ def handle_received_file(intent):
                             self.process_received_text(content)
                         else:
                             print("InputStream is None. Cannot read the file.")
+
                     except Exception as e:
                         print(f"Error reading from InputStream: {e}")
             else:
