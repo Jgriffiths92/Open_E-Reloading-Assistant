@@ -1848,11 +1848,14 @@ def on_permissions_result(self, permissions, grant_results):
                 print("Read external storage permission granted.")
             else:
                 print("Read external storage permission denied.")
+<<<<<<< HEAD
         elif permission == Permission.WRITE_EXTERNAL_STORAGE:
             if granted:
                 print("Write external storage permission granted.")
             else:
                 print("Write external storage permission denied.")
                 
+=======
+>>>>>>> parent of c879615 (Implement NFC handling by adding MyNfcActivity and updating buildozer.spec)
 if __name__ == "__main__":
     MainApp().run()
