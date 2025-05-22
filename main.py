@@ -263,31 +263,6 @@ class MainApp(MDApp):
             return
 
         self.send_nfc_image(width, height, image_buffer, epd_init)
-
-    def send_csv_bitmap_via_nfc(self):
-    # 1. Convert CSV to bitmap
-        output_path = self.csv_to_bitmap(self.current_data)
-        if not output_path:
-            print("Failed to create bitmap.")
-            return
-
-        # 2. Read bitmap as bytes
-        with open(output_path, "rb") as f:
-            image_buffer = f.read()
-
-        # 3. Get bitmap dimensions
-        from PIL import Image
-        img = Image.open(output_path)
-        width, height = img.size
-
-        # 4. Get epd_init for the selected display
-        epd_init = self.EPD_INIT_MAP.get(self.selected_display)
-        if not epd_init:
-            print(f"No epd_init found for display: {self.selected_display}")
-            return
-
-        # 5. Send via NFC
-        self.send_nfc_image(width, height, image_buffer, epd_init)
             
     def on_pause(self):
         print("on_pause CALLED")
