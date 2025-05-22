@@ -230,28 +230,8 @@ class MainApp(MDApp):
 
     dialog = None  # Store the dialog instance
 
-    def send_nfc_image(self, width, height, image_buffer, epd_init):
-        print("send_nfc_image called")
-        PythonActivity = autoclass('org.kivy.android.PythonActivity')
-        intent = PythonActivity.mActivity.getIntent()
-        NfcHelper = autoclass('com.openedope.open_edope.NfcHelper')
-
-        # Convert Python bytes to Java byte[]
-        ByteBuffer = autoclass('java.nio.ByteBuffer')
-        image_buffer_java = ByteBuffer.wrap(bytes(image_buffer))
-
-        # Convert Python list of strings to Java String[]
-        String = autoclass('java.lang.String')
-        Array = autoclass('java.lang.reflect.Array')
-        epd_init_java_array = Array.newInstance(String, len(epd_init))
-        for i, s in enumerate(epd_init):
-            epd_init_java_array[i] = String(s)
-
-        # Call your Java static method
-        NfcHelper.processNfcIntent(intent, width, height, image_buffer_java, epd_init_java_array)
-
-    def send_csv_bitmap_via_nfc(self):
-           # 1. Convert CSV to bitmap
+    def send_csv_bitmap_via_nfc(self, intent):
+        # 1. Convert CSV to bitmap
         output_path = self.csv_to_bitmap(self.current_data)
         if not output_path:
             print("Failed to create bitmap.")
@@ -267,40 +247,32 @@ class MainApp(MDApp):
         width, height = img.size
 
         # 4. Prepare epd_init (replace with your actual values)
-
-        # Get epd_init for the selected display
         epd_init = self.EPD_INIT_MAP.get(self.selected_display)
         if not epd_init:
             print(f"No epd_init found for display: {self.selected_display}")
             return
 
-        self.send_nfc_image(width, height, image_buffer, epd_init)
+        # 5. Pass the intent down!
+        self.send_nfc_image(intent, width, height, image_buffer, epd_init)
 
-    def send_csv_bitmap_via_nfc(self):
-    # 1. Convert CSV to bitmap
-        output_path = self.csv_to_bitmap(self.current_data)
-        if not output_path:
-            print("Failed to create bitmap.")
-            return
+    def send_nfc_image(self, intent, width, height, image_buffer, epd_init):
+        print("send_nfc_image called")
+        NfcHelper = autoclass('com.openedope.open_edope.NfcHelper')
 
-        # 2. Read bitmap as bytes
-        with open(output_path, "rb") as f:
-            image_buffer = f.read()
+        # Convert Python bytes to Java byte[]
+        ByteBuffer = autoclass('java.nio.ByteBuffer')
+        image_buffer_java = ByteBuffer.wrap(bytes(image_buffer))
 
-        # 3. Get bitmap dimensions
-        from PIL import Image
-        img = Image.open(output_path)
-        width, height = img.size
+        # Convert Python list of strings to Java String[]
+        String = autoclass('java.lang.String')
+        Array = autoclass('java.lang.reflect.Array')
+        epd_init_java_array = Array.newInstance(String, len(epd_init))
+        for i, s in enumerate(epd_init):
+            epd_init_java_array[i] = String(s)
 
-        # 4. Get epd_init for the selected display
-        epd_init = self.EPD_INIT_MAP.get(self.selected_display)
-        if not epd_init:
-            print(f"No epd_init found for display: {self.selected_display}")
-            return
-
-        # 5. Send via NFC
-        self.send_nfc_image(width, height, image_buffer, epd_init)
-            
+        # Call your Java static method
+        NfcHelper.processNfcIntent(intent, width, height, image_buffer_java, epd_init_java_array)
+        
     def on_pause(self):
         print("on_pause CALLED")
         return True  # Returning True allows the app to be paused
@@ -1238,7 +1210,7 @@ class MainApp(MDApp):
                     "android.nfc.action.TECH_DISCOVERED",
                 ]:
                     print("NFC tag detected!")
-                    self.send_csv_bitmap_via_nfc()
+                    self.send_csv_bitmap_via_nfc(intent)
                     return  # Optionally return here if you don't want to process further
 
                 # Handle shared data (SEND/VIEW)
