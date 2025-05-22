@@ -216,6 +216,26 @@ class MainApp(MDApp):
         ],
     }
 
+    def on_permissions_result(self, permissions, grant_results):
+        """Handle the result of the permission request."""
+        for permission, granted in zip(permissions, grant_results):
+            if permission == Permission.NFC:
+                if granted:
+                    print("NFC permission granted.")
+                    self.initialize_nfc()
+                else:
+                    print("NFC permission denied.")
+            elif permission == Permission.READ_EXTERNAL_STORAGE:
+                if granted:
+                    print("Read external storage permission granted.")
+                else:
+                    print("Read external storage permission denied.")
+            elif permission == Permission.WRITE_EXTERNAL_STORAGE:
+                if granted:
+                    print("Write external storage permission granted.")
+                else:
+                    print("Write external storage permission denied.")
+ 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.config_parser = ConfigParser()  # Initialize ConfigParser
@@ -272,7 +292,7 @@ class MainApp(MDApp):
 
         # Call your Java static method
         NfcHelper.processNfcIntent(intent, width, height, image_buffer_java, epd_init_java_array)
-        
+
     def on_pause(self):
         print("on_pause CALLED")
         return True  # Returning True allows the app to be paused
@@ -291,27 +311,6 @@ class MainApp(MDApp):
         else:
             print("No shared file/text intent to process on resume.")
     
-            
-    def request_android_permissions(self):
-        """Request necessary permissions on Android."""
-        if is_android():
-            try:
-                # List of permissions to request
-                permissions = [
-                    Permission.READ_EXTERNAL_STORAGE,
-                    Permission.WRITE_EXTERNAL_STORAGE,
-                    Permission.NFC,
-                ]
-
-                # Request permissions
-                print("Requesting Android permissions...")
-                request_permissions(permissions, self.on_permissions_result)
-            except Exception as e:
-                print(f"Error requesting permissions: {e}")
-        else:
-            print("Permissions can only be requested on Android.")
-
-
     def request_bal_exemption():
         if is_android() and autoclass:
             try:
@@ -1842,25 +1841,5 @@ def process_received_text(self, text_data):
     except Exception as e:
         print(f"Error processing text data: {e}")
 
-def on_permissions_result(self, permissions, grant_results):
-    """Handle the result of the permission request."""
-    for permission, granted in zip(permissions, grant_results):
-        if permission == Permission.NFC:
-            if granted:
-                print("NFC permission granted.")
-                self.initialize_nfc()
-            else:
-                print("NFC permission denied.")
-        elif permission == Permission.READ_EXTERNAL_STORAGE:
-            if granted:
-                print("Read external storage permission granted.")
-            else:
-                print("Read external storage permission denied.")
-        elif permission == Permission.WRITE_EXTERNAL_STORAGE:
-            if granted:
-                print("Write external storage permission granted.")
-            else:
-                print("Write external storage permission denied.")
-                
 if __name__ == "__main__":
     MainApp().run()
