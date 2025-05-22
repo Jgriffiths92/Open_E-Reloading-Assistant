@@ -1872,12 +1872,11 @@ def on_permissions_result(self, permissions, grant_results):
                 print("Read external storage permission granted.")
             else:
                 print("Read external storage permission denied.")
+        elif permission == Permission.WRITE_EXTERNAL_STORAGE:
+            if granted:
+                print("Write external storage permission granted.")
+            else:
+                print("Write external storage permission denied.")
                 
-def on_new_nfc_intent_from_java(intent):
-    from kivy.app import App
-    app = App.get_running_app()
-    if hasattr(app, "on_new_intent"):
-        app.on_new_intent(intent)
-
 if __name__ == "__main__":
     MainApp().run()
