@@ -149,16 +149,28 @@ class SavedCardsScreen(Screen):
             return
 
         if sort_by == "name":
-            filechooser.sort_func = lambda items: sorted(items, key=lambda item: item[0].lower(), reverse=reverse)
+            filechooser.sort_func = lambda items: sorted(
+                items, key=lambda item: item[0].lower(), reverse=reverse
+            )
         elif sort_by == "date":
             import os
+            def safe_getmtime(item):
+                try:
+                    return os.path.getmtime(item[1])
+                except Exception:
+                    return 0
             filechooser.sort_func = lambda items: sorted(
-                items, key=lambda item: os.path.getmtime(item[1]), reverse=reverse
+                items, key=safe_getmtime, reverse=reverse
             )
         elif sort_by == "type":
             import os
+            def safe_isdir(item):
+                try:
+                    return not os.path.isdir(item[1])
+                except Exception:
+                    return True
             filechooser.sort_func = lambda items: sorted(
-                items, key=lambda item: (not os.path.isdir(item[1]), item[0].lower()), reverse=reverse
+                items, key=lambda item: (safe_isdir(item), item[0].lower()), reverse=reverse
             )
         filechooser._update_files()
 
@@ -180,7 +192,7 @@ class ManageDataScreen(Screen):
     pass
 
 class SettingsScreen(Screen):
-   pass
+    pass
 
 class MainApp(MDApp):
     EPD_INIT_MAP = {
@@ -203,7 +215,7 @@ class MainApp(MDApp):
             "2200"  # Display update command (example)
         ],
     }
-    
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.config_parser = ConfigParser()  # Initialize ConfigParser
@@ -239,8 +251,7 @@ class MainApp(MDApp):
         NfcHelper.processNfcIntent(intent, width, height, image_buffer_java, epd_init_java_array)
 
     def send_csv_bitmap_via_nfc(self):
-        print("send_csv_bitmap_via_nfc called")
-        # 1. Convert CSV to bitmap
+           # 1. Convert CSV to bitmap
         output_path = self.csv_to_bitmap(self.current_data)
         if not output_path:
             print("Failed to create bitmap.")
@@ -263,6 +274,31 @@ class MainApp(MDApp):
             print(f"No epd_init found for display: {self.selected_display}")
             return
 
+        self.send_nfc_image(width, height, image_buffer, epd_init)
+
+    def send_csv_bitmap_via_nfc(self):
+    # 1. Convert CSV to bitmap
+        output_path = self.csv_to_bitmap(self.current_data)
+        if not output_path:
+            print("Failed to create bitmap.")
+            return
+
+        # 2. Read bitmap as bytes
+        with open(output_path, "rb") as f:
+            image_buffer = f.read()
+
+        # 3. Get bitmap dimensions
+        from PIL import Image
+        img = Image.open(output_path)
+        width, height = img.size
+
+        # 4. Get epd_init for the selected display
+        epd_init = self.EPD_INIT_MAP.get(self.selected_display)
+        if not epd_init:
+            print(f"No epd_init found for display: {self.selected_display}")
+            return
+
+        # 5. Send via NFC
         self.send_nfc_image(width, height, image_buffer, epd_init)
             
     def on_pause(self):
@@ -554,7 +590,7 @@ class MainApp(MDApp):
             font_name="assets/fonts/RobotoMono-Regular.ttf",  # Path to the font file
         )
         table_container.add_widget(table_label)
-        
+
     def on_dots_press(self, instance):
         global show_lead, show_range, show_2_wind_holds
 
@@ -1848,14 +1884,11 @@ def on_permissions_result(self, permissions, grant_results):
                 print("Read external storage permission granted.")
             else:
                 print("Read external storage permission denied.")
-<<<<<<< HEAD
         elif permission == Permission.WRITE_EXTERNAL_STORAGE:
             if granted:
                 print("Write external storage permission granted.")
             else:
                 print("Write external storage permission denied.")
                 
-=======
->>>>>>> parent of c879615 (Implement NFC handling by adding MyNfcActivity and updating buildozer.spec)
 if __name__ == "__main__":
     MainApp().run()
