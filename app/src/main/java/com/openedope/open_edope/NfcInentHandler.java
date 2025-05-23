@@ -1,10 +1,15 @@
-import android.content.Intent;
+package com.openedope.open_edope;
 
-public class MyActivity extends org.kivy.android.PythonActivity {
+import android.content.Intent;
+import org.kivy.android.PythonActivity;
+
+public class MyActivity extends PythonActivity {
     @Override
     public void onNewIntent(Intent intent) {
-        // Pass intent to Python
-        PythonActivity.mService.postToPython("on_new_intent", intent);
-        super.onNewIntent(intent);
+        super.onNewIntent(intent); // Always call super
+
+        // If you need to notify Python code, use JNI, services, or a Python event
+        // Example (if mService exists):
+        // mService.postToPython("on_new_intent", intent);
     }
 }
