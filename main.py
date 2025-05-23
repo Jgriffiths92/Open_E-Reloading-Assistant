@@ -311,7 +311,7 @@ class MainApp(MDApp):
         else:
             print("No shared file/text intent to process on resume.")
     
-    def request_bal_exemption():
+    def request_bal_exemption(self):
         if is_android() and autoclass:
             try:
                 ActivityCompat = autoclass('androidx.core.app.ActivityCompat')
@@ -1748,7 +1748,7 @@ class MainApp(MDApp):
                 print(f"Error hiding NFC button: {e}")
 
     
-    def verify_copied_files():
+    def verify_copied_files(self):
         """Verify the contents of the copied CSV files."""
         dest_dir = os.path.join(os.environ.get("ANDROID_PRIVATE", ""), "CSV")
         for file_name in os.listdir(dest_dir):
