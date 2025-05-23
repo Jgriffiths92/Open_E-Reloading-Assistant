@@ -47,13 +47,11 @@ def is_android():
     """Check if the app is running on an Android device."""
     try:
         from android import mActivity
-        from android.nfc import NfcAdapter
         from jnius import autoclass, cast
         print("Running on Android")
         # Print if these modules are imported
         print("android imported:", 'mActivity' in globals() and mActivity is not None)
         print("jnius imported:", 'autoclass' in globals() and autoclass is not None)
-        print("NfcAdapter imported:", 'NfcAdapter' in globals() and NfcAdapter is not None)
         return True
     except ImportError:
         return False
@@ -297,7 +295,6 @@ class MainApp(MDApp):
 
     def on_pause(self):
         print("on_pause CALLED")
-        self.disable_nfc_foreground_dispatch()
         return True  # Returning True allows the app to be paused
 
     def on_resume(self):
@@ -307,19 +304,13 @@ class MainApp(MDApp):
         intent = PythonActivity.mActivity.getIntent()
         action = intent.getAction()
         print(f"Checking for new intent on resume... Action: {action}")
-        intent = self.getIntent()
-        if intent.getAction() == "android.nfc.action.TECH_DISCOVERED":
-            print("Received NFC intent:", intent)
+
         # Only process if it's a SEND or VIEW intent (i.e., a file/text was shared)
         if action in ["android.intent.action.SEND", "android.intent.action.VIEW"]:
             self.on_new_intent(intent)
         else:
             print("No shared file/text intent to process on resume.")
     
-    def on_stop(self):
-        self.disable_nfc_foreground_dispatch()
-        print("on_stop CALLED")
-
     def request_bal_exemption():
         if is_android() and autoclass:
             try:
@@ -338,6 +329,7 @@ class MainApp(MDApp):
                 print(f"Error requesting BAL exemption: {e}")
                 
     def build(self):
+
         """Build the app's UI and initialize settings."""
         # Set the theme to Light
         self.theme_cls.theme_style = "Light"
@@ -349,7 +341,7 @@ class MainApp(MDApp):
         if is_android():
             request_permissions(
         [Permission.NFC, Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE],
-        self.on_permissions_result
+        self.on_permissions_result       
     )
 
         # Initialize NFC only on Android
