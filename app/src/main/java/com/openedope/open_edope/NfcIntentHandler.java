@@ -3,7 +3,7 @@ package com.openedope.open_edope;
 import android.content.Intent;
 import org.kivy.android.PythonActivity;
 
-public class MyActivity extends PythonActivity {
+public class NfcIntentHandler extends PythonActivity {
     @Override
     public void onNewIntent(Intent intent) {
         super.onNewIntent(intent); // Always call super
