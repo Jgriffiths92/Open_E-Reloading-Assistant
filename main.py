@@ -24,6 +24,7 @@ from kivy.core.window import Window
 import shutil
 from plyer import notification
 from kivy.clock import Clock
+from jnius import autoclass, PythonJavaClass, java_method
 
 # Ensure the soft keyboard pushes the target widget above it
 Window.softinput_mode = "below_target"
@@ -200,6 +201,19 @@ class ManageDataScreen(Screen):
 
 class SettingsScreen(Screen):
     pass
+
+
+class NfcBroadcastReceiver(PythonJavaClass):
+    __javainterfaces__ = ['android/content/BroadcastReceiver']
+    __javacontext__ = 'app'
+
+    @java_method('(Landroid/content/Context;Landroid/content/Intent;)V')
+    def onReceive(self, context, intent):
+        action = intent.getAction()
+        if action == "com.openedope.open_edope.NFC_EVENT":
+            nfc_action = intent.getStringExtra("action")
+            print(f"Received NFC event from Java! Action: {nfc_action}")
+            # Call your Python NFC handler here
 
 
 class MainApp(MDApp):
@@ -1886,7 +1900,5 @@ def process_received_text(self, text_data):
         print("Text data processed and displayed successfully.")
     except Exception as e:
         print(f"Error processing text data: {e}")
-
-
 if __name__ == "__main__":
     MainApp().run()

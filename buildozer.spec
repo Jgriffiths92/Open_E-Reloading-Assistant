@@ -145,7 +145,7 @@ android.private_storage = True
 
 # (str) Full name including package path of the Java class that implements Android Activity
 # use that parameter together with android.entrypoint to set custom Java class instead of PythonActivity
-android.activity_class_name = com.openedope.open_edope.NfcIntentHandler
+android.activity_class_name = org.kivy.android.PythonActivity
 
 # (str) Extra xml to write directly inside the <manifest> element of AndroidManifest.xml
 android.extra_manifest_xml = ./extra_manifest.xml
