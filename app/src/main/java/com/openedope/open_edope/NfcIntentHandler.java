@@ -2,6 +2,7 @@ package com.openedope.open_edope;
 
 import android.content.Intent;
 import org.kivy.android.PythonActivity;
+import android.util.Log;
 
 public class NfcIntentHandler extends PythonActivity {
     @Override
@@ -34,6 +35,9 @@ public class NfcIntentHandler extends PythonActivity {
 
         // Place for further intent handling or Python call
         // Example: if mService exists
-        mActivity.postToPython("on_new_intent", intent);
+        PythonActivity python = PythonActivity.mActivity;
+python.runOnUiThread(() -> {
+    Python.getInstance().getModule("main").callAttr("on_new_intent", intent);
+});
     }
 }
