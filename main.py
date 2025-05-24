@@ -1262,7 +1262,19 @@ class MainApp(MDApp):
                     print("No extras in intent.")
                 # --- End debug block ---
 
-                # NFC tag detected
+                # --- NEW: Always check for NFC tag extra, even if action is not NFC ---
+                EXTRA_TAG = autoclass('android.nfc.NfcAdapter').EXTRA_TAG
+                tag = intent.getParcelableExtra(EXTRA_TAG)
+                if tag:
+                    print("NFC tag detected (regardless of action)!")
+                    tech_list = tag.getTechList()
+                    print("Tag technologies detected by Android:")
+                    for tech in tech_list:
+                        print(f" - {tech}")
+                    self.send_csv_bitmap_via_nfc(intent)
+                    return  # Optionally return here if you don't want to process further
+
+                # NFC tag detected by action
                 if action in [
                     "android.nfc.action.TAG_DISCOVERED",
                     "android.nfc.action.NDEF_DISCOVERED",
@@ -1271,7 +1283,6 @@ class MainApp(MDApp):
                     print("NFC tag detected!")
 
                     # Get the Tag object from the intent
-                    EXTRA_TAG = autoclass('android.nfc.NfcAdapter').EXTRA_TAG
                     tag = intent.getParcelableExtra(EXTRA_TAG)
                     if tag:
                         # Get the list of supported techs
