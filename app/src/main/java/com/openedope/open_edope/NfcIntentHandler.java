@@ -34,6 +34,6 @@ public class NfcIntentHandler extends PythonActivity {
 
         // Place for further intent handling or Python call
         // Example: if mService exists
-        mService.postToPython("on_new_intent", intent);
+        mActivity.postToPython("on_new_intent", intent);
     }
 }
