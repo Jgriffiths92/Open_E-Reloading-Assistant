@@ -20,7 +20,10 @@ public class NfcIntentHandler extends PythonActivity {
 
         // PyJNIus way:
         try {
-            org.kivy.android.PythonActivity.callPython("on_new_intent", intent.getAction());
+            // Get the Python instance
+            org.kivy.android.Python py = org.kivy.android.Python.getInstance();
+            // Get the main Python module (usually "main")
+            py.getModule("main").callAttr("on_new_intent", intent);
         } catch (Exception e) {
             Log.e("NfcIntentHandler", "Failed to call on_new_intent", e);
         }
