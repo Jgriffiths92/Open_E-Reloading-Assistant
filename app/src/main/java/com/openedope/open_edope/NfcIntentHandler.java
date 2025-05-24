@@ -1,7 +1,6 @@
 package com.openedope.open_edope;
 
 import android.content.Intent;
-import android.util.Log;
 import org.kivy.android.PythonActivity;
 
 public class NfcIntentHandler extends PythonActivity {

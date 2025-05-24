@@ -25,7 +25,6 @@ import shutil
 from plyer import notification
 from kivy.clock import Clock
 
-
 # Ensure the soft keyboard pushes the target widget above it
 Window.softinput_mode = "below_target"
 
@@ -43,6 +42,7 @@ try:
 except ImportError:
     autoclass = None  # Handle cases where pyjnius is not available
 
+
 def is_android():
     """Check if the app is running on an Android device."""
     try:
@@ -55,6 +55,7 @@ def is_android():
         return True
     except ImportError:
         return False
+
 
 # Import the nfc module if not running on Android
 if not is_android():
@@ -127,9 +128,11 @@ Builder.load_string('''
     FileChooserListView
 ''')
 
+
 # Define Screens
 class HomeScreen(Screen):
     pass
+
 
 class SavedCardsScreen(Screen):
     def on_enter(self):
@@ -159,6 +162,7 @@ class SavedCardsScreen(Screen):
                     return os.path.getmtime(item[1])
                 except Exception:
                     return 0
+
             filechooser.sort_func = lambda items: sorted(
                 items, key=safe_getmtime, reverse=reverse
             )
@@ -169,6 +173,7 @@ class SavedCardsScreen(Screen):
                     return not os.path.isdir(item[1])
                 except Exception:
                     return True
+
             filechooser.sort_func = lambda items: sorted(
                 items, key=lambda item: (safe_isdir(item), item[0].lower()), reverse=reverse
             )
@@ -188,15 +193,18 @@ class SavedCardsScreen(Screen):
         )
         self.sort_menu.open()
 
+
 class ManageDataScreen(Screen):
     pass
+
 
 class SettingsScreen(Screen):
     pass
 
+
 class MainApp(MDApp):
     EPD_INIT_MAP = {
-                # Good Display 3.7-inch (SSD1680, 280x480)
+        # Good Display 3.7-inch (SSD1680, 280x480)
         "Good Display 3.7-inch": [
             # Initialization sequence (hex string, no spaces)
             "120101DF01001103440023450000DF014E004F0000",  # SWRESET, DRIVER_OUTPUT, DATA_ENTRY, RAM X/Y, etc.
@@ -235,7 +243,7 @@ class MainApp(MDApp):
                     print("Write external storage permission granted.")
                 else:
                     print("Write external storage permission denied.")
- 
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.config_parser = ConfigParser()  # Initialize ConfigParser
@@ -310,7 +318,7 @@ class MainApp(MDApp):
             self.on_new_intent(intent)
         else:
             print("No shared file/text intent to process on resume.")
-    
+
     def request_bal_exemption(self):
         if is_android() and autoclass:
             try:
@@ -318,16 +326,16 @@ class MainApp(MDApp):
                 PythonActivity = autoclass('org.kivy.android.PythonActivity')
                 activity = PythonActivity.mActivity
 
-            # Request BAL exemption
+                # Request BAL exemption
                 ActivityCompat.requestPermissions(
-                activity,
-                ["android.permission.BAL_EXEMPTION"],
-                0
+                    activity,
+                    ["android.permission.BAL_EXEMPTION"],
+                    0
                 )
                 print("Requested BAL exemption.")
             except Exception as e:
                 print(f"Error requesting BAL exemption: {e}")
-                
+
     def build(self):
 
         """Build the app's UI and initialize settings."""
@@ -340,9 +348,9 @@ class MainApp(MDApp):
         # Request permissions on Android
         if is_android():
             request_permissions(
-        [Permission.NFC, Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE],
-        self.on_permissions_result       
-    )
+                [Permission.NFC, Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE],
+                self.on_permissions_result
+            )
 
         # Initialize NFC only on Android
         if is_android() and self.initialize_nfc():
@@ -376,7 +384,7 @@ class MainApp(MDApp):
         self.hide_nfc_button()
 
         return self.root
-    
+
     global show_lead, show_range, show_2_wind_holds
     show_lead = False
     show_range = False
@@ -517,7 +525,7 @@ class MainApp(MDApp):
         # Define the static column order
         static_headers = ["Target", "Range", "Elv", "Wnd1", "Wnd2", "Lead"]
 
-         # Filter headers based on the show/hide options
+        # Filter headers based on the show/hide options
         headers = ["Elv", "Wnd1"]  # Start with these columns
         target_present = any(row.get("Target") for row in data)
         if target_present:
@@ -532,7 +540,7 @@ class MainApp(MDApp):
         if show_lead:
             headers.append("Lead")
 
-    # Filter the data rows based on the selected headers
+        # Filter the data rows based on the selected headers
         filtered_data = [
             {header: row.get(header, "") for header in headers} for row in data
         ]
@@ -547,7 +555,8 @@ class MainApp(MDApp):
         table_text = " | ".join(f"{header:<{column_widths[header]}}" for header in headers) + "\n"  # Add headers
         table_text += "-" * (sum(column_widths.values()) + len(headers) * 3 - 1) + "\n"  # Add a separator line
         for row in filtered_data:
-            table_text += " | ".join(f"{str(row.get(header, '')):<{column_widths[header]}}" for header in headers) + "\n"  # Add rows
+            table_text += " | ".join(
+                f"{str(row.get(header, '')):<{column_widths[header]}}" for header in headers) + "\n"  # Add rows
 
         # Add the text to the table_container in Home Screen
         home_screen = self.root.ids.home_screen
@@ -575,19 +584,25 @@ class MainApp(MDApp):
 
         # Update the "Show Lead" menu item dynamically
         if show_lead:
-            lead_menu = {"text": "Hide Lead", "on_release": lambda: (self.menu_callback("Hide Lead"), self.menu.dismiss())}
+            lead_menu = {"text": "Hide Lead",
+                         "on_release": lambda: (self.menu_callback("Hide Lead"), self.menu.dismiss())}
         else:
-            lead_menu = {"text": "Show Lead", "on_release": lambda: (self.menu_callback("Show Lead"), self.menu.dismiss())}
+            lead_menu = {"text": "Show Lead",
+                         "on_release": lambda: (self.menu_callback("Show Lead"), self.menu.dismiss())}
         # Update the "Show Range" menu item dynamically
         if show_range:
-            range_menu = {"text": "Hide Range", "on_release": lambda: (self.menu_callback("Hide Range"), self.menu.dismiss())}
+            range_menu = {"text": "Hide Range",
+                          "on_release": lambda: (self.menu_callback("Hide Range"), self.menu.dismiss())}
         else:
-            range_menu = {"text": "Show Range", "on_release": lambda: (self.menu_callback("Show Range"), self.menu.dismiss())}
+            range_menu = {"text": "Show Range",
+                          "on_release": lambda: (self.menu_callback("Show Range"), self.menu.dismiss())}
         # Update the "Show 2 Wind Holds" menu item dynamically
         if show_2_wind_holds:
-            wind_holds_menu = {"text": "Show 1 Wind Hold", "on_release": lambda: (self.menu_callback("Show 1 Wind Hold"), self.menu.dismiss())}
+            wind_holds_menu = {"text": "Show 1 Wind Hold",
+                               "on_release": lambda: (self.menu_callback("Show 1 Wind Hold"), self.menu.dismiss())}
         else:
-            wind_holds_menu = {"text": "Show 2 Wind Holds", "on_release": lambda: (self.menu_callback("Show 2 Wind Holds"), self.menu.dismiss())}
+            wind_holds_menu = {"text": "Show 2 Wind Holds",
+                               "on_release": lambda: (self.menu_callback("Show 2 Wind Holds"), self.menu.dismiss())}
 
         # Define menu items
         menu_items = [
@@ -698,7 +713,8 @@ class MainApp(MDApp):
             dropdown_menu = MDDropdownMenu(
                 caller=dropdown_button,
                 items=[{"text": "New Event...", "on_release": lambda: update_selected_folder("New Event...")}] +
-                      [{"text": folder, "on_release": lambda selected_folder=folder: update_selected_folder(selected_folder)}
+                      [{"text": folder,
+                        "on_release": lambda selected_folder=folder: update_selected_folder(selected_folder)}
                        for folder in folders],
                 position="center",
             )
@@ -823,7 +839,8 @@ class MainApp(MDApp):
             self.config_parser.set("Settings", "standalone_mode", str(self.standalone_mode_enabled))  # Save as string
 
             # Debug: Print the settings being saved
-            print(f"Saving settings: display_model={self.selected_display}, orientation={self.selected_orientation}, standalone_mode={self.standalone_mode_enabled}")
+            print(
+                f"Saving settings: display_model={self.selected_display}, orientation={self.selected_orientation}, standalone_mode={self.standalone_mode_enabled}")
 
             # Write the settings to the file
             with open(self.config_file, "w") as config_file:
@@ -893,13 +910,15 @@ class MainApp(MDApp):
 
             # Calculate column widths based on the data
             filtered_data = self.filter_table_data(csv_data)
-            column_widths = {header: len("Tgt" if header == "Target" else header) for header in filtered_data[0].keys()}  # Start with header lengths
+            column_widths = {header: len("Tgt" if header == "Target" else header) for header in
+                             filtered_data[0].keys()}  # Start with header lengths
             for row in filtered_data:
                 for header, value in row.items():
                     column_widths[header] = max(column_widths[header], len(str(value)))
 
             # Write headers to the image
-            headers = " | ".join(f"{'Tgt' if header == 'Target' else header:<{column_widths[header]}}" for header in filtered_data[0].keys())
+            headers = " | ".join(f"{'Tgt' if header == 'Target' else header:<{column_widths[header]}}" for header in
+                                 filtered_data[0].keys())
             text_bbox = draw.textbbox((0, 0), headers, font=font)  # Get the bounding box of the headers
             text_width = text_bbox[2] - text_bbox[0]  # Calculate the text width
             x = (display_width - text_width) // 2  # Center the text horizontally
@@ -920,12 +939,14 @@ class MainApp(MDApp):
             y += 20  # Add some spacing before the stage notes
             draw.line((10, y, display_width - 10, y), fill="black", width=1)  # Draw a line above the stage notes
             y += 10  # Add some spacing after the line
-            text_bbox = draw.textbbox((0, 0), "Stage Notes:", font=font)  # Get the bounding box of the stage notes label
+            text_bbox = draw.textbbox((0, 0), "Stage Notes:",
+                                      font=font)  # Get the bounding box of the stage notes label
             text_width = text_bbox[2] - text_bbox[0]  # Calculate the text width
             x = (display_width - text_width) // 2  # Center the text horizontally
             draw.text((x, y), "Stage Notes:", fill="black", font=font)
             y += 30  # Add some spacing after the stage notes label
-            draw.line((10, y, display_width - 10, y), fill="black", width=1)  # Draw a horizontal line under the stage notes label
+            draw.line((10, y, display_width - 10, y), fill="black",
+                      width=1)  # Draw a horizontal line under the stage notes label
             y += 20  # Add some spacing after the line
             text_bbox = draw.textbbox((0, 0), stage_notes, font=font)  # Get the bounding box of the stage notes
             text_width = text_bbox[2] - text_bbox[0]  # Calculate the text width
@@ -944,12 +965,11 @@ class MainApp(MDApp):
             print(f"Error converting CSV to bitmap: {e}")
             return None
 
-    
     def navigate_to_home(self):
         """Navigate back to the home screen."""
         self.root.ids.screen_manager.current = "home"
 
-# search functionality below
+    # search functionality below
     def on_search_entered(self, search_text):
         """Filter the FileChooserListView based on the search input."""
         try:
@@ -962,7 +982,7 @@ class MainApp(MDApp):
                 filechooser.filters = []
         except Exception as e:
             print(f"Error in search functionality: {e}")
-    
+
     def limit_stage_notes(self, text_field):
         """Limit the stage notes to 2 lines."""
         max_lines = 2
@@ -976,9 +996,12 @@ class MainApp(MDApp):
         """Open the dropdown menu for selecting a display model."""
         # Define the available display models with their resolutions
         display_models = [
-            {"text": "Good Display 3.7-inch", "resolution": (280, 416), "on_release": lambda: self.set_display_model("Good Display 3.7-inch", (280, 416))},
-            {"text": "Good Display 4.2-inch", "resolution": (300, 400), "on_release": lambda: self.set_display_model("Good Display 4.2-inch", (400, 300))},
-            {"text": "Good Display 2.9-inch", "resolution": (128, 296), "on_release": lambda: self.set_display_model("Good Display 2.9-inch", (296, 128))},
+            {"text": "Good Display 3.7-inch", "resolution": (280, 416),
+             "on_release": lambda: self.set_display_model("Good Display 3.7-inch", (280, 416))},
+            {"text": "Good Display 4.2-inch", "resolution": (300, 400),
+             "on_release": lambda: self.set_display_model("Good Display 4.2-inch", (400, 300))},
+            {"text": "Good Display 2.9-inch", "resolution": (128, 296),
+             "on_release": lambda: self.set_display_model("Good Display 2.9-inch", (296, 128))},
         ]
 
         # Create the dropdown menu if it doesn't exist
@@ -1135,7 +1158,7 @@ class MainApp(MDApp):
             print("Running on Android. External storage is available.")
             storage_path = self.get_external_storage_path()
             if storage_path:
-                 print(f"External storage path: {storage_path}")
+                print(f"External storage path: {storage_path}")
         else:
             print("Not running on Android. External storage is not available.")
 
@@ -1196,7 +1219,6 @@ class MainApp(MDApp):
             except Exception as e:
                 print(f"Error enabling NFC foreground dispatch: {e}")
 
-    
     def on_new_intent(self, intent):
         print("on_new_intent called")
         """Handle new intents, including shared data and NFC tags."""
@@ -1215,8 +1237,8 @@ class MainApp(MDApp):
                     print("NFC tag detected!")
 
                     # Get the Tag object from the intent
-                    Tag = autoclass('android.nfc.Tag')
-                    tag = intent.getParcelableExtra("android.nfc.extra.TAG")
+                    EXTRA_TAG = autoclass('android.nfc.NfcAdapter').EXTRA_TAG
+                    tag = intent.getParcelableExtra(EXTRA_TAG)
                     if tag:
                         # Get the list of supported techs
                         tech_list = tag.getTechList()
@@ -1331,7 +1353,7 @@ class MainApp(MDApp):
         try:
             # If it's CSV text (not a path or URI), parse directly
             if (
-                "\n" in file_path_or_uri or "\r" in file_path_or_uri
+                    "\n" in file_path_or_uri or "\r" in file_path_or_uri
             ) and not file_path_or_uri.startswith("/") and not file_path_or_uri.startswith("content://"):
                 # Looks like CSV text, not a path or URI
                 csv_file = io.StringIO(file_path_or_uri)
@@ -1367,7 +1389,7 @@ class MainApp(MDApp):
             print(f"Processed received CSV: {file_path_or_uri}")
         except Exception as e:
             print(f"Error processing received CSV: {e}")
-        
+
     def read_csv_from_assets(self, file_name):
         """Read a CSV file from the assets/CSV folder."""
         if is_android():
@@ -1577,7 +1599,9 @@ class MainApp(MDApp):
         # The new row should be added above the button layouts
         button_index = 0
         for i, child in enumerate(reversed(table_container.children)):
-            if isinstance(child, BoxLayout) and any(isinstance(widget, MDRaisedButton) or isinstance(widget, MDFlatButton) for widget in child.children):
+            if isinstance(child, BoxLayout) and any(
+                    isinstance(widget, MDRaisedButton) or isinstance(widget, MDFlatButton) for widget in
+                    child.children):
                 button_index = len(table_container.children) - i
                 break
 
@@ -1747,7 +1771,6 @@ class MainApp(MDApp):
             except Exception as e:
                 print(f"Error hiding NFC button: {e}")
 
-    
     def verify_copied_files(self):
         """Verify the contents of the copied CSV files."""
         dest_dir = os.path.join(os.environ.get("ANDROID_PRIVATE", ""), "CSV")
@@ -1756,6 +1779,7 @@ class MainApp(MDApp):
             print(f"Verifying file: {dest_file}")
             with open(dest_file, "r", encoding="utf-8") as file:
                 print(file.read())
+
 
 def handle_received_file(intent):
     """Handle a file received via Intent.EXTRA_STREAM."""
@@ -1806,6 +1830,7 @@ def handle_received_file(intent):
     else:
         print("This functionality is only available on Android.")
 
+
 def start_foreground_service(self):
     """Start a foreground service with a persistent notification."""
     if is_android():
@@ -1818,9 +1843,11 @@ def start_foreground_service(self):
             )
             print("Foreground service started with a persistent notification.")
         except Exception as e:
-                print(f"Error starting foreground service: {e}")
+            print(f"Error starting foreground service: {e}")
     else:
         print("Foreground service is only available on Android.")
+
+
 def process_received_file(self, file_path):
     """Process the received file."""
     try:
@@ -1836,7 +1863,8 @@ def process_received_file(self, file_path):
             print("Unsupported file type.")
     except Exception as e:
         print(f"Error processing received file: {e}")
-            
+
+
 def process_received_text(self, text_data):
     """Process the received text data."""
     try:
@@ -1858,6 +1886,7 @@ def process_received_text(self, text_data):
         print("Text data processed and displayed successfully.")
     except Exception as e:
         print(f"Error processing text data: {e}")
+
 
 if __name__ == "__main__":
     MainApp().run()
