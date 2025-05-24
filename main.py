@@ -24,7 +24,7 @@ from kivy.core.window import Window
 import shutil
 from plyer import notification
 from kivy.clock import Clock
-from jnius import autoclass, PythonJavaClass, java_method
+
 
 # Ensure the soft keyboard pushes the target widget above it
 Window.softinput_mode = "below_target"
@@ -201,19 +201,6 @@ class ManageDataScreen(Screen):
 
 class SettingsScreen(Screen):
     pass
-
-
-class NfcBroadcastReceiver(PythonJavaClass):
-    __javainterfaces__ = ['android/content/BroadcastReceiver']
-    __javacontext__ = 'app'
-
-    @java_method('(Landroid/content/Context;Landroid/content/Intent;)V')
-    def onReceive(self, context, intent):
-        action = intent.getAction()
-        if action == "com.openedope.open_edope.NFC_EVENT":
-            nfc_action = intent.getStringExtra("action")
-            print(f"Received NFC event from Java! Action: {nfc_action}")
-            # Call your Python NFC handler here
 
 
 class MainApp(MDApp):
@@ -394,7 +381,24 @@ class MainApp(MDApp):
                 Clock.schedule_once(lambda dt: self.on_new_intent(intent), 0)
             except Exception as e:
                 print(f"Error handling startup intent: {e}")
-
+                # ...existing code...
+        if is_android():
+            def poll_intent(dt):
+                PythonActivity = autoclass('org.kivy.android.PythonActivity')
+                intent = PythonActivity.mActivity.getIntent()
+                action = intent.getAction()
+                if action in [
+                    "android.nfc.action.TAG_DISCOVERED",
+                    "android.nfc.action.NDEF_DISCOVERED",
+                    "android.nfc.action.TECH_DISCOVERED",
+                ]:
+                    print(f"Polling: found NFC intent action: {action}")
+                    self.on_new_intent(intent)
+                    intent.setAction("")  # Clear so it doesn't get handled again
+        
+            # Poll every second for new NFC intents
+            Clock.schedule_interval(poll_intent, 1)
+        
         # Initialize the dropdown menus
         self.display_menu = None
         self.orientation_menu = None
@@ -412,7 +416,7 @@ class MainApp(MDApp):
     show_lead = False
     show_range = False
     show_2_wind_holds = True
-
+        
     def ensure_csv_directory(self):
         """Ensure the assets/CSV directory exists and is accessible."""
         if is_android():
