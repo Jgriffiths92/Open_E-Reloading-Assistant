@@ -327,11 +327,20 @@ class MainApp(MDApp):
         action = intent.getAction()
         print(f"Checking for new intent on resume... Action: {action}")
 
-        # Only process if it's a SEND or VIEW intent (i.e., a file/text was shared)
-        if action in ["android.intent.action.SEND", "android.intent.action.VIEW"]:
+        # Check for SEND, VIEW, or any NFC action
+        if action in [
+            "android.intent.action.SEND",
+            "android.intent.action.VIEW",
+            "android.nfc.action.TAG_DISCOVERED",
+            "android.nfc.action.NDEF_DISCOVERED",
+            "android.nfc.action.TECH_DISCOVERED",
+        ]:
+            print("Calling on_new_intent from on_resume")
             self.on_new_intent(intent)
+            # Optionally clear the intent action so it doesn't get handled again
+            intent.setAction("")
         else:
-            print("No shared file/text intent to process on resume.")
+            print("No shared file/text or NFC intent to process on resume.")
 
     def request_bal_exemption(self):
         if is_android() and autoclass:
