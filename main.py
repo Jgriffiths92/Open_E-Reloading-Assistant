@@ -1251,6 +1251,17 @@ class MainApp(MDApp):
                 action = intent.getAction()
                 print(f"Intent action: {action}")
 
+                # --- Print all extras for debugging ---
+                extras = intent.getExtras()
+                if extras:
+                    print("Intent extras:")
+                    for key in extras.keySet():
+                        value = extras.get(key)
+                        print(f"  {key}: {value}")
+                else:
+                    print("No extras in intent.")
+                # --- End debug block ---
+
                 # NFC tag detected
                 if action in [
                     "android.nfc.action.TAG_DISCOVERED",
