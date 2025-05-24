@@ -390,7 +390,7 @@ class MainApp(MDApp):
             try:
                 PythonActivity = autoclass('org.kivy.android.PythonActivity')
                 intent = PythonActivity.mActivity.getIntent()
-                # Delay intent handling to ensure UI is ready
+                print(f"Scheduling on_new_intent for action: {intent.getAction()}")  # <-- Add this line
                 Clock.schedule_once(lambda dt: self.on_new_intent(intent), 0)
             except Exception as e:
                 print(f"Error handling startup intent: {e}")
