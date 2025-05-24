@@ -244,7 +244,7 @@ android.manifest.intent_filters = extra_intents.xml
 android.res_xml = ./res/xml/nfc_tech_filter.xml
 
 # (str) launchMode to set for the main activity
-#android.manifest.launch_mode = standard
+android.manifest.launch_mode = singleTop
 
 # (str) screenOrientation to set for the main activity.
 # Valid values can be found at https://developer.android.com/guide/topics/manifest/activity-element
