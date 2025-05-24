@@ -141,7 +141,7 @@ android.private_storage = True
 # android.accept_sdk_license = False
 
 # (str) Android entry point, default is ok for Kivy-based app
-    android.entrypoint = com.openedope.open_edope.NfcIntentHandler
+#android.entrypoint = com.openedope.open_edope.NfcIntentHandler
 
 # (str) Full name including package path of the Java class that implements Android Activity
 # use that parameter together with android.entrypoint to set custom Java class instead of PythonActivity
