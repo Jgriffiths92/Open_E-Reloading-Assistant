@@ -296,6 +296,7 @@ class MainApp(MDApp):
 
     def send_nfc_image(self, intent, width, height, image_buffer, epd_init):
         print("send_nfc_image called")
+        print(f"image_buffer type: {type(image_buffer)}")  # <-- Add this line
         NfcHelper = autoclass('com.openedope.open_edope.NfcHelper')
 
         # Convert Python bytes to Java byte[]
@@ -313,6 +314,7 @@ class MainApp(MDApp):
 
         # Call your Java static method
         NfcHelper.processNfcIntent(intent, width, height, image_buffer_java, epd_init_java_array)
+        NfcHelper.testByteArray(image_buffer_java)
 
     def on_pause(self):
         print("on_pause CALLED")
@@ -1801,8 +1803,6 @@ class MainApp(MDApp):
                         dest.write(src.read())
                     print(f"Copied file: {sub_src_path} to {sub_dest_path}")
         except Exception as e:
-
-
             print(f"Error copying directory locally: {e}")
 
     def process_subject_content(self, subject_content):
