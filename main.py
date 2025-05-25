@@ -364,7 +364,7 @@ class MainApp(MDApp):
 
         # Initialize NFC only on Android
         if is_android() and self.initialize_nfc():
-            self.enable_nfc_foreground_dispatch()
+            print("NFC initialized successfully.")
 
         # Dynamically set the rootpath for the FileChooserListView
         self.root = Builder.load_file("layout.kv")  # Load the root widget from the KV file
