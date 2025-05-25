@@ -298,12 +298,14 @@ class MainApp(MDApp):
         NfcHelper = autoclass('com.openedope.open_edope.NfcHelper')
 
         # Convert Python bytes to Java byte[]
-        ByteBuffer = autoclass('java.nio.ByteBuffer')
-        image_buffer_java = ByteBuffer.wrap(bytes(image_buffer))
+        Array = autoclass('java.lang.reflect.Array')
+        Byte = autoclass('java.lang.Byte')
+        image_buffer_java = Array.newInstance(Byte.TYPE, len(image_buffer))
+        for i, b in enumerate(image_buffer):
+            Array.setByte(image_buffer_java, i, b)
 
         # Convert Python list of strings to Java String[]
         String = autoclass('java.lang.String')
-        Array = autoclass('java.lang.reflect.Array')
         epd_init_java_array = Array.newInstance(String, len(epd_init))
         for i, s in enumerate(epd_init):
             epd_init_java_array[i] = String(s)
@@ -1798,6 +1800,7 @@ class MainApp(MDApp):
                         dest.write(src.read())
                     print(f"Copied file: {sub_src_path} to {sub_dest_path}")
         except Exception as e:
+
             print(f"Error copying directory locally: {e}")
 
     def process_subject_content(self, subject_content):
