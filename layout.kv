@@ -141,6 +141,14 @@ MDNavigationLayout:
                         size_hint: None, None
                         size: dp(56), dp(56)  # Standard FAB size
                         on_release: app.on_fab_press()
+
+                    MDFloatingActionButton:
+                        icon: "broom"
+                        size_hint: (None, None)
+                        size: dp(56), dp(56)  # Standard FAB size
+                        md_bg_color: 0.91, 0.74, 0.09, 1
+                        on_release: app.clear_table_data()
+
 <SavedCardsScreen>:
     MDBoxLayout:
         orientation: "vertical"

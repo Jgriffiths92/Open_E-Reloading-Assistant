@@ -419,6 +419,15 @@ class MainApp(MDApp):
 
         return self.root
 
+    def clear_table_data(self):
+        """Clear the data in the table and update the UI."""
+        self.current_data = []
+        home_screen = self.root.ids.home_screen
+        table_container = home_screen.ids.table_container
+        table_container.clear_widgets()
+        print("Data table cleared.")
+        self.show_manual_data_input()  # Show manual data input fields again
+
     global show_lead, show_range, show_2_wind_holds
     show_lead = False
     show_range = False
