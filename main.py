@@ -1333,7 +1333,7 @@ class MainApp(MDApp):
                     # NEW: Get the tag ID and UID
                     if tag:
                         tag_id = tag.getId()
-                        tag_uid = ''.join('{:02X}'.format(byte) for byte in tag_id)
+                        tag_uid = ''.join('{:02X}'.format (byte) for byte in tag_id)
                         print(f"Tag UID: {tag_uid}")
                         # Optionally update a label in your UI
 
@@ -1573,19 +1573,28 @@ class MainApp(MDApp):
         try:
             if os.path.exists(path):
                 if os.path.isdir(path):
-                    # Remove the folder
                     os.rmdir(path)
                     print(f"Deleted folder: {path}")
                 else:
-                    # Remove the file
                     os.remove(path)
                     print(f"Deleted file: {path}")
 
                 # Refresh the FileChooserListView
                 saved_cards_screen = self.root.ids.screen_manager.get_screen("saved_cards")
                 filechooser = saved_cards_screen.ids.filechooser
+
+                # Set the filechooser path to the parent directory of the deleted file/folder
+                parent_dir = os.path.dirname(path)
+                filechooser.path = parent_dir
+
                 filechooser._update_files()  # Refresh the file and folder list
                 print("File and folder list refreshed.")
+
+                # Clear the data table after deletion
+                self.clear_table_data()
+
+                # Return to the Saved Cards screen
+                self.root.ids.screen_manager.current = "saved_cards"
             else:
                 print(f"Path does not exist: {path}")
         except Exception as e:
