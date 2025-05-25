@@ -425,6 +425,13 @@ class MainApp(MDApp):
         home_screen = self.root.ids.home_screen
         table_container = home_screen.ids.table_container
         table_container.clear_widgets()
+        # Clear the stage name and stage notes fields
+        try:
+            home_screen.ids.stage_name_field.text = ""
+            home_screen.ids.stage_notes_field.text = ""
+            print("Stage name and stage notes fields cleared.")
+        except Exception as e:
+            print(f"Error clearing stage name or notes: {e}")
         print("Data table cleared.")
         self.show_manual_data_input()  # Show manual data input fields again
 
