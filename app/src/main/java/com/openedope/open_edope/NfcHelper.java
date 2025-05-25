@@ -29,7 +29,7 @@ public class NfcHelper {
             "F0DA000003F00330"
     };
 
-    public static void processNfcIntent(Intent intent, int width0, int height0, byte[] image_buffer, String[] epd_init) {
+    public static void processNfcIntent(Intent intent, int width, int height, byte[] imageBuffer, String[] epdInit) {
           Log.e("NfcHelper", "processNfcIntent CALLED");
         Parcelable p = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
         if (p == null) return;
@@ -43,11 +43,11 @@ public class NfcHelper {
                 byte[] response;
                 nfcA.setTimeout(60000);
 
-                cmd = hexStringToBytes(epd_init[0]);
+                cmd = hexStringToBytes(epdInit[0]);
                 response = nfcA.transceive(cmd);
                 Log.e("epdinit_state", hexToString(response));
 
-                cmd = hexStringToBytes(epd_init[1]);
+                cmd = hexStringToBytes(epdInit[1]);
                 response = nfcA.transceive(cmd);
                 Log.e("epdinit_state", hexToString(response));
 
@@ -60,7 +60,7 @@ public class NfcHelper {
                     cmd[3] = (byte) i;
                     cmd[4] = (byte) 0xFA;
                     for (int j = 0; j < 250; j++) {
-                        cmd[j + 5] = image_buffer[j + 250 * i];
+                        cmd[j + 5] = imageBuffer[j + 250 * i];
                     }
                     response = nfcA.transceive(cmd);
                     Log.e((i + 1) + " sendData_state:", hexToString(response));
