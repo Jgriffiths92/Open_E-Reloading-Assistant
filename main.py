@@ -381,8 +381,6 @@ class MainApp(MDApp):
                 Clock.schedule_once(lambda dt: self.on_new_intent(intent), 0)
             except Exception as e:
                 print(f"Error handling startup intent: {e}")
-                # ...existing code...
-        if is_android():
             def poll_intent(dt):
                 PythonActivity = autoclass('org.kivy.android.PythonActivity')
                 intent = PythonActivity.mActivity.getIntent()
