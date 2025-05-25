@@ -86,7 +86,7 @@ public class NfcHelper {
     }
 
     public static void processNfcIntentWrapper(Intent intent, int width0, int height0, Object image_buffer, String[] epd_init) {
-        // Cast the Object to byte[] and call the original method
+        Log.e("NfcHelper", "processNfcIntentWrapper CALLED");
         processNfcIntent(intent, width0, height0, (byte[]) image_buffer, epd_init);
     }
 
