@@ -104,4 +104,8 @@ public class NfcHelper {
         }
         return sb.toString();
     }
+
+    public static void testByteArray(byte[] arr) {
+        Log.e("NfcHelper", "testByteArray called, length: " + arr.length);
+    }
 }
