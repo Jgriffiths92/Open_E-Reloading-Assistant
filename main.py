@@ -312,8 +312,11 @@ class MainApp(MDApp):
         for i, s in enumerate(epd_init):
             epd_init_java_array[i] = String(s)
 
-        # Call your Java static method
-        NfcHelper.processNfcIntent(intent, width, height, image_buffer_java, epd_init_java_array)
+        # Convert bytes to a list of ints (0-255)
+        image_buffer_list = list(image_buffer)
+
+        # Pass the list directly to the Java method
+        NfcHelper.processNfcIntent(intent, width, height, image_buffer_list, epd_init_java_array)
         NfcHelper.testByteArray(image_buffer_java)
 
     def on_pause(self):
