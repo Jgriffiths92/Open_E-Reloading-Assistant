@@ -408,6 +408,15 @@ class MainApp(MDApp):
         # Hide the NFC button if on Android
         self.hide_nfc_button()
 
+        # Delay check for empty table and show manual input if needed
+        def check_and_show_manual_input(dt):
+            # Only show manual input if there is no data loaded
+            if not hasattr(self, "current_data") or not self.current_data:
+                print("No data found after UI load, showing manual data input.")
+                self.show_manual_data_input()
+
+        Clock.schedule_once(check_and_show_manual_input, 0.5)  # Delay to ensure UI is loaded
+
         return self.root
 
     global show_lead, show_range, show_2_wind_holds
