@@ -24,7 +24,7 @@ from kivy.core.window import Window
 import shutil
 from plyer import notification
 from kivy.clock import Clock
-from jnius import autoclass, cast, jarray  # Add jarray import at the top
+
 
 
 # Ensure the soft keyboard pushes the target widget above it
@@ -299,10 +299,13 @@ class MainApp(MDApp):
         NfcHelper = autoclass('com.openedope.open_edope.NfcHelper')
 
         # Convert Python bytes to Java byte[]
-        image_buffer_java = jarray('b')(image_buffer)  # <-- Use jarray for byte[]
+        Array = autoclass('java.lang.reflect.Array')
+        Byte = autoclass('java.lang.Byte')
+        image_buffer_java = Array.newInstance(Byte.TYPE, len(image_buffer))
+        for i, b in enumerate(image_buffer):
+            Array.setByte(image_buffer_java, i, b)
 
         # Convert Python list of strings to Java String[]
-        Array = autoclass('java.lang.reflect.Array')
         String = autoclass('java.lang.String')
         epd_init_java_array = Array.newInstance(String, len(epd_init))
         for i, s in enumerate(epd_init):
@@ -1798,6 +1801,7 @@ class MainApp(MDApp):
                         dest.write(src.read())
                     print(f"Copied file: {sub_src_path} to {sub_dest_path}")
         except Exception as e:
+
 
             print(f"Error copying directory locally: {e}")
 
