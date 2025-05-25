@@ -1303,6 +1303,7 @@ class MainApp(MDApp):
                 tag = intent.getParcelableExtra(EXTRA_TAG)
                 if tag:
                     print("NFC tag detected (regardless of action)!")
+                    tag = cast('android.nfc.Tag', tag)  # Properly cast to Tag
                     tech_list = tag.getTechList()
                     print("Tag technologies detected by Android:")
                     for tech in tech_list:
