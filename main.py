@@ -361,10 +361,10 @@ class MainApp(MDApp):
                 [Permission.NFC, Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE],
                 self.on_permissions_result
             )
-
-        # Initialize NFC only on Android
-        if is_android() and self.initialize_nfc():
-            print("NFC initialized successfully.")
+            if self.initialize_nfc():
+                print("NFC initialized successfully.")
+            from android import activity
+            activity.bind(on_new_intent=self.on_new_intent)
 
         # Dynamically set the rootpath for the FileChooserListView
         self.root = Builder.load_file("layout.kv")  # Load the root widget from the KV file
@@ -1319,6 +1319,13 @@ class MainApp(MDApp):
                             print(f" - {tech}")
                     else:
                         print("No Tag object found in intent.")
+
+                    # NEW: Get the tag ID and UID
+                    if tag:
+                        tag_id = tag.getId()
+                        tag_uid = ''.join('{:02X}'.format(byte) for byte in tag_id)
+                        print(f"Tag UID: {tag_uid}")
+                        # Optionally update a label in your UI
 
                     self.send_csv_bitmap_via_nfc(intent)
                     return  # Optionally return here if you don't want to process further
