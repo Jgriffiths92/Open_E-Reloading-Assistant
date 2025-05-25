@@ -39,16 +39,25 @@ except ImportError:
     request_permissions = None
     Permission = None
 try:
-    from jnius import autoclass
+    from jnius import autoclass, cast
+    NfcAdapter = autoclass('android.nfc.NfcAdapter')
+    Ndef = autoclass('android.nfc.tech.Ndef')
+    NdefFormatable = autoclass('android.nfc.tech.NdefFormatable')
+    MifareClassic = autoclass('android.nfc.tech.MifareClassic')
+    MifareUltralight = autoclass('android.nfc.tech.MifareUltralight')
 except ImportError:
-    autoclass = None  # Handle cases where pyjnius is not available
+    autoclass = None
+    NfcAdapter = None
+    Ndef = None
+    NdefFormatable = None
+    MifareClassic = None
+    MifareUltralight = None
 
 
 def is_android():
     """Check if the app is running on an Android device."""
     try:
         from android import mActivity
-        from jnius import autoclass, cast
         print("Running on Android")
         # Print if these modules are imported
         print("android imported:", 'mActivity' in globals() and mActivity is not None)
