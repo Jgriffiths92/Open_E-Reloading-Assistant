@@ -1617,12 +1617,7 @@ class MainApp(MDApp):
 
         # Create a layout for the "CANCEL" and "ADD" buttons
         action_buttons_layout = BoxLayout(orientation="horizontal", spacing="10dp", size_hint=(1, None), height=dp(50))
-        action_buttons_layout.add_widget(
-            MDFlatButton(
-                text="CANCEL",
-                on_release=lambda x: self.cancel_manual_data_input()
-            )
-        )
+      
         action_buttons_layout.add_widget(
             MDRaisedButton(
                 text="ADD",
