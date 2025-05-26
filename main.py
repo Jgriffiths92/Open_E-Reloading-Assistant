@@ -300,17 +300,17 @@ class MainApp(MDApp):
         NfcHelper = autoclass('com.openedope.open_edope.NfcHelper')
 
         # Convert Python bytes to Java byte[]
-        Array = autoclass('java.lang.reflect.Array')
-        Byte = autoclass('java.lang.Byte')
-        image_buffer_java = Array.newInstance(Byte.TYPE, len(image_buffer))
-        for i, b in enumerate(image_buffer):
-            Array.setByte(image_buffer_java, i, b)
+        #Array = autoclass('java.lang.reflect.Array')
+        #Byte = autoclass('java.lang.Byte')
+        #image_buffer_java = Array.newInstance(Byte.TYPE, len(image_buffer))
+        #for i, b in enumerate(image_buffer):
+            #Array.setByte(image_buffer_java, i, b)
 
         # Convert Python list of strings to Java String[]
-        String = autoclass('java.lang.String')
-        epd_init_java_array = Array.newInstance(String, len(epd_init))
-        for i, s in enumerate(epd_init):
-            epd_init_java_array[i] = String(s)
+        #String = autoclass('java.lang.String')
+        #epd_init_java_array = Array.newInstance(String, len(epd_init))
+        #for i, s in enumerate(epd_init):
+            #epd_init_java_array[i] = String(s)
 
         # Convert bytes to a list of ints (0-255)
         #image_buffer_list = list(image_buffer)
