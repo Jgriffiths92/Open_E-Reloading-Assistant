@@ -1987,3 +1987,5 @@ def process_received_text(self, text_data):
         print("Text data processed and displayed successfully.")
     except Exception as e:
         print(f"Error processing text data: {e}")
+if __name__ == "__main__":
+    MainApp().run()
