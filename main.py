@@ -313,12 +313,12 @@ class MainApp(MDApp):
             epd_init_java_array[i] = String(s)
 
         # Convert bytes to a list of ints (0-255)
-        image_buffer_list = list(image_buffer)
+        #image_buffer_list = list(image_buffer)
+        #NfcHelper.processNfcIntentWrapper(intent, width, height, image_buffer_list, epd_init_java_array)
 
-        # Pass the list directly to the Java method
-        NfcHelper.processNfcIntentWrapper(intent, width, height, image_buffer_list, epd_init_java_array)
-        NfcHelper.testByteArray(image_buffer_java)
-
+        # Option 2: Pass as a bytearray
+        image_buffer_bytearray = bytearray(image_buffer)
+        NfcHelper.processNfcIntentWrapper(intent, width, height, image_buffer_bytearray, epd_init_java_array)
     def on_pause(self):
         print("on_pause CALLED")
         return True  # Returning True allows the app to be paused
