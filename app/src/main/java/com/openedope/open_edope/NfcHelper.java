@@ -31,7 +31,7 @@ public class NfcHelper {
 
     public static void processNfcIntent(Intent intent, int width0, int height0, byte[] image_buffer, String[] epd_init) {
         Log.e("NfcHelper", "processNfcIntent CALLED");
-        Log.e("NfcHelper", "image_buffer class: " + image_buffer.getClass().getName());
+        Log.e("NfcHelper", "image_buffer class in processNfcIntent: " + image_buffer.getClass().getName());
         Parcelable p = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
         if (p == null) return;
         Tag tag = (Tag) p;
@@ -87,6 +87,7 @@ public class NfcHelper {
 
     public static void processNfcIntentWrapper(Intent intent, int width0, int height0, Object image_buffer, String[] epd_init) {
         Log.e("NfcHelper", "processNfcIntentWrapper CALLED");
+        Log.e("NfcHelper", "image_buffer class in wrapper: " + image_buffer.getClass().getName());
         processNfcIntent(intent, width0, height0, (byte[]) image_buffer, epd_init);
     }
 
