@@ -307,10 +307,11 @@ class MainApp(MDApp):
             #Array.setByte(image_buffer_java, i, b)
 
         # Convert Python list of strings to Java String[]
-        #String = autoclass('java.lang.String')
-        #epd_init_java_array = Array.newInstance(String, len(epd_init))
-        #for i, s in enumerate(epd_init):
-            #epd_init_java_array[i] = String(s)
+        String = autoclass('java.lang.String')
+        Array = autoclass('java.lang.reflect.Array')
+        epd_init_java_array = Array.newInstance(String, len(epd_init))
+        for i, s in enumerate(epd_init):
+            epd_init_java_array[i] = String(s)
 
         # Convert bytes to a list of ints (0-255)
         #image_buffer_list = list(image_buffer)
