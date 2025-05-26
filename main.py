@@ -316,7 +316,7 @@ class MainApp(MDApp):
         image_buffer_list = list(image_buffer)
 
         # Pass the list directly to the Java method
-        NfcHelper.processNfcIntentWrapper(intent, width, height, image_buffer_java, epd_init_java_array)
+        NfcHelper.processNfcIntentWrapper(intent, width, height, image_buffer_list, epd_init_java_array)
         NfcHelper.testByteArray(image_buffer_java)
 
     def on_pause(self):
@@ -1987,5 +1987,3 @@ def process_received_text(self, text_data):
         print("Text data processed and displayed successfully.")
     except Exception as e:
         print(f"Error processing text data: {e}")
-if __name__ == "__main__":
-    MainApp().run()
