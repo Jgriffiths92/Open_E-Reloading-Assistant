@@ -4,6 +4,7 @@ package com.openedope.open_edope;
 import android.content.Intent;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
+import android.nfc.tech.IsoDep;
 import android.nfc.tech.NfcA;
 import android.os.Parcelable;
 import android.util.Log;
@@ -38,30 +39,26 @@ public class NfcHelper {
             return;
         }
         Tag tag = (Tag) p;
-        Log.e("NfcHelper", "Tag ID: " + bytesToHex(tag.getId()));
-        String[] techList = tag.getTechList();
-        for (String tech : techList) {
-            Log.e("NfcHelper", "Tag supports: " + tech);
-        }
-        NfcA nfcA = NfcA.get(tag);
-        if (nfcA != null) {
+        IsoDep isoDep = IsoDep.get(tag);
+        if (isoDep != null) {
             try {
-                Log.e("NfcHelper", "Before connect, isConnected: " + nfcA.isConnected());
-                Log.e("NfcHelper", "Attempting to connect to NFC tag...");
-                nfcA.connect();
-                Log.e("NfcHelper", "After connect, isConnected: " + nfcA.isConnected());
-                Log.e("NfcHelper", "NFC tag connected: " + nfcA.toString());
-                Log.e("NfcHelper", "Tag timeout (ms): " + nfcA.getTimeout());
-                byte[] cmd;
-                byte[] response;
-                nfcA.setTimeout(60000);
+                isoDep.connect();
+                Log.e("NfcHelper", "IsoDep connected: " + isoDep.isConnected());
+                isoDep.setTimeout(60000);
 
-                cmd = hexStringToBytes(epd_init[0]);
-                response = nfcA.transceive(cmd);
+                // Send initialization command
+                byte[] cmd = hexStringToBytes(epd_init[0]);
+                byte[] response = isoDep.transceive(cmd);
                 Log.e("epdinit_state", hexToString(response));
+                // Check for success (0x90 at end)
+                if (response.length > 0 && response[response.length - 1] == (byte) 0x90) {
+                    Log.e("NfcHelper", "Init command success");
+                } else {
+                    Log.e("NfcHelper", "Init command failed");
+                }
 
                 cmd = hexStringToBytes(epd_init[1]);
-                response = nfcA.transceive(cmd);
+                response = isoDep.transceive(cmd);
                 Log.e("epdinit_state", hexToString(response));
 
                 int datas = width0 * height0 / 8;
@@ -81,7 +78,7 @@ public class NfcHelper {
                     boolean success = false;
                     while (attempt < maxRetries && !success) {
                         try {
-                            response = nfcA.transceive(cmd);
+                            response = isoDep.transceive(cmd);
                             Log.e((i + 1) + " sendData_state:", hexToString(response));
                             success = true;
                         } catch (Exception e) {
@@ -92,87 +89,63 @@ public class NfcHelper {
                     }
                 }
 
+                // Send refresh command and check response
                 byte[] refreshCmd = new byte[]{(byte) 0xF0, (byte) 0xD4, 0x05, (byte) 0x80, 0x00};
-                response = nfcA.transceive(refreshCmd);
+                response = isoDep.transceive(refreshCmd);
                 Log.e("RefreshData1_state:", hexToString(response));
-                if (response[0] != (byte) 0x90) {
-                    response = nfcA.transceive(refreshCmd);
-                    Log.e("RefreshData2_state:", hexToString(response));
+                if (response.length > 0 && response[response.length - 1] == (byte) 0x90) {
+                    Log.e("NfcHelper", "Refresh command success");
+                } else {
+                    Log.e("NfcHelper", "Refresh command failed");
                 }
             } catch (Exception e) {
-                e.printStackTrace();
-                Log.e("NfcHelper", "Exception in processNfcIntent: " + e);
-                Log.e("NfcHelper", "Is tag connected? " + (nfcA.isConnected() ? "YES" : "NO"));
+                Log.e("NfcHelper", "IsoDep Exception: " + e);
             } finally {
                 try {
-                    Log.e("NfcHelper", "In finally, isConnected: " + nfcA.isConnected());
-                    if (nfcA.isConnected()) {
-                        Log.e("NfcHelper", "Closing NFC tag connection...");
-                        nfcA.close();
-                        Log.e("NfcHelper", "NFC tag connection closed.");
-                    } else {
-                        Log.e("NfcHelper", "NFC tag was already disconnected.");
-                    }
-                } catch (Exception ignored) {
-                    Log.e("NfcHelper", "Exception while closing NFC tag.");
-                }
+                    isoDep.close();
+                } catch (Exception ignored) {}
             }
         } else {
-            Log.e("NfcHelper", "NfcA technology not supported by this tag.");
-        }
-    }
+            Log.e("NfcHelper", "IsoDep not supported, falling back to NfcA");
+            NfcA nfcA = NfcA.get(tag);
+            if (nfcA != null) {
+                try {
+                    Log.e("NfcHelper", "Before connect, isConnected: " + nfcA.isConnected());
+                    Log.e("NfcHelper", "Attempting to connect to NFC tag...");
+                    nfcA.connect();
+                    Log.e("NfcHelper", "After connect, isConnected: " + nfcA.isConnected());
+                    Log.e("NfcHelper", "NFC tag connected: " + nfcA.toString());
+                    Log.e("NfcHelper", "Tag timeout (ms): " + nfcA.getTimeout());
+                    byte[] cmd;
+                    byte[] response;
+                    nfcA.setTimeout(60000);
 
-    public static void processNfcIntentWrapper(Intent intent, int width0, int height0, Object image_buffer, String[] epd_init) {
-        Log.e("NfcHelper", "processNfcIntentWrapper CALLED");
-        Log.e("NfcHelper", "image_buffer class in wrapper: " + image_buffer.getClass().getName());
-        processNfcIntent(intent, width0, height0, (byte[]) image_buffer, epd_init);
-    }
+                    cmd = hexStringToBytes(epd_init[0]);
+                    response = nfcA.transceive(cmd);
+                    Log.e("epdinit_state", hexToString(response));
 
-    public static void processNfcIntentByteBuffer(Intent intent, int width0, int height0, java.nio.ByteBuffer buffer, String[] epd_init) {
-        byte[] image_buffer = new byte[buffer.remaining()];
-        buffer.get(image_buffer);
-        processNfcIntent(intent, width0, height0, image_buffer, epd_init);
-    }
+                    cmd = hexStringToBytes(epd_init[1]);
+                    response = nfcA.transceive(cmd);
+                    Log.e("epdinit_state", hexToString(response));
 
-    public static void processNfcIntentByteBufferAsync(final Intent intent, final int width0, final int height0, final java.nio.ByteBuffer buffer, final String[] epd_init) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                processNfcIntentByteBuffer(intent, width0, height0, buffer, epd_init);
-            }
-        }).start();
-    }
-
-    // Utility: Convert hex string to byte array
-    public static byte[] hexStringToBytes(String s) {
-        int len = s.length();
-        byte[] data = new byte[len / 2];
-        for (int i = 0; i < len; i += 2) {
-            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
-                    + Character.digit(s.charAt(i+1), 16));
-        }
-        return data;
-    }
-
-    // Utility: Convert byte array to hex string
-    public static String hexToString(byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-        for (byte b : bytes) {
-            sb.append(String.format("%02X", b));
-        }
-        return sb.toString();
-    }
-
-    // Utility for tag ID logging
-    public static String bytesToHex(byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-        for (byte b : bytes) {
-            sb.append(String.format("%02X", b));
-        }
-        return sb.toString();
-    }
-
-    public static void testByteArray(byte[] arr) {
-        Log.e("NfcHelper", "testByteArray called, length: " + arr.length);
-    }
-}
+                    int datas = width0 * height0 / 8;
+                    int chunkSize = 128; // Try 128 or 64 if errors persist
+                    int maxRetries = 3;
+                    for (int i = 0; i < datas / chunkSize; i++) {
+                        cmd = new byte[5 + chunkSize];
+                        cmd[0] = (byte) 0xF0;
+                        cmd[1] = (byte) 0xD2;
+                        cmd[2] = 0x00;
+                        cmd[3] = (byte) i;
+                        cmd[4] = (byte) chunkSize;
+                        for (int j = 0; j < chunkSize; j++) {
+                            cmd[j + 5] = image_buffer[j + chunkSize * i];
+                        }
+                        int attempt = 0;
+                        boolean success = false;
+                        while (attempt < maxRetries && !success) {
+                            try {
+                                response = nfcA.transceive(cmd);
+                                Log.e((i + 1) + " sendData_state:", hexToString(response));
+                                success = true;
+                           
