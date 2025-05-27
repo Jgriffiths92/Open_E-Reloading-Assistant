@@ -33,13 +33,18 @@ public class NfcHelper {
         Log.e("NfcHelper", "processNfcIntent CALLED");
         Log.e("NfcHelper", "image_buffer class in processNfcIntent: " + image_buffer.getClass().getName());
         Parcelable p = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
-        if (p == null) return;
+        if (p == null) {
+            Log.e("NfcHelper", "No NFC tag found in intent!");
+            return;
+        }
         Tag tag = (Tag) p;
         NfcA nfcA = NfcA.get(tag);
         if (nfcA != null) {
             try {
-                Log.e("debug", "intent");
+                Log.e("NfcHelper", "Attempting to connect to NFC tag...");
                 nfcA.connect();
+                Log.e("NfcHelper", "NFC tag connected: " + nfcA.toString());
+                Log.e("NfcHelper", "Tag timeout (ms): " + nfcA.getTimeout());
                 byte[] cmd;
                 byte[] response;
                 nfcA.setTimeout(60000);
@@ -89,12 +94,23 @@ public class NfcHelper {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                Log.e("debug", "Exception in processNfcIntent: " + e);
+                Log.e("NfcHelper", "Exception in processNfcIntent: " + e);
+                Log.e("NfcHelper", "Is tag connected? " + (nfcA.isConnected() ? "YES" : "NO"));
             } finally {
                 try {
-                    nfcA.close();
-                } catch (Exception ignored) {}
+                    if (nfcA.isConnected()) {
+                        Log.e("NfcHelper", "Closing NFC tag connection...");
+                        nfcA.close();
+                        Log.e("NfcHelper", "NFC tag connection closed.");
+                    } else {
+                        Log.e("NfcHelper", "NFC tag was already disconnected.");
+                    }
+                } catch (Exception ignored) {
+                    Log.e("NfcHelper", "Exception while closing NFC tag.");
+                }
             }
+        } else {
+            Log.e("NfcHelper", "NfcA technology not supported by this tag.");
         }
     }
 
