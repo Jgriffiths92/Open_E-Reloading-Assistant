@@ -319,7 +319,9 @@ class MainApp(MDApp):
 
         # Option 2: Pass as a bytearray
         image_buffer_bytearray = bytearray(image_buffer)
-        NfcHelper.processNfcIntentWrapper(intent, width, height, image_buffer_bytearray, epd_init_java_array)
+        ByteBuffer = autoclass('java.nio.ByteBuffer')
+        image_buffer_bb = ByteBuffer.wrap(bytes(image_buffer))
+        NfcHelper.processNfcIntentByteBuffer(intent, width, height, image_buffer_bb, epd_init_java_array)
     def on_pause(self):
         print("on_pause CALLED")
         return True  # Returning True allows the app to be paused
