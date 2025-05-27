@@ -53,18 +53,31 @@ public class NfcHelper {
                 Log.e("epdinit_state", hexToString(response));
 
                 int datas = width0 * height0 / 8;
-                for (int i = 0; i < datas / 250; i++) {
-                    cmd = new byte[255];
+                int chunkSize = 128; // Try 128 or 64 if errors persist
+                int maxRetries = 3;
+                for (int i = 0; i < datas / chunkSize; i++) {
+                    cmd = new byte[5 + chunkSize];
                     cmd[0] = (byte) 0xF0;
                     cmd[1] = (byte) 0xD2;
                     cmd[2] = 0x00;
                     cmd[3] = (byte) i;
-                    cmd[4] = (byte) 0xFA;
-                    for (int j = 0; j < 250; j++) {
-                        cmd[j + 5] = image_buffer[j + 250 * i];
+                    cmd[4] = (byte) chunkSize;
+                    for (int j = 0; j < chunkSize; j++) {
+                        cmd[j + 5] = image_buffer[j + chunkSize * i];
                     }
-                    response = nfcA.transceive(cmd);
-                    Log.e((i + 1) + " sendData_state:", hexToString(response));
+                    int attempt = 0;
+                    boolean success = false;
+                    while (attempt < maxRetries && !success) {
+                        try {
+                            response = nfcA.transceive(cmd);
+                            Log.e((i + 1) + " sendData_state:", hexToString(response));
+                            success = true;
+                        } catch (Exception e) {
+                            attempt++;
+                            Log.e("NfcHelper", "Retry " + attempt + " for chunk " + i + ": " + e);
+                            if (attempt == maxRetries) throw e;
+                        }
+                    }
                 }
 
                 byte[] refreshCmd = new byte[]{(byte) 0xF0, (byte) 0xD4, 0x05, (byte) 0x80, 0x00};
