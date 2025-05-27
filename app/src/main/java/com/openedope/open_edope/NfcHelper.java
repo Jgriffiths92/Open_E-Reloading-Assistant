@@ -181,6 +181,15 @@ public class NfcHelper {
         }
     }
 
+    public static void processNfcIntentByteBufferAsync(final Intent intent, final int width0, final int height0, final java.nio.ByteBuffer buffer, final String[] epd_init) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                processNfcIntentByteBuffer(intent, width0, height0, buffer, epd_init);
+            }
+        }).start();
+    }
+
     public static byte[] hexStringToBytes(String hexString) {
         int len = hexString.length();
         byte[] data = new byte[len / 2];
