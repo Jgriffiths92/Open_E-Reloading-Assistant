@@ -129,6 +129,11 @@ public class NfcHelper {
                     Log.e("epdinit_state", hexToString(response));
 
                     int datas = width0 * height0 / 8;
+                    if (image_buffer.length != datas) {
+                        Log.e("NfcHelper", "WARNING: Image buffer size (" + image_buffer.length +
+                              ") does not match expected size (" + datas + ") for " +
+                              width0 + "x" + height0 + " display.");
+                    }
                     int chunkSize = 128; // Try 128 or 64 if errors persist
                     int maxRetries = 3;
                     for (int i = 0; i < datas / chunkSize; i++) {
@@ -148,4 +153,49 @@ public class NfcHelper {
                                 response = nfcA.transceive(cmd);
                                 Log.e((i + 1) + " sendData_state:", hexToString(response));
                                 success = true;
-                           
+                            } catch (Exception e) {
+                                attempt++;
+                                Log.e("NfcHelper", "Retry " + attempt + " for chunk " + i + ": " + e);
+                                if (attempt == maxRetries) throw e;
+                            }
+                        }
+                    }
+
+                    // Send refresh command and check response
+                    byte[] refreshCmd = new byte[]{(byte) 0xF0, (byte) 0xD4, 0x05, (byte) 0x80, 0x00};
+                    response = nfcA.transceive(refreshCmd);
+                    Log.e("RefreshData1_state:", hexToString(response));
+                    if (response.length > 0 && response[response.length - 1] == (byte) 0x90) {
+                        Log.e("NfcHelper", "Refresh command success");
+                    } else {
+                        Log.e("NfcHelper", "Refresh command failed");
+                    }
+                } catch (Exception e) {
+                    Log.e("NfcHelper", "NfcA Exception: " + e);
+                } finally {
+                    try {
+                        nfcA.close();
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+    }
+
+    public static byte[] hexStringToBytes(String hexString) {
+        int len = hexString.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(hexString.charAt(i), 16) << 4)
+                                 + Character.digit(hexString.charAt(i+1), 16));
+        }
+        return data;
+    }
+
+    public static String hexToString(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02X ", b));
+        }
+        return sb.toString();
+    }
+}
