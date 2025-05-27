@@ -190,6 +190,17 @@ public class NfcHelper {
         }).start();
     }
 
+    public static void processNfcIntentByteBuffer(Intent intent, int width0, int height0, java.nio.ByteBuffer buffer, String[] epd_init) {
+        byte[] image_buffer;
+        if (buffer.hasArray()) {
+            image_buffer = buffer.array();
+        } else {
+            image_buffer = new byte[buffer.remaining()];
+            buffer.get(image_buffer);
+        }
+        processNfcIntent(intent, width0, height0, image_buffer, epd_init);
+    }
+
     public static byte[] hexStringToBytes(String hexString) {
         int len = hexString.length();
         byte[] data = new byte[len / 2];
