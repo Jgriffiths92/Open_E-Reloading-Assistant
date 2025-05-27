@@ -191,13 +191,8 @@ public class NfcHelper {
     }
 
     public static void processNfcIntentByteBuffer(Intent intent, int width0, int height0, java.nio.ByteBuffer buffer, String[] epd_init) {
-        byte[] image_buffer;
-        if (buffer.hasArray()) {
-            image_buffer = buffer.array();
-        } else {
-            image_buffer = new byte[buffer.remaining()];
-            buffer.get(image_buffer);
-        }
+        byte[] image_buffer = new byte[buffer.remaining()];
+        buffer.get(image_buffer);
         processNfcIntent(intent, width0, height0, image_buffer, epd_init);
     }
 
