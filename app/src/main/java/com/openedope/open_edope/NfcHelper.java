@@ -97,6 +97,15 @@ public class NfcHelper {
         processNfcIntent(intent, width0, height0, image_buffer, epd_init);
     }
 
+    public static void processNfcIntentByteBufferAsync(final Intent intent, final int width0, final int height0, final java.nio.ByteBuffer buffer, final String[] epd_init) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                processNfcIntentByteBuffer(intent, width0, height0, buffer, epd_init);
+            }
+        }).start();
+    }
+
     // Utility: Convert hex string to byte array
     public static byte[] hexStringToBytes(String s) {
         int len = s.length();

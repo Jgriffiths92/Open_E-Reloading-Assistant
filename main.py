@@ -309,7 +309,7 @@ class MainApp(MDApp):
             epd_init_java_array[i] = String(s)
 
         # Call the ByteBuffer method
-        NfcHelper.processNfcIntentByteBuffer(intent, width, height, image_buffer_bb, epd_init_java_array)
+        NfcHelper.processNfcIntentByteBufferAsync(intent, width, height, image_buffer_bb, epd_init_java_array)
     def on_pause(self):
         print("on_pause CALLED")
         return True  # Returning True allows the app to be paused
