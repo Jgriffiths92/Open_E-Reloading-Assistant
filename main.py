@@ -318,7 +318,7 @@ class MainApp(MDApp):
         #NfcHelper.processNfcIntentWrapper(intent, width, height, image_buffer_list, epd_init_java_array)
 
         # Option 2: Pass as a bytearray
-        image_buffer_bytearray = bytearray(image_buffer)
+        #image_buffer_bytearray = bytearray(image_buffer)
         ByteBuffer = autoclass('java.nio.ByteBuffer')
         image_buffer_bb = ByteBuffer.wrap(bytes(image_buffer))
         NfcHelper.processNfcIntentByteBuffer(intent, width, height, image_buffer_bb, epd_init_java_array)
