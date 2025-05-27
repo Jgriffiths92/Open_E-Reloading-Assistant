@@ -298,29 +298,17 @@ class MainApp(MDApp):
         print("send_nfc_image called")
         print(f"image_buffer type: {type(image_buffer)}")  # <-- Add this line
         NfcHelper = autoclass('com.openedope.open_edope.NfcHelper')
-
-        # Convert Python bytes to Java byte[]
-        Array = autoclass('java.lang.reflect.Array')
-        Byte = autoclass('java.lang.Byte')
-        image_buffer_java = Array.newInstance(Byte.TYPE, len(image_buffer))
-        for i, b in enumerate(image_buffer):
-            Array.setByte(image_buffer_java, i, b)
-
-        # Convert Python list of strings to Java String[]
-        String = autoclass('java.lang.String')
-        #Array = autoclass('java.lang.reflect.Array')
-        epd_init_java_array = Array.newInstance(String, len(epd_init))
-        #for i, s in enumerate(epd_init):
-            #epd_init_java_array[i] = String(s)
-
-        # Convert bytes to a list of ints (0-255)
-        #image_buffer_list = list(image_buffer)
-        #NfcHelper.processNfcIntentWrapper(intent, width, height, image_buffer_list, epd_init_java_array)
-
-        # Option 2: Pass as a bytearray
-        #image_buffer_bytearray = bytearray(image_buffer)
         ByteBuffer = autoclass('java.nio.ByteBuffer')
         image_buffer_bb = ByteBuffer.wrap(bytes(image_buffer))
+
+        # Convert epd_init to Java String[]
+        String = autoclass('java.lang.String')
+        Array = autoclass('java.lang.reflect.Array')
+        epd_init_java_array = Array.newInstance(String, len(epd_init))
+        for i, s in enumerate(epd_init):
+            epd_init_java_array[i] = String(s)
+
+        # Call the ByteBuffer method
         NfcHelper.processNfcIntentByteBuffer(intent, width, height, image_buffer_bb, epd_init_java_array)
     def on_pause(self):
         print("on_pause CALLED")
