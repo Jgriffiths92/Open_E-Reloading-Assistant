@@ -38,11 +38,18 @@ public class NfcHelper {
             return;
         }
         Tag tag = (Tag) p;
+        Log.e("NfcHelper", "Tag ID: " + bytesToHex(tag.getId()));
+        String[] techList = tag.getTechList();
+        for (String tech : techList) {
+            Log.e("NfcHelper", "Tag supports: " + tech);
+        }
         NfcA nfcA = NfcA.get(tag);
         if (nfcA != null) {
             try {
+                Log.e("NfcHelper", "Before connect, isConnected: " + nfcA.isConnected());
                 Log.e("NfcHelper", "Attempting to connect to NFC tag...");
                 nfcA.connect();
+                Log.e("NfcHelper", "After connect, isConnected: " + nfcA.isConnected());
                 Log.e("NfcHelper", "NFC tag connected: " + nfcA.toString());
                 Log.e("NfcHelper", "Tag timeout (ms): " + nfcA.getTimeout());
                 byte[] cmd;
@@ -98,6 +105,7 @@ public class NfcHelper {
                 Log.e("NfcHelper", "Is tag connected? " + (nfcA.isConnected() ? "YES" : "NO"));
             } finally {
                 try {
+                    Log.e("NfcHelper", "In finally, isConnected: " + nfcA.isConnected());
                     if (nfcA.isConnected()) {
                         Log.e("NfcHelper", "Closing NFC tag connection...");
                         nfcA.close();
@@ -148,6 +156,15 @@ public class NfcHelper {
 
     // Utility: Convert byte array to hex string
     public static String hexToString(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02X", b));
+        }
+        return sb.toString();
+    }
+
+    // Utility for tag ID logging
+    public static String bytesToHex(byte[] bytes) {
         StringBuilder sb = new StringBuilder();
         for (byte b : bytes) {
             sb.append(String.format("%02X", b));
