@@ -295,12 +295,9 @@ class MainApp(MDApp):
 
         print(f"epd_init[0]: {epd_init[0]}")
         print(f"epd_init[0] length: {len(bytes.fromhex(epd_init[0]))} bytes")
-
-        # Add this before sending epd_init[0]
-        wakeup_cmd = "F0DB020000"
-        NfcHelper = autoclass('com.openedope.open_edope.NfcHelper')
-        wakeup_bytes = bytes.fromhex(wakeup_cmd)
-        NfcHelper.transceive(intent, wakeup_bytes)  # Or however you send a raw command
+        print("epd_init[0] bytes:", list(bytes.fromhex(epd_init[0])))
+        print("First 16 bytes of image_buffer:", list(image_buffer[:16]))
+        print("Image buffer length:", len(image_buffer))
 
         # 5. Pass the intent down!
         self.send_nfc_image(intent, width, height, image_buffer, epd_init)
@@ -308,6 +305,8 @@ class MainApp(MDApp):
     def send_nfc_image(self, intent, width, height, image_buffer, epd_init):
         print("send_nfc_image called")
         print(f"image_buffer type: {type(image_buffer)}")
+        print("First 16 bytes of image_buffer:", list(image_buffer[:16]))
+        print("Image buffer length:", len(image_buffer))
         expected_size = width * height // 8
         if len(image_buffer) != expected_size:
             print(f"WARNING: Image buffer size ({len(image_buffer)}) does not match expected size ({expected_size}) for {width}x{height} display.")
@@ -1771,6 +1770,8 @@ class MainApp(MDApp):
                 if isinstance(child, BoxLayout) and any(isinstance(widget, MDTextField) for widget in child.children):
                     table_container.remove_widget(child)
                     break
+
+
 
         else:
             if len(self.manual_data_rows) > 0:
