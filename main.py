@@ -292,6 +292,15 @@ class MainApp(MDApp):
             print(f"No epd_init found for display: {self.selected_display}")
             return
 
+        # Add these debug prints:
+        print("epd_init[0] raw string:", repr(epd_init[0]))
+        print("epd_init[0] hex length:", len(epd_init[0]))
+        try:
+            test_bytes = bytes.fromhex(epd_init[0])
+            print("epd_init[0] bytes length:", len(test_bytes))
+        except Exception as e:
+            print("Error converting epd_init[0] to bytes:", e)
+
         print(f"epd_init[0]: {epd_init[0]}")
         print(f"epd_init[0] length: {len(bytes.fromhex(epd_init[0]))} bytes")
         print("epd_init[0] bytes:", list(bytes.fromhex(epd_init[0])))
