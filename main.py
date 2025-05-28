@@ -1813,7 +1813,7 @@ class MainApp(MDApp):
                     # Copy a single file
                     with open(sub_src_path, "rb") as src, open(sub_dest_path, "wb") as dest:
                         dest.write(src.read())
-                    print(f"Copied file: {sub_src_path} to {sub_dest_path}")
+                    print(f"Copied file: {sub_src_path} to {dest_path}")
         except Exception as e:
             print(f"Error copying directory locally: {e}")
 
