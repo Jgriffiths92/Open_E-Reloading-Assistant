@@ -90,7 +90,7 @@ public class NfcHelper {
                 }
 
                 // Send refresh command and check response
-                byte[] refreshCmd = hexStringToBytes(epd_init[2]); // or [1] if that's your refresh
+                byte[] refreshCmd = hexStringToBytes(epd_init[1]);
                 response = isoDep.transceive(refreshCmd);
                 Log.e("RefreshData1_state:", hexToString(response));
                 if (response.length >= 2 && response[response.length - 2] == (byte) 0x90 && response[response.length - 1] == (byte) 0x00) {
@@ -162,7 +162,7 @@ public class NfcHelper {
                     }
 
                     // Send refresh command and check response
-                    byte[] refreshCmd = hexStringToBytes(epd_init[2]); // or epd_init[1] if that's your refresh
+                    byte[] refreshCmd = hexStringToBytes(epd_init[1]);
                     response = nfcA.transceive(refreshCmd);
                     Log.e("RefreshData1_state:", hexToString(response));
                     if (response.length >= 2 && response[response.length - 2] == (byte) 0x90 && response[response.length - 1] == (byte) 0x00) {
