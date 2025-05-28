@@ -234,6 +234,8 @@ class MainApp(MDApp):
         ],
     }
 
+    print("EPD_INIT_MAP at definition:", repr(EPD_INIT_MAP["Good Display 3.7-inch"][0]), len(EPD_INIT_MAP["Good Display 3.7-inch"][0]))
+
     def on_permissions_result(self, permissions, grant_results):
         """Handle the result of the permission request."""
         for permission, granted in zip(permissions, grant_results):
