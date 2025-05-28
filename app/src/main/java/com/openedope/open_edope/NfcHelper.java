@@ -213,4 +213,18 @@ public class NfcHelper {
         }
         return sb.toString();
     }
+
+    public static byte[] transceive(Intent intent, byte[] command) {
+        try {
+            Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+            IsoDep isoDep = IsoDep.get(tag);
+            isoDep.connect();
+            byte[] response = isoDep.transceive(command);
+            isoDep.close();
+            return response;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }

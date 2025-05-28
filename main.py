@@ -298,7 +298,6 @@ class MainApp(MDApp):
 
         # Add this before sending epd_init[0]
         wakeup_cmd = "F0DB020000"
-        NfcHelper = autoclass('com.openedope.open_edope.NfcHelper')
         wakeup_bytes = bytes.fromhex(wakeup_cmd)
         NfcHelper.transceive(intent, wakeup_bytes)  # Or however you send a raw command
 
