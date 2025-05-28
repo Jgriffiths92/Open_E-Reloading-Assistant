@@ -234,8 +234,6 @@ class MainApp(MDApp):
         ],
     }
 
-    print("EPD_INIT_MAP at definition:", repr(EPD_INIT_MAP["Good Display 3.7-inch"][0]), len(EPD_INIT_MAP["Good Display 3.7-inch"][0]))
-
     def on_permissions_result(self, permissions, grant_results):
         """Handle the result of the permission request."""
         for permission, granted in zip(permissions, grant_results):
@@ -310,6 +308,7 @@ class MainApp(MDApp):
         print("Image buffer length:", len(image_buffer))
 
         # 5. Pass the intent down!
+        print("epd_init[0] right before Java:", repr(epd_init[0]), len(epd_init[0]))
         self.send_nfc_image(intent, width, height, image_buffer, epd_init)
 
     def send_nfc_image(self, intent, width, height, image_buffer, epd_init):
@@ -2033,6 +2032,11 @@ def pack_image_column_major(img):
                     byte |= (1 << (7 - bit))
             packed.append(byte)
     return bytes(packed)
+
+print("EPD_INIT_MAP[3.7] length:", len(MainApp.EPD_INIT_MAP["Good Display 3.7-inch"][0]))
+for i, c in enumerate(MainApp.EPD_INIT_MAP["Good Display 3.7-inch"][0]):
+    if not c.isalnum():
+        print(f"Non-alphanumeric character at position {i}: {repr(c)}")
 
 if __name__ == "__main__":
     MainApp().run()
