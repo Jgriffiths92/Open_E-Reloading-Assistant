@@ -51,7 +51,7 @@ public class NfcHelper {
                 byte[] response = isoDep.transceive(cmd);
                 Log.e("epdinit_state", hexToString(response));
                 // Check for success (0x90 at end)
-                if (response.length > 0 && response[response.length - 1] == (byte) 0x90) {
+                if (response.length >= 2 && response[response.length - 2] == (byte) 0x90 && response[response.length - 1] == (byte) 0x00) {
                     Log.e("NfcHelper", "Init command success");
                 } else {
                     Log.e("NfcHelper", "Init command failed");
@@ -93,7 +93,7 @@ public class NfcHelper {
                 byte[] refreshCmd = new byte[]{(byte) 0xF0, (byte) 0xD4, 0x05, (byte) 0x80, 0x00};
                 response = isoDep.transceive(refreshCmd);
                 Log.e("RefreshData1_state:", hexToString(response));
-                if (response.length > 0 && response[response.length - 1] == (byte) 0x90) {
+                if (response.length >= 2 && response[response.length - 2] == (byte) 0x90 && response[response.length - 1] == (byte) 0x00) {
                     Log.e("NfcHelper", "Refresh command success");
                 } else {
                     Log.e("NfcHelper", "Refresh command failed");
@@ -165,7 +165,7 @@ public class NfcHelper {
                     byte[] refreshCmd = new byte[]{(byte) 0xF0, (byte) 0xD4, 0x05, (byte) 0x80, 0x00};
                     response = nfcA.transceive(refreshCmd);
                     Log.e("RefreshData1_state:", hexToString(response));
-                    if (response.length > 0 && response[response.length - 1] == (byte) 0x90) {
+                    if (response.length >= 2 && response[response.length - 2] == (byte) 0x90 && response[response.length - 1] == (byte) 0x00) {
                         Log.e("NfcHelper", "Refresh command success");
                     } else {
                         Log.e("NfcHelper", "Refresh command failed");
