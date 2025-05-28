@@ -2007,6 +2007,14 @@ def process_received_text(self, text_data):
     except Exception as e:
         print(f"Error processing text data: {e}")
 
+s = MainApp.EPD_INIT_MAP["Good Display 3.7-inch"][0]
+print("Length:", len(s))
+for i, c in enumerate(s):
+    if not c.isalnum():
+        print(f"Non-alphanumeric at {i}: {repr(c)}")
+for i in range(0, len(s), 40):
+    print(f"{i:03d}: {s[i:i+40]}")
+
 def safe_join(base, *paths):
     # Join and normalize the path
     final_path = os.path.abspath(os.path.join(base, *paths))
