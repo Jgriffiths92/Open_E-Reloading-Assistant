@@ -276,9 +276,11 @@ class MainApp(MDApp):
             print("Failed to create bitmap.")
             return
 
-        # 2. Read bitmap as bytes
-        with open(output_path, "rb") as f:
-            image_buffer = f.read()
+        # 2. Read bitmap as 1bpp bytes
+        from PIL import Image
+        with Image.open(output_path) as img:
+            img = img.convert("1")
+            image_buffer = img.tobytes()
 
         # 3. Get bitmap dimensions
         from PIL import Image
@@ -1018,9 +1020,10 @@ class MainApp(MDApp):
             image.thumbnail(self.selected_resolution, Image.LANCZOS)
 
             # Save the resized image as a bitmap
-            image.save(output_path)
+            bw_image = image.convert("1")  # Convert to 1-bit pixels
+            bw_image.save(output_path)
             print(f"Bitmap saved to {output_path}")
-            print(f"Bitmap dimensions: {image.size}")
+            print(f"Bitmap dimensions: {bw_image.size}")
             return output_path
         except Exception as e:
             print(f"Error converting CSV to bitmap: {e}")
