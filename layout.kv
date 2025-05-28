@@ -281,3 +281,4 @@ MDNavigationLayout:
             opacity: 0 if ctx.name == "..\\" or ctx.name == "../" else 1  # Hide the delete button for the back option
             disabled: True if ctx.name == "..\\" or ctx.name == "../" else False  # Disable the delete button for the back option
             on_release: app.delete_file_or_folder(ctx.path) # Call the delete function
+            

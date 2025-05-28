@@ -293,6 +293,9 @@ class MainApp(MDApp):
             print(f"No epd_init found for display: {self.selected_display}")
             return
 
+        print(f"epd_init[0]: {epd_init[0]}")
+        print(f"epd_init[0] length: {len(bytes.fromhex(epd_init[0]))} bytes")
+
         # 5. Pass the intent down!
         self.send_nfc_image(intent, width, height, image_buffer, epd_init)
 
@@ -1781,9 +1784,6 @@ class MainApp(MDApp):
                 if asset_manager.list(sub_source_path):  # Check if it's a directory
                     if not os.path.exists(sub_dest_path):
                         os.makedirs(sub_dest_path)
-                    self.copy_directory_from_assets(asset_manager, sub_source_path, dest_path)
-                else:
-                    # Copy a single file
                     with asset_manager.open(sub_source_path) as asset_file:
                         with open(sub_dest_path, "wb") as output_file:
                             output_file.write(asset_file.read())
