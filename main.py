@@ -296,7 +296,10 @@ class MainApp(MDApp):
 
     def send_nfc_image(self, intent, width, height, image_buffer, epd_init):
         print("send_nfc_image called")
-        print(f"image_buffer type: {type(image_buffer)}")  # <-- Add this line
+        print(f"image_buffer type: {type(image_buffer)}")
+        expected_size = width * height // 8
+        if len(image_buffer) != expected_size:
+            print(f"WARNING: Image buffer size ({len(image_buffer)}) does not match expected size ({expected_size}) for {width}x{height} display.")
         NfcHelper = autoclass('com.openedope.open_edope.NfcHelper')
         ByteBuffer = autoclass('java.nio.ByteBuffer')
         image_buffer_bb = ByteBuffer.wrap(bytes(image_buffer))
