@@ -770,7 +770,7 @@ class MainApp(MDApp):
                 else:
                     text_input.opacity = 0  # Hide the text input
                     text_input.disabled = True  # Disable the text input
-                    self.selected_save_folder = os.path.join(csv_directory, selected_option)  # Set the selected folder
+                    self.selected_save_folder = safe_join(csv_directory, selected_option)
 
             # Create the dropdown menu
             dropdown_menu = MDDropdownMenu(
@@ -839,15 +839,15 @@ class MainApp(MDApp):
                     file_name = f"{self.root.ids.home_screen.ids.stage_name_field.text}.csv"
                     if new_event_name:
                         # Use the new event name to create a folder inside the CSV folder
-                        event_folder_path = os.path.join(csv_folder_path, new_event_name)
+                        event_folder_path = safe_join(csv_folder_path, new_event_name)
                         if not os.path.exists(event_folder_path):
                             os.makedirs(event_folder_path)  # Create the folder if it doesn't exist
-                        file_path = os.path.join(event_folder_path, file_name)
+                        file_path = safe_join(event_folder_path, file_name)
                     elif self.selected_save_folder:
                         # Use the selected folder inside the CSV folder
                         if not os.path.exists(self.selected_save_folder):
                             os.makedirs(self.selected_save_folder)  # Create the folder if it doesn't exist
-                        file_path = os.path.join(self.selected_save_folder, file_name)
+                        file_path = safe_join(self.selected_save_folder, file_name)
                     else:
                         print("No folder selected or created. Cannot save data.")
                         return
@@ -1504,7 +1504,7 @@ class MainApp(MDApp):
                 return None
         else:
             # On non-Android platforms, read from the local assets/CSV folder
-            file_path = os.path.join(os.path.dirname(__file__), "assets", "CSV", file_name)
+            file_path = safe_join(os.path.dirname(__file__), "assets", "CSV", file_name)
             try:
                 with open(file_path, "r", encoding="utf-8") as file:
                     content = file.read()
@@ -1551,8 +1551,8 @@ class MainApp(MDApp):
                     # Copy files locally for non-Android platforms
                     assets_csv_path = os.path.join(os.path.dirname(__file__), "assets", "CSV")
                     for file_name in os.listdir(assets_csv_path):
-                        src_path = os.path.join(assets_csv_path, file_name)
-                        dest_path = os.path.join(csv_internal_path, file_name)
+                        src_path = safe_join(assets_csv_path, file_name)
+                        dest_path = safe_join(csv_internal_path, file_name)
                         if os.path.isdir(src_path):
                             if not os.path.exists(dest_path):
                                 os.makedirs(dest_path)
@@ -1576,6 +1576,11 @@ class MainApp(MDApp):
     def delete_file_or_folder(self, path):
         """Delete the selected file or folder and refresh the file list."""
         try:
+            base_dir = os.path.abspath(self.get_private_storage_path())
+            path = os.path.abspath(path)
+            if not path.startswith(base_dir):
+                print("Unsafe path detected! Aborting delete.")
+                return
             if os.path.exists(path):
                 if os.path.isdir(path):
                     os.rmdir(path)
@@ -1790,8 +1795,8 @@ class MainApp(MDApp):
         """Recursively copy a directory locally."""
         try:
             for file_name in os.listdir(src_path):
-                sub_src_path = os.path.join(src_path, file_name)
-                sub_dest_path = os.path.join(dest_path, file_name)
+                sub_src_path = safe_join(src_path, file_name)
+                sub_dest_path = safe_join(dest_path, file_name)
 
                 if os.path.isdir(sub_src_path):
                     if not os.path.exists(sub_dest_path):
@@ -1873,7 +1878,7 @@ class MainApp(MDApp):
         """Verify the contents of the copied CSV files."""
         dest_dir = os.path.join(os.environ.get("ANDROID_PRIVATE", ""), "CSV")
         for file_name in os.listdir(dest_dir):
-            dest_file = os.path.join(dest_dir, file_name)
+            dest_file = safe_join(dest_dir, file_name)
             print(f"Verifying file: {dest_file}")
             with open(dest_file, "r", encoding="utf-8") as file:
                 print(file.read())
@@ -1984,5 +1989,14 @@ def process_received_text(self, text_data):
         print("Text data processed and displayed successfully.")
     except Exception as e:
         print(f"Error processing text data: {e}")
+
+def safe_join(base, *paths):
+    # Join and normalize the path
+    final_path = os.path.abspath(os.path.join(base, *paths))
+    # Ensure the final path is within the base directory
+    if not final_path.startswith(os.path.abspath(base)):
+        raise ValueError("Unsafe path detected!")
+    return final_path
+
 if __name__ == "__main__":
     MainApp().run()
