@@ -280,7 +280,7 @@ class MainApp(MDApp):
         from PIL import Image
         with Image.open(output_path) as img:
             img = img.convert("1")
-            image_buffer = img.tobytes()
+            image_buffer = pack_image_column_major(img)
 
         # 3. Get bitmap dimensions
         from PIL import Image
@@ -295,6 +295,12 @@ class MainApp(MDApp):
 
         print(f"epd_init[0]: {epd_init[0]}")
         print(f"epd_init[0] length: {len(bytes.fromhex(epd_init[0]))} bytes")
+
+        # Add this before sending epd_init[0]
+        wakeup_cmd = "F0DB020000"
+        NfcHelper = autoclass('com.openedope.open_edope.NfcHelper')
+        wakeup_bytes = bytes.fromhex(wakeup_cmd)
+        NfcHelper.transceive(intent, wakeup_bytes)  # Or however you send a raw command
 
         # 5. Pass the intent down!
         self.send_nfc_image(intent, width, height, image_buffer, epd_init)
@@ -1765,6 +1771,7 @@ class MainApp(MDApp):
                 if isinstance(child, BoxLayout) and any(isinstance(widget, MDTextField) for widget in child.children):
                     table_container.remove_widget(child)
                     break
+
         else:
             if len(self.manual_data_rows) > 0:
                 # Clear the text fields in the last row
@@ -1997,6 +2004,24 @@ def safe_join(base, *paths):
     if not final_path.startswith(os.path.abspath(base)):
         raise ValueError("Unsafe path detected!")
     return final_path
+
+def pack_image_column_major(img):
+    """Convert a 1bpp PIL image to column-major, 8-pixels-per-byte format."""
+    width, height = img.size
+    pixels = img.load()
+    packed = bytearray()
+    for x in range(width-1, -1, -1):  # right-to-left to match demo
+        for y_block in range(0, height, 8):
+            byte = 0
+            for bit in range(8):
+                y = y_block + bit
+                if y >= height:
+                    continue
+                # In '1' mode, 0=black, 255=white
+                if pixels[x, y] == 0:
+                    byte |= (1 << (7 - bit))
+            packed.append(byte)
+    return bytes(packed)
 
 if __name__ == "__main__":
     MainApp().run()

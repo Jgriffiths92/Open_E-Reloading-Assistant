@@ -62,7 +62,7 @@ public class NfcHelper {
                 Log.e("epdinit_state", hexToString(response));
 
                 int datas = width0 * height0 / 8;
-                int chunkSize = 128; // Try 128 or 64 if errors persist
+                int chunkSize = 250; // Increased chunk size to 250
                 int maxRetries = 3;
                 for (int i = 0; i < datas / chunkSize; i++) {
                     cmd = new byte[5 + chunkSize];
@@ -134,7 +134,7 @@ public class NfcHelper {
                               ") does not match expected size (" + datas + ") for " +
                               width0 + "x" + height0 + " display.");
                     }
-                    int chunkSize = 128; // Try 128 or 64 if errors persist
+                    int chunkSize = 250; // Increased chunk size to 250
                     int maxRetries = 3;
                     for (int i = 0; i < datas / chunkSize; i++) {
                         cmd = new byte[5 + chunkSize];
