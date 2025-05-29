@@ -265,7 +265,25 @@ class MainApp(MDApp):
         self.detected_tag = None  # Initialize the detected_tag attribute
 
     dialog = None  # Store the dialog instance
-
+    def pack_image_column_major(img):
+        """
+        Convert a PIL image to a column-major 1bpp byte buffer.
+        Assumes img is already in mode "1" and the correct size.
+        """
+        width, height = img.size
+        pixels = img.load()
+        buffer = bytearray()
+        for x in range(width):
+            for y_block in range(0, height, 8):
+                byte = 0
+                for bit in range(8):
+                    y = y_block + bit
+                    if y < height:
+                        # In "1" mode, 0 is black, 255 is white
+                        if pixels[x, y] == 0:
+                            byte |= (1 << bit)
+                buffer.append(byte)
+        return buffer
     def send_csv_bitmap_via_nfc(self, intent):
         # 1. Convert CSV to bitmap
         output_path = self.csv_to_bitmap(self.current_data)
