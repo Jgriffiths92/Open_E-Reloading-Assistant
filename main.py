@@ -277,6 +277,9 @@ class MainApp(MDApp):
         from PIL import Image
         with Image.open(output_path) as img:
             img = img.convert("1")
+            # Rotate the image if needed (90 degrees counterclockwise)
+            img = img.rotate(90, expand=True)
+            width, height = img.size  # These are now the rotated dimensions!
             image_buffer = pack_image_column_major(img)
 
         # 3. Get bitmap dimensions
@@ -319,7 +322,7 @@ class MainApp(MDApp):
             print(f"WARNING: Image buffer size ({len(image_buffer)}) does not match expected size ({expected_size}) for {width}x{height} display.")
         NfcHelper = autoclass('com.openedope.open_edope.NfcHelper')
         ByteBuffer = autoclass('java.nio.ByteBuffer')
-        image_buffer_bb = ByteBuffer.wrap(bytes(image_buffer))
+        image_buffer = ByteBuffer.wrap(bytes(image_buffer))
 
         # Convert epd_init to Java String[]
         String = autoclass('java.lang.String')
@@ -329,7 +332,7 @@ class MainApp(MDApp):
             epd_init_java_array[i] = String(s)
 
         # Call the ByteBuffer method
-        NfcHelper.processNfcIntentByteBufferAsync(intent, width, height, image_buffer_bb, epd_init_java_array)
+        NfcHelper.processNfcIntent(intent, width, height, image_buffer, epd_init)
     def on_pause(self):
         print("on_pause CALLED")
         return True  # Returning True allows the app to be paused
@@ -2012,32 +2015,6 @@ for i, c in enumerate(s):
         print(f"Non-alphanumeric at {i}: {repr(c)}")
 for i in range(0, len(s), 40):
     print(f"{i:03d}: {s[i:i+40]}")
-
-def safe_join(base, *paths):
-    # Join and normalize the path
-    final_path = os.path.abspath(os.path.join(base, *paths))
-    # Ensure the final path is within the base directory
-    if not final_path.startswith(os.path.abspath(base)):
-        raise ValueError("Unsafe path detected!")
-    return final_path
-
-def pack_image_column_major(img):
-    """Convert a 1bpp PIL image to column-major, 8-pixels-per-byte format."""
-    width, height = img.size
-    pixels = img.load()
-    packed = bytearray()
-    for x in range(width-1, -1, -1):  # right-to-left to match demo
-        for y_block in range(0, height, 8):
-            byte = 0
-            for bit in range(8):
-                y = y_block + bit
-                if y >= height:
-                    continue
-                # In '1' mode, 0=black, 255=white
-                if pixels[x, y] == 0:
-                    byte |= (1 << (7 - bit))
-            packed.append(byte)
-    return bytes(packed)
 
 print("EPD_INIT_MAP[3.7] length:", len(MainApp.EPD_INIT_MAP["Good Display 3.7-inch"][0]))
 for i, c in enumerate(MainApp.EPD_INIT_MAP["Good Display 3.7-inch"][0]):
