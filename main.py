@@ -298,7 +298,7 @@ class MainApp(MDApp):
             # Rotate the image if needed (90 degrees counterclockwise)
             img = img.rotate(90, expand=True)
             width, height = img.size  # These are now the rotated dimensions!
-            image_buffer = pack_image_column_major(img)
+            image_buffer = self.pack_image_column_major(img)
 
         # 3. Get bitmap dimensions
         from PIL import Image
