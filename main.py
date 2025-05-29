@@ -276,7 +276,7 @@ class MainApp(MDApp):
         # 2. Read bitmap as 1bpp bytes
         from PIL import Image
         with Image.open(output_path) as img:
-            img = img.convert("1")
+            img = img.convert("1", dither=Image.FLOYDSTEINBERG)
             # Rotate the image if needed (90 degrees counterclockwise)
             img = img.rotate(90, expand=True)
             width, height = img.size  # These are now the rotated dimensions!
@@ -840,7 +840,17 @@ class MainApp(MDApp):
             )
 
         self.dialog.open()
-
+    def on_nfc_button_press(self):
+        """Generate the bitmap and (optionally) send it via NFC when the NFC button is pressed."""
+        print("NFC button pressed.")
+        # Generate the bitmap from the current CSV data
+        output_path = self.csv_to_bitmap(self.current_data)
+        if output_path:
+            print(f"Bitmap generated at: {output_path}")
+            # Optionally, send via NFC if you want to trigger the full NFC flow:
+            # self.send_csv_bitmap_via_nfc(current_intent)
+        else:
+            print("Failed to generate bitmap.")
     def save_data(self, new_event_name=None):
         """Save the current data to a CSV file in the private storage directory, creating it if it doesn't exist."""
         if hasattr(self, "current_data") and self.current_data:
@@ -1780,8 +1790,6 @@ class MainApp(MDApp):
                 if isinstance(child, BoxLayout) and any(isinstance(widget, MDTextField) for widget in child.children):
                     table_container.remove_widget(child)
                     break
-
-
 
         else:
             if len(self.manual_data_rows) > 0:
