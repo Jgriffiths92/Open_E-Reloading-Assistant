@@ -960,7 +960,7 @@ class MainApp(MDApp):
                 output_path = os.path.join(bitmap_directory, "output.bmp")
 
             # Default resolution if no display is selected
-            display_width, display_height = 280, 416
+            display_width, display_height = 240, 416
 
             # Adjust for orientation based on final resolution
             if self.selected_orientation == "Landscape":
