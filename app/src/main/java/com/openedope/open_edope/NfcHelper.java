@@ -89,8 +89,27 @@ public class NfcHelper {
                     }
                 }
 
+                // Java, after the main chunk loop
+                int tail = datas % chunkSize;
+                if (tail != 0) {
+                    cmd = new byte[5 + chunkSize];
+                    cmd[0] = (byte) 0xF0;
+                    cmd[1] = (byte) 0xD2;
+                    cmd[2] = 0x00;
+                    cmd[3] = (byte) (datas / chunkSize);
+                    cmd[4] = (byte) chunkSize;
+                    for (int j = 0; j < chunkSize; j++) {
+                        if (j < tail) {
+                            cmd[j + 5] = image_buffer[j + chunkSize * (datas / chunkSize)];
+                        } else {
+                            cmd[j + 5] = 0; // pad with zeros
+                        }
+                    }
+                    response = isoDep.transceive(cmd);
+                }
+
                 // Send refresh command and check response
-                byte[] refreshCmd = hexStringToBytes(epd_init[1]);
+                byte[] refreshCmd = new byte[] {(byte)0xF0, (byte)0xD4, (byte)0x05, (byte)0x80, (byte)0x00};
                 response = isoDep.transceive(refreshCmd);
                 Log.e("RefreshData1_state:", hexToString(response));
                 if (response.length >= 2 && response[response.length - 2] == (byte) 0x90 && response[response.length - 1] == (byte) 0x00) {
@@ -159,6 +178,25 @@ public class NfcHelper {
                                 if (attempt == maxRetries) throw e;
                             }
                         }
+                    }
+
+                    // Java, after the main chunk loop
+                    int tail = datas % chunkSize;
+                    if (tail != 0) {
+                        cmd = new byte[5 + chunkSize];
+                        cmd[0] = (byte) 0xF0;
+                        cmd[1] = (byte) 0xD2;
+                        cmd[2] = 0x00;
+                        cmd[3] = (byte) (datas / chunkSize);
+                        cmd[4] = (byte) chunkSize;
+                        for (int j = 0; j < chunkSize; j++) {
+                            if (j < tail) {
+                                cmd[j + 5] = image_buffer[j + chunkSize * (datas / chunkSize)];
+                            } else {
+                                cmd[j + 5] = 0; // pad with zeros
+                            }
+                        }
+                        response = nfcA.transceive(cmd);
                     }
 
                     // Send refresh command and check response

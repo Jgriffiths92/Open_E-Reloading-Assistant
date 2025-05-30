@@ -277,6 +277,7 @@ class MainApp(MDApp):
         from PIL import Image
         with Image.open(output_path) as img:
             img = img.convert("1", dither=Image.FLOYDSTEINBERG)
+            img = img.rotate(-90, expand=True)
             image_buffer = pack_image_column_major(img)
 
         # 3. Get bitmap dimensions
