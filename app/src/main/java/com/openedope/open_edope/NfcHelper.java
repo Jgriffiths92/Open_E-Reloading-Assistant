@@ -176,7 +176,7 @@ public class NfcHelper {
 
                     // Send DIY command before init
                     byte[] diyCmd = hexStringToBytes("F0DB020000");
-                    byte[] response = nfcA.transceive(diyCmd);
+                    response = nfcA.transceive(diyCmd);
                     Log.e("diy_state", hexToString(response));
 
                     // Now send the main init command as before
