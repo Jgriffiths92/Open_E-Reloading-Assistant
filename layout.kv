@@ -169,7 +169,6 @@ MDNavigationLayout:
         FileChooserListView:
             id: filechooser
             rootpath: app.ensure_csv_directory()  # Dynamically set the root directory
-            filters: []  # Optional: Only show CSV files
             on_selection: app.on_file_selected(self.selection)
             size_hint_y: 0.8
             pos_hint: {"center_x": 0.5, "center_y": 0.5}
