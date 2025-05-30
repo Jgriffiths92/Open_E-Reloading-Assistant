@@ -46,37 +46,26 @@ public class NfcHelper {
                 Log.e("NfcHelper", "IsoDep connected: " + isoDep.isConnected());
                 isoDep.setTimeout(60000);
 
-                // Split header and payload
-                String initHex = epd_init[0];
-                String headerHex = initHex.substring(0, 10);      // first 10 hex chars (5 bytes)
-                String payloadHex = initHex.substring(10);        // rest of the string
-
-                byte[] headerCmd = hexStringToBytes(headerHex);
-                byte[] payloadCmd = hexStringToBytes(payloadHex);
-
-                // Send header
-                byte[] response = isoDep.transceive(headerCmd);
-                Log.e("epdinit_header", hexToString(response));
-
-                // Send payload
-                response = isoDep.transceive(payloadCmd);
-                Log.e("epdinit_payload", hexToString(response));
-
-                // Check for success (0x90 0x00 at end)
+                // Send initialization command
+                byte[] cmd = hexStringToBytes(epd_init[0]);
+                byte[] response = isoDep.transceive(cmd);
+                Log.e("epdinit_state", hexToString(response));
+                // Check for success (0x90 at end)
                 if (response.length >= 2 && response[response.length - 2] == (byte) 0x90 && response[response.length - 1] == (byte) 0x00) {
                     Log.e("NfcHelper", "Init command success");
                 } else {
                     Log.e("NfcHelper", "Init command failed");
                 }
 
-                response = isoDep.transceive(hexStringToBytes(epd_init[1]));
+                cmd = hexStringToBytes(epd_init[1]);
+                response = isoDep.transceive(cmd);
                 Log.e("epdinit_state", hexToString(response));
 
                 int datas = width0 * height0 / 8;
                 int chunkSize = 250; // Increased chunk size to 250
                 int maxRetries = 3;
                 for (int i = 0; i < datas / chunkSize; i++) {
-                    byte[] cmd = new byte[5 + chunkSize];
+                    cmd = new byte[5 + chunkSize];
                     cmd[0] = (byte) 0xF0;
                     cmd[1] = (byte) 0xD2;
                     cmd[2] = 0x00;
@@ -131,28 +120,9 @@ public class NfcHelper {
                     byte[] response;
                     nfcA.setTimeout(60000);
 
-                    // Split header and payload
-                    String initHex = epd_init[0];
-                    String headerHex = initHex.substring(0, 10);      // first 10 hex chars (5 bytes)
-                    String payloadHex = initHex.substring(10);        // rest of the string
-
-                    byte[] headerCmd = hexStringToBytes(headerHex);
-                    byte[] payloadCmd = hexStringToBytes(payloadHex);
-
-                    // Send header
-                    response = nfcA.transceive(headerCmd);
-                    Log.e("epdinit_header", hexToString(response));
-
-                    // Send payload
-                    response = nfcA.transceive(payloadCmd);
-                    Log.e("epdinit_payload", hexToString(response));
-
-                    // Check for success (0x90 0x00 at end)
-                    if (response.length >= 2 && response[response.length - 2] == (byte) 0x90 && response[response.length - 1] == (byte) 0x00) {
-                        Log.e("NfcHelper", "Init command success");
-                    } else {
-                        Log.e("NfcHelper", "Init command failed");
-                    }
+                    cmd = hexStringToBytes(epd_init[0]);
+                    response = nfcA.transceive(cmd);
+                    Log.e("epdinit_state", hexToString(response));
 
                     cmd = hexStringToBytes(epd_init[1]);
                     response = nfcA.transceive(cmd);
