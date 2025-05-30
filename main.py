@@ -24,8 +24,8 @@ from kivy.core.window import Window
 import shutil
 from plyer import notification
 from kivy.clock import Clock
-
-
+from kivy.uix.filechooser import FileChooserListView
+import shutil
 
 # Ensure the soft keyboard pushes the target widget above it
 Window.softinput_mode = "below_target"
@@ -158,37 +158,13 @@ class SavedCardsScreen(Screen):
     def sort_filechooser(self, sort_by="name", reverse=False):
         try:
             filechooser = self.ids.filechooser
+            filechooser.sort_type = sort_by
+            filechooser.sort_order = 'desc' if reverse else 'asc'
+            filechooser.sort_dirs_first = True
+            filechooser._update_files()
+            print(f"Sorted by {sort_by}, reverse={reverse}")
         except Exception as e:
             print(f"Error accessing filechooser: {e}")
-            return
-
-        if sort_by == "name":
-            filechooser.sort_func = lambda items: sorted(
-                items, key=lambda item: item[0].lower(), reverse=reverse
-            )
-        elif sort_by == "date":
-            import os
-            def safe_getmtime(item):
-                try:
-                    return os.path.getmtime(item[1])
-                except Exception:
-                    return 0
-
-            filechooser.sort_func = lambda items: sorted(
-                items, key=safe_getmtime, reverse=reverse
-            )
-        elif sort_by == "type":
-            import os
-            def safe_isdir(item):
-                try:
-                    return not os.path.isdir(item[1])
-                except Exception:
-                    return True
-
-            filechooser.sort_func = lambda items: sorted(
-                items, key=lambda item: (safe_isdir(item), item[0].lower()), reverse=reverse
-            )
-        filechooser._update_files()
 
     def open_sort_menu(self, caller):
         from kivymd.uix.menu import MDDropdownMenu
@@ -211,6 +187,36 @@ class ManageDataScreen(Screen):
 
 class SettingsScreen(Screen):
     pass
+
+
+class CustomFileChooserListView(FileChooserListView):
+    def _sort_files(self, files):
+        # files: list of (filename, fullpath) tuples
+        sort_type = getattr(self, 'sort_type', 'name')
+        reverse = getattr(self, 'sort_order', 'asc') == 'desc'
+
+        def get_date(item):
+            try:
+                return os.path.getmtime(item[1])
+            except Exception:
+                return 0
+
+        def get_type(item):
+            # Folders first, then by extension
+            if os.path.isdir(item[1]):
+                return ('', '')
+            name, ext = os.path.splitext(item[0])
+            return (ext.lower(), item[0].lower())
+
+        if sort_type == 'date':
+            key = get_date
+        elif sort_type == 'type':
+            key = get_type
+        else:
+            key = lambda item: item[0].lower()
+
+        # Sort all items (folders and files) together
+        return sorted(files, key=key, reverse=reverse)
 
 
 class MainApp(MDApp):
@@ -787,7 +793,7 @@ class MainApp(MDApp):
                     self.selected_save_folder = None  # Clear the selected folder
                 else:
                     text_input.opacity = 0  # Hide the text input
-                    text_input.disabled = True  # Disable the text input
+                    text_input.disabled = True  # Disable it
                     self.selected_save_folder = os.path.join(csv_directory, selected_option)
 
             # Create the dropdown menu
@@ -1595,33 +1601,28 @@ class MainApp(MDApp):
         """Delete the selected file or folder and refresh the file list."""
         try:
             base_dir = os.path.abspath(self.get_private_storage_path())
+            assets_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "assets", "CSV"))
             path = os.path.abspath(path)
-            if not path.startswith(base_dir):
-                print("Unsafe path detected! Aborting delete.")
-                return
+            saved_cards_screen = self.root.ids.screen_manager.get_screen("saved_cards")
+            filechooser = saved_cards_screen.ids.filechooser
+
+            # If deleting a folder or a non-csv file, always go to assets/CSV first
+            if not path.lower().endswith(".csv"):
+                csv_root = self.ensure_csv_directory()
+                filechooser.path = csv_root
+
             if os.path.exists(path):
                 if os.path.isdir(path):
-                    os.rmdir(path)
+                    shutil.rmtree(path)  # Recursively delete folder and contents
                     print(f"Deleted folder: {path}")
                 else:
                     os.remove(path)
                     print(f"Deleted file: {path}")
 
-                # Refresh the FileChooserListView
-                saved_cards_screen = self.root.ids.screen_manager.get_screen("saved_cards")
-                filechooser = saved_cards_screen.ids.filechooser
-
-                # Set the filechooser path to the parent directory of the deleted file/folder
-                parent_dir = os.path.dirname(path)
-                filechooser.path = parent_dir
-
                 filechooser._update_files()  # Refresh the file and folder list
                 print("File and folder list refreshed.")
 
-                # Clear the data table after deletion
                 self.clear_table_data()
-
-                # Return to the Saved Cards screen
                 self.root.ids.screen_manager.current = "saved_cards"
             else:
                 print(f"Path does not exist: {path}")
@@ -1759,37 +1760,6 @@ class MainApp(MDApp):
             print("Manual data added:", self.current_data)
         except Exception as e:
             print(f"Error adding manual data: {e}")
-
-    def cancel_manual_data_input(self):
-        """Cancel manual data input and restore the table container."""
-        home_screen = self.root.ids.home_screen
-        table_container = home_screen.ids.table_container
-        table_container.clear_widgets()  # Clear the input fields
-        if hasattr(self, "current_data"):
-            self.display_table(self.current_data)  # Restore the table if data exists
-
-    def delete_last_row(self, table_container):
-        """Delete the bottom-most row of data fields from the table container."""
-        if hasattr(self, "manual_data_rows") and len(self.manual_data_rows) > 1:
-            # Remove the last row from the manual_data_rows list
-            self.manual_data_rows.pop()
-
-            # Remove the last row layout from the table container
-            for child in table_container.children:
-                # Check if the child is a row layout containing text fields
-                if isinstance(child, BoxLayout) and any(isinstance(widget, MDTextField) for widget in child.children):
-                    table_container.remove_widget(child)
-                    break
-
-
-
-        else:
-            if len(self.manual_data_rows) > 0:
-                # Clear the text fields in the last row
-                last_row_fields = self.manual_data_rows[-1]
-                for field in last_row_fields.values():
-                    field.text = ""
-            print("Cannot delete the last row. At least one row must remain.")
 
     def copy_directory_from_assets(self, asset_manager, source_path, dest_path):
         """Recursively copy a directory from the assets folder to the destination."""
