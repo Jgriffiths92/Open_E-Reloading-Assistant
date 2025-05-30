@@ -11,24 +11,27 @@ import android.util.Log;
 
 public class NfcHelper {
 
-    public static String data_DB = "F0DB000069";
-    public static String start = "A00603300190012C";
-    public static String RST = "A4010C" + "A502000A" + "A40108" + "A502000A" + "A4010C" + "A502000A" + "A40108" + "A502000A"
-            + "A4010C" + "A502000A" + "A40108" + "A502000A" + "A4010C" + "A502000A" + "A40103";
-    public static String set_wf = "A102000F";
-    public static String set_power = "A10104" + "A40103";
-    public static String set_resolution = "A105610190012C";
-    public static String set_border = "A1025097";
-    public static String write_BW = "A3021013";
-    public static String write_BWR = "A3021013";
-    public static String update = "A20112" + "A502000A" + "A40103";
-    public static String sleep = "A20102" + "A40103" + "A20207A5";
+    // The following static fields and epd_init array are not used anywhere in this file.
+    // If you do not reference them from other files, you can safely delete them.
 
-    public static String[] epd_init = new String[]{
-            data_DB + start + RST + set_wf + set_resolution + set_border + set_power + write_BWR + update + sleep,
-            data_DB + start + RST + set_wf + set_resolution + set_border + set_power + write_BWR + update + sleep,
-            "F0DA000003F00330"
-    };
+    // public static String data_DB = "F0DB000069";
+    // public static String start = "A00603300190012C";
+    // public static String RST = "A4010C" + "A502000A" + "A40108" + "A502000A" + "A4010C" + "A502000A" + "A40108" + "A502000A"
+    //         + "A4010C" + "A502000A" + "A40108" + "A502000A" + "A4010C" + "A502000A" + "A40103";
+    // public static String set_wf = "A102000F";
+    // public static String set_power = "A10104" + "A40103";
+    // public static String set_resolution = "A105610190012C";
+    // public static String set_border = "A1025097";
+    // public static String write_BW = "A3021013";
+    // public static String write_BWR = "A3021013";
+    // public static String update = "A20112" + "A502000A" + "A40103";
+    // public static String sleep = "A20102" + "A40103" + "A20207A5";
+
+    // public static String[] epd_init = new String[]{
+    //         data_DB + start + RST + set_wf + set_resolution + set_border + set_power + write_BWR + update + sleep,
+    //         data_DB + start + RST + set_wf + set_resolution + set_border + set_power + write_BWR + update + sleep,
+    //         "F0DA000003F00330"
+    // };
 
     public static void processNfcIntent(Intent intent, int width0, int height0, byte[] image_buffer, String[] epd_init) {
         Log.e("NfcHelper", "processNfcIntent CALLED");
@@ -46,9 +49,14 @@ public class NfcHelper {
                 Log.e("NfcHelper", "IsoDep connected: " + isoDep.isConnected());
                 isoDep.setTimeout(60000);
 
-                // Send initialization command
+                // Send DIY command before init
+                byte[] diyCmd = hexStringToBytes("F0DB020000");
+                byte[] response = isoDep.transceive(diyCmd);
+                Log.e("diy_state", hexToString(response));
+
+                // Now send the main init command as before
                 byte[] cmd = hexStringToBytes(epd_init[0]);
-                byte[] response = isoDep.transceive(cmd);
+                response = isoDep.transceive(cmd);
                 Log.e("epdinit_state", hexToString(response));
                 // Check for success (0x90 at end)
                 if (response.length >= 2 && response[response.length - 2] == (byte) 0x90 && response[response.length - 1] == (byte) 0x00) {
@@ -64,15 +72,42 @@ public class NfcHelper {
                 int datas = width0 * height0 / 8;
                 int chunkSize = 250; // Increased chunk size to 250
                 int maxRetries = 3;
+                // Send BW buffer
                 for (int i = 0; i < datas / chunkSize; i++) {
                     cmd = new byte[5 + chunkSize];
                     cmd[0] = (byte) 0xF0;
                     cmd[1] = (byte) 0xD2;
-                    cmd[2] = 0x00;
+                    cmd[2] = 0x00; // BW index
                     cmd[3] = (byte) i;
                     cmd[4] = (byte) chunkSize;
                     for (int j = 0; j < chunkSize; j++) {
                         cmd[j + 5] = image_buffer[j + chunkSize * i];
+                    }
+                    int attempt = 0;
+                    boolean success = false;
+                    while (attempt < maxRetries && !success) {
+                        try {
+                            response = isoDep.transceive(cmd);
+                            Log.e((i + 1) + " sendData_state:", hexToString(response));
+                            success = true;
+                        } catch (Exception e) {
+                            attempt++;
+                            Log.e("NfcHelper", "Retry " + attempt + " for chunk " + i + ": " + e);
+                            if (attempt == maxRetries) throw e;
+                        }
+                    }
+                }
+
+                // Send R buffer (inverted)
+                for (int i = 0; i < datas / chunkSize; i++) {
+                    cmd = new byte[5 + chunkSize];
+                    cmd[0] = (byte) 0xF0;
+                    cmd[1] = (byte) 0xD2;
+                    cmd[2] = 0x01; // R index
+                    cmd[3] = (byte) i;
+                    cmd[4] = (byte) chunkSize;
+                    for (int j = 0; j < chunkSize; j++) {
+                        cmd[j + 5] = (byte) ~image_buffer[j + chunkSize * i];
                     }
                     int attempt = 0;
                     boolean success = false;
@@ -139,7 +174,13 @@ public class NfcHelper {
                     byte[] response;
                     nfcA.setTimeout(60000);
 
-                    cmd = hexStringToBytes(epd_init[0]);
+                    // Send DIY command before init
+                    byte[] diyCmd = hexStringToBytes("F0DB020000");
+                    byte[] response = nfcA.transceive(diyCmd);
+                    Log.e("diy_state", hexToString(response));
+
+                    // Now send the main init command as before
+                    byte[] cmd = hexStringToBytes(epd_init[0]);
                     response = nfcA.transceive(cmd);
                     Log.e("epdinit_state", hexToString(response));
 
@@ -155,15 +196,42 @@ public class NfcHelper {
                     }
                     int chunkSize = 250; // Increased chunk size to 250
                     int maxRetries = 3;
+                    // Send BW buffer
                     for (int i = 0; i < datas / chunkSize; i++) {
                         cmd = new byte[5 + chunkSize];
                         cmd[0] = (byte) 0xF0;
                         cmd[1] = (byte) 0xD2;
-                        cmd[2] = 0x00;
+                        cmd[2] = 0x00; // BW index
                         cmd[3] = (byte) i;
                         cmd[4] = (byte) chunkSize;
                         for (int j = 0; j < chunkSize; j++) {
                             cmd[j + 5] = image_buffer[j + chunkSize * i];
+                        }
+                        int attempt = 0;
+                        boolean success = false;
+                        while (attempt < maxRetries && !success) {
+                            try {
+                                response = nfcA.transceive(cmd);
+                                Log.e((i + 1) + " sendData_state:", hexToString(response));
+                                success = true;
+                            } catch (Exception e) {
+                                attempt++;
+                                Log.e("NfcHelper", "Retry " + attempt + " for chunk " + i + ": " + e);
+                                if (attempt == maxRetries) throw e;
+                            }
+                        }
+                    }
+
+                    // Send R buffer (inverted)
+                    for (int i = 0; i < datas / chunkSize; i++) {
+                        cmd = new byte[5 + chunkSize];
+                        cmd[0] = (byte) 0xF0;
+                        cmd[1] = (byte) 0xD2;
+                        cmd[2] = 0x01; // R index
+                        cmd[3] = (byte) i;
+                        cmd[4] = (byte) chunkSize;
+                        for (int j = 0; j < chunkSize; j++) {
+                            cmd[j + 5] = (byte) ~image_buffer[j + chunkSize * i];
                         }
                         int attempt = 0;
                         boolean success = false;
@@ -200,7 +268,7 @@ public class NfcHelper {
                     }
 
                     // Send refresh command and check response
-                    byte[] refreshCmd = hexStringToBytes(epd_init[1]);
+                    byte[] refreshCmd = new byte[] {(byte)0xF0, (byte)0xD4, (byte)0x05, (byte)0x80, (byte)0x00};
                     response = nfcA.transceive(refreshCmd);
                     Log.e("RefreshData1_state:", hexToString(response));
                     if (response.length >= 2 && response[response.length - 2] == (byte) 0x90 && response[response.length - 1] == (byte) 0x00) {
