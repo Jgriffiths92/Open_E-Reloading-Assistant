@@ -180,7 +180,7 @@ public class NfcHelper {
                     Log.e("diy_state", hexToString(response));
 
                     // Now send the main init command as before
-                    byte[] cmd = hexStringToBytes(epd_init[0]);
+                    cmd = hexStringToBytes(epd_init[0]);
                     response = nfcA.transceive(cmd);
                     Log.e("epdinit_state", hexToString(response));
 
