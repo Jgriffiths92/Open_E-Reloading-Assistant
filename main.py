@@ -217,7 +217,7 @@ class MainApp(MDApp):
     EPD_INIT_MAP = {
         # Good Display 3.7-inch (UC8171, 240x416)
     "Good Display 3.7-inch": [
-        "F0DB00005EA006512000F001A0A4010CA502000AA40108A502000AA4010CA502000AA40108A502000AA4010CA502000AA40108A502000AA4010CA502000AA40108A502000AA40103A102001FA10461F001A0A10104A40103A3021013A20112A502000AA40103A20102A40103A20207A5",
+        "A006512000F001A0A4010CA502000AA40108A502000AA4010CA502000AA40108A502000AA4010CA502000AA40108A502000AA4010CA502000AA40103A102001FA10104A40103A3021013A20112A502000AA40103A20102A40103A20207A5",
         "F0DA000003F05120"
         ],
         # Good Display 4.2-inch (SSD1680, 400x300)
@@ -301,7 +301,9 @@ class MainApp(MDApp):
 
         print(f"epd_init[0]: {epd_init[0]}")
         print(f"epd_init[0] length: {len(bytes.fromhex(epd_init[0]))} bytes")
-        print("epd_init[0] bytes:", list(bytes.fromhex(epd_init[0])))
+        epd_init_bytes = bytes.fromhex(epd_init[0])
+        print("epd_init[0] bytes:", epd_init_bytes)
+        print("epd_init[0] length (bytes):", len(epd_init_bytes))
         print("First 16 bytes of image_buffer:", list(image_buffer[:16]))
         print("Image buffer length:", len(image_buffer))
 
