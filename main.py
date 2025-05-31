@@ -478,7 +478,7 @@ class MainApp(MDApp):
         # Request permissions on Android
         if is_android():
             request_permissions(
-                [Permission.NFC, Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE],
+                [Permission.NFC, Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE, Permission.VIBRATE],
                 self.on_permissions_result
             )
             if self.initialize_nfc():
