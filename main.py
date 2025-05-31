@@ -25,8 +25,7 @@ import shutil
 from plyer import notification
 from kivy.clock import Clock
 from kivy.uix.filechooser import FileChooserListView
-from kivymd.uix.progressbar import MDProgressBar
-
+import shutil
 
 # Ensure the soft keyboard pushes the target widget above it
 Window.softinput_mode = "below_target"
@@ -35,20 +34,11 @@ try:
     from android import mActivity
     from jnius import autoclass, cast
     from android.permissions import request_permissions, Permission
-    from jnius import PythonJavaClass, java_method
 except ImportError:
     mActivity = None  # Handle cases where the app is not running on Android
     autoclass = None  # Handle cases where pyjnius is not available
     request_permissions = None
     Permission = None
-    # Define dummy classes so code runs on non-Android platforms
-    class PythonJavaClass(object):
-        pass
-    def java_method(signature):
-        def decorator(func):
-            return func
-        return decorator
-
 try:
     from jnius import autoclass, cast
     NfcAdapter = autoclass('android.nfc.NfcAdapter')
@@ -229,21 +219,6 @@ class CustomFileChooserListView(FileChooserListView):
         return sorted(files, key=key, reverse=reverse)
 
 
-class NfcProgressCallback(PythonJavaClass):
-    __javainterfaces__ = ['com.openedope.open_edope.PythonCallback']
-    __javacontext__ = 'app'
-
-    @java_method('(F)V')
-    def callback(self, progress):
-        # progress is a float (0.0 to 1.0 or -1.0 for failure)
-        percent = int(progress * 100)
-        app = MDApp.get_running_app()
-        app.update_nfc_progress(percent)
-        # Optionally close dialog when done
-        if percent >= 100:
-            app.close_nfc_progress_dialog()
-
-
 class MainApp(MDApp):
     EPD_INIT_MAP = {
         # Good Display 3.7-inch (UC8171, 240x416)
@@ -262,19 +237,6 @@ class MainApp(MDApp):
             "F0DA000003F00120"
         ],
     }
-    def vibrate_device(self, duration_ms=500):
-        if is_android() and autoclass:
-            try:
-                PythonActivity = autoclass('org.kivy.android.PythonActivity')
-                Context = autoclass('android.content.Context')
-                activity = PythonActivity.mActivity
-                vibrator = activity.getSystemService(Context.VIBRATOR_SERVICE)
-                if vibrator:
-                    vibrator.vibrate(duration_ms)
-                   
-                    print("Vibrator service not available.")
-            except Exception as e:
-                print(f"Error vibrating device: {e}")
 
     def on_permissions_result(self, permissions, grant_results):
         """Handle the result of the permission request."""
@@ -310,52 +272,7 @@ class MainApp(MDApp):
 
     dialog = None  # Store the dialog instance
 
-    def show_nfc_progress_dialog(self):
-        if hasattr(self, "nfc_progress_dialog") and self.nfc_progress_dialog:
-            return  # Already showing
-
-        self.nfc_progress_bar = MDProgressBar(value=0, max=100)
-        self.nfc_progress_label = Label(text="Sending via NFC: 0%", halign="center", size_hint_y=None, height=dp(32))
-
-        content = BoxLayout(orientation="vertical", spacing="10dp", size_hint_y=None, height=dp(80))
-        content.add_widget(self.nfc_progress_label)
-        content.add_widget(self.nfc_progress_bar)
-
-        self.nfc_progress_dialog = MDDialog(
-            title="NFC Progress",
-            type="custom",
-            content_cls=content,
-            auto_dismiss=False,
-        )
-        self.nfc_progress_dialog.open()
-
-    def update_nfc_progress(self, percent):
-        if hasattr(self, "nfc_progress_bar"):
-            if percent < 0:
-                self.nfc_progress_bar.value = 0
-            else:
-                self.nfc_progress_bar.value = percent
-        if hasattr(self, "nfc_progress_label"):
-            if percent < 0:
-                self.nfc_progress_label.text = "Send Failed!"
-                self.vibrate_device(500)  # Vibrate on failure
-                Clock.schedule_once(lambda dt: self.close_nfc_progress_dialog(), 2)
-            elif percent >= 100:
-                self.nfc_progress_label.text = "Send Complete!"
-                self.vibrate_device(500)  # Vibrate on success
-                Clock.schedule_once(lambda dt: self.close_nfc_progress_dialog(), 1)
-            else:
-                self.nfc_progress_label.text = f"Sending via NFC: {int(percent)}%"
-
-    def close_nfc_progress_dialog(self):
-        if hasattr(self, "nfc_progress_dialog") and self.nfc_progress_dialog:
-            self.nfc_progress_dialog.dismiss()
-            self.nfc_progress_dialog = None
-            
     def send_csv_bitmap_via_nfc(self, intent):
-        self.show_nfc_progress_dialog()
-        NfcHelper = autoclass('com.openedope.open_edope.NfcHelper')
-        NfcHelper.setProgressCallback(NfcProgressCallback())
         # 1. Convert CSV to bitmap
         output_path = self.csv_to_bitmap(self.current_data)
         if not output_path:
@@ -478,7 +395,7 @@ class MainApp(MDApp):
         # Request permissions on Android
         if is_android():
             request_permissions(
-                [Permission.NFC, Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE, Permission.VIBRATE],
+                [Permission.NFC, Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE],
                 self.on_permissions_result
             )
             if self.initialize_nfc():
@@ -1391,127 +1308,124 @@ class MainApp(MDApp):
                 print(f"Error enabling NFC foreground dispatch: {e}")
 
     def on_new_intent(self, intent):
-        def handle_intent(dt):
-            print("on_new_intent called")
-            """Handle new intents, including shared data and NFC tags."""
-            if is_android() and autoclass:
-                try:
-                    # Get the action from the intent
-                    action = intent.getAction()
-                    print(f"Intent action: {action}")
+        print("on_new_intent called")
+        """Handle new intents, including shared data and NFC tags."""
+        if is_android() and autoclass:
+            try:
+                # Get the action from the intent
+                action = intent.getAction()
+                print(f"Intent action: {action}")
 
-                    # --- Print all extras for debugging ---
-                    extras = intent.getExtras()
-                    if extras:
-                        print("Intent extras:")
-                        for key in extras.keySet():
-                            value = extras.get(key)
-                            print(f"  {key}: {value}")
-                    else:
-                        print("No extras in intent.")
-                    # --- End debug block ---
+                # --- Print all extras for debugging ---
+                extras = intent.getExtras()
+                if extras:
+                    print("Intent extras:")
+                    for key in extras.keySet():
+                        value = extras.get(key)
+                        print(f"  {key}: {value}")
+                else:
+                    print("No extras in intent.")
+                # --- End debug block ---
 
-                    # --- NEW: Always check for NFC tag extra, even if action is not NFC ---
-                    EXTRA_TAG = autoclass('android.nfc.NfcAdapter').EXTRA_TAG
+                # --- NEW: Always check for NFC tag extra, even if action is not NFC ---
+                EXTRA_TAG = autoclass('android.nfc.NfcAdapter').EXTRA_TAG
+                tag = intent.getParcelableExtra(EXTRA_TAG)
+                if tag:
+                    print("NFC tag detected (regardless of action)!")
+                    tag = cast('android.nfc.Tag', tag)  # Properly cast to Tag
+                    tech_list = tag.getTechList()
+                    print("Tag technologies detected by Android:")
+                    for tech in tech_list:
+                        print(f" - {tech}")
+                    self.send_csv_bitmap_via_nfc(intent)
+                    return  # Optionally return here if you don't want to process further
+
+                # NFC tag detected by action
+                if action in [
+                    "android.nfc.action.TAG_DISCOVERED",
+                    "android.nfc.action.NDEF_DISCOVERED",
+                    "android.nfc.action.TECH_DISCOVERED",
+                ]:
+                    print("NFC tag detected!")
+
+                    # Get the Tag object from the intent
                     tag = intent.getParcelableExtra(EXTRA_TAG)
                     if tag:
-                        print("NFC tag detected (regardless of action)!")
-                        self.vibrate_device(500)  # Vibrate for 500 ms
-                        tag = cast('android.nfc.Tag', tag)  # Properly cast to Tag
+                        # Get the list of supported techs
                         tech_list = tag.getTechList()
                         print("Tag technologies detected by Android:")
                         for tech in tech_list:
                             print(f" - {tech}")
-                        self.send_csv_bitmap_via_nfc(intent)
-                        return  # Optionally return here if you don't want to process further
-
-                    # NFC tag detected by action
-                    if action in [
-                        "android.nfc.action.TAG_DISCOVERED",
-                        "android.nfc.action.NDEF_DISCOVERED",
-                        "android.nfc.action.TECH_DISCOVERED",
-                    ]:
-                        print("NFC tag detected!")
-
-                        # Get the Tag object from the intent
-                        tag = intent.getParcelableExtra(EXTRA_TAG)
-                        if tag:
-                            # Get the list of supported techs
-                            tech_list = tag.getTechList()
-                            print("Tag technologies detected by Android:")
-                            for tech in tech_list:
-                                print(f" - {tech}")
-                        else:
-                            print("No Tag object found in intent.")
-
-                        # NEW: Get the tag ID and UID
-                        if tag:
-                            tag_id = tag.getId()
-                            tag_uid = ''.join('{:02X}'.format (byte) for byte in tag_id)
-                            print(f"Tag UID: {tag_uid}")
-                            # Optionally update a label in your UI
-
-                        self.send_csv_bitmap_via_nfc(intent)
-                        return  # Optionally return here if you don't want to process further
-
-                    # Handle shared data (SEND/VIEW)
-                    if action in ["android.intent.action.SEND", "android.intent.action.VIEW"]:
-                        extras = intent.getExtras()
-                        if extras and extras.containsKey("android.intent.extra.TEXT"):
-                            # Handle shared text
-                            shared_text = extras.getString("android.intent.extra.TEXT")
-                            print(f"Received shared text: {shared_text}")
-                            self.process_received_text(shared_text)
-                        elif extras and extras.containsKey("android.intent.extra.STREAM"):
-                            # Handle shared file
-                            stream_uri = extras.getParcelable("android.intent.extra.STREAM")
-                            print(f"Received stream URI: {stream_uri}")
-
-                            # If the stream_uri is a string path, open it directly
-                            if isinstance(stream_uri, str) and stream_uri.startswith("/"):
-                                print(f"Received file path: {stream_uri}")
-                                self.process_received_csv(stream_uri)
-                            else:
-                                Uri = autoclass('android.net.Uri')
-                                try:
-                                    stream_uri = cast('android.net.Uri', stream_uri)
-                                except Exception:
-                                    stream_uri = Uri.parse(str(stream_uri))
-
-                                content_resolver = mActivity.getContentResolver()
-                                file_path = self.resolve_uri_to_path(content_resolver, stream_uri)
-
-                                if file_path:
-                                    self.process_received_csv(file_path)
-                                else:
-                                    try:
-                                        input_stream = content_resolver.openInputStream(stream_uri)
-                                        if input_stream:
-                                            ByteArrayOutputStream = autoclass('java.io.ByteArrayOutputStream')
-                                            buffer = ByteArrayOutputStream()
-                                            byte = input_stream.read()
-                                            while byte != -1:
-                                                buffer.write(byte)
-                                                byte = input_stream.read()
-                                            input_stream.close()
-                                            content_bytes = bytes(buffer.toByteArray())
-                                            try:
-                                                content = content_bytes.decode("utf-8")
-                                            except UnicodeDecodeError:
-                                                print("UTF-8 decode failed, trying latin-1...")
-                                                content = content_bytes.decode("latin-1")
-                                            print(f"File contents (from InputStream):\n{content}")
-                                            self.process_received_csv(content)
-                                        else:
-                                            print("InputStream is None. Cannot read the file.")
-                                    except Exception as e:
-                                        print(f"Error reading from InputStream: {e}")
                     else:
-                        print("No valid data found in the intent.")
-                except Exception as e:
-                    print(f"Error handling new intent: {e}")
-        Clock.schedule_once(handle_intent, 0)
-        
+                        print("No Tag object found in intent.")
+
+                    # NEW: Get the tag ID and UID
+                    if tag:
+                        tag_id = tag.getId()
+                        tag_uid = ''.join('{:02X}'.format (byte) for byte in tag_id)
+                        print(f"Tag UID: {tag_uid}")
+                        # Optionally update a label in your UI
+
+                    self.send_csv_bitmap_via_nfc(intent)
+                    return  # Optionally return here if you don't want to process further
+
+                # Handle shared data (SEND/VIEW)
+                if action in ["android.intent.action.SEND", "android.intent.action.VIEW"]:
+                    extras = intent.getExtras()
+                    if extras and extras.containsKey("android.intent.extra.TEXT"):
+                        # Handle shared text
+                        shared_text = extras.getString("android.intent.extra.TEXT")
+                        print(f"Received shared text: {shared_text}")
+                        self.process_received_text(shared_text)
+                    elif extras and extras.containsKey("android.intent.extra.STREAM"):
+                        # Handle shared file
+                        stream_uri = extras.getParcelable("android.intent.extra.STREAM")
+                        print(f"Received stream URI: {stream_uri}")
+
+                        # If the stream_uri is a string path, open it directly
+                        if isinstance(stream_uri, str) and stream_uri.startswith("/"):
+                            print(f"Received file path: {stream_uri}")
+                            self.process_received_csv(stream_uri)
+                        else:
+                            Uri = autoclass('android.net.Uri')
+                            try:
+                                stream_uri = cast('android.net.Uri', stream_uri)
+                            except Exception:
+                                stream_uri = Uri.parse(str(stream_uri))
+
+                            content_resolver = mActivity.getContentResolver()
+                            file_path = self.resolve_uri_to_path(content_resolver, stream_uri)
+
+                            if file_path:
+                                self.process_received_csv(file_path)
+                            else:
+                                try:
+                                    input_stream = content_resolver.openInputStream(stream_uri)
+                                    if input_stream:
+                                        ByteArrayOutputStream = autoclass('java.io.ByteArrayOutputStream')
+                                        buffer = ByteArrayOutputStream()
+                                        byte = input_stream.read()
+                                        while byte != -1:
+                                            buffer.write(byte)
+                                            byte = input_stream.read()
+                                        input_stream.close()
+                                        content_bytes = bytes(buffer.toByteArray())
+                                        try:
+                                            content = content_bytes.decode("utf-8")
+                                        except UnicodeDecodeError:
+                                            print("UTF-8 decode failed, trying latin-1...")
+                                            content = content_bytes.decode("latin-1")
+                                        print(f"File contents (from InputStream):\n{content}")
+                                        self.process_received_csv(content)
+                                    else:
+                                        print("InputStream is None. Cannot read the file.")
+                                except Exception as e:
+                                    print(f"Error reading from InputStream: {e}")
+                else:
+                    print("No valid data found in the intent.")
+            except Exception as e:
+                print(f"Error handling new intent: {e}")
+
     def resolve_uri_to_path(self, content_resolver, uri):
         """Resolve a content URI to a file path."""
         try:
@@ -1761,7 +1675,7 @@ class MainApp(MDApp):
                 md_bg_color=(1, 0, 0, 1),  # Red background
                 on_release=lambda x: self.delete_last_row(main_layout)
             )
-                             )
+        )
 
         # Create a layout for the "CANCEL" and "ADD" buttons
         action_buttons_layout = BoxLayout(orientation="horizontal", spacing="10dp", size_hint=(1, None), height=dp(50))
@@ -1779,8 +1693,6 @@ class MainApp(MDApp):
 
         # Add the main layout to the table container
         table_container.add_widget(main_layout)
-
-
 
     def add_data_row(self, table_container):
         """Add a new row of data fields directly underneath the existing rows."""
