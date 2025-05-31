@@ -16,7 +16,7 @@ from kivy.graphics import Line, Rectangle, Color
 from kivy.clock import Clock
 from collections.abc import Iterable
 from math import ceil
-from kivy.properties import NumericProperty, ListProperty
+from kivy.properties import NumericProperty, ListProperty, ObjectProperty
 
 # This constant enforces the cap argument to be one of the caps accepted by the kivy.graphics.Line class
 _ACCEPTED_BAR_CAPS = {"round", "none", "square"}
@@ -72,167 +72,74 @@ class CircularProgressBar(Widget):
         2. set_norm_value - alternative name for set_normalised_progress
     """
 
-    max = NumericProperty(100)
-    value = NumericProperty(0)
-    thickness = NumericProperty(10)
-    color = ListProperty([1, 0, 0, 1])
-    background_color = ListProperty([0.26, 0.26, 0.26, 1])
+    max = NumericProperty(_DEFAULT_MAX_PROGRESS)
+    min = NumericProperty(_DEFAULT_MIN_PROGRESS)
+    value = NumericProperty(_DEFAULT_MIN_PROGRESS)
+    thickness = NumericProperty(_DEFAULT_THICKNESS)
+    color = ListProperty(list(_DEFAULT_PROGRESS_COLOUR))
+    background_color = ListProperty(list(_DEFAULT_BACKGROUND_COLOUR))
+    widget_size = NumericProperty(_DEFAULT_WIDGET_SIZE)
+    label = ObjectProperty(_DEFAULT_TEXT_LABEL)
+
+    cap_style = ObjectProperty(_DEFAULT_CAP_STYLE)
+    cap_precision = NumericProperty(_DEFAULT_PRECISION)
 
     def __init__(self, **kwargs):
-        super(CircularProgressBar, self).__init__(**kwargs)
-
-        # Initialise the values modifiable via the class properties
-        self._thickness = _DEFAULT_THICKNESS
-        self._cap_style = _DEFAULT_CAP_STYLE
-        self._cap_precision = _DEFAULT_PRECISION
-        self._progress_colour = _DEFAULT_PROGRESS_COLOUR
-        self._background_colour = _DEFAULT_BACKGROUND_COLOUR
-        self._max_progress = _DEFAULT_MAX_PROGRESS
-        self._min_progress = _DEFAULT_MIN_PROGRESS
-        self._widget_size = _DEFAULT_WIDGET_SIZE
-        self._text_label = _DEFAULT_TEXT_LABEL
-
-        # Initialise the progress value to the minimum - gets overridden post init anyway
-        self._value = _DEFAULT_MIN_PROGRESS
-
-        # Store some label-related values to access them later
-        self._default_label_text = _DEFAULT_TEXT_LABEL.text
+        super().__init__(**kwargs)
+        self._default_label_text = self.label.text
         self._label_size = (0, 0)
-
-        # Create some aliases to match the progress bar method names
         self.get_norm_value = self.get_normalised_progress
         self.set_norm_value = self.set_normalised_progress
+        self.bind(
+            value=self._on_value,
+            max=self._on_max,
+            min=self._on_min,
+            thickness=self._on_thickness,
+            widget_size=self._on_widget_size,
+            label=self._on_label,
+        )
+        self._draw()
 
-    @property
-    def thickness(self):
-        return self._thickness
-
-    @thickness.setter
-    def thickness(self, value):
-        if type(value) != int:
-            raise TypeError("Circular bar thickness only accepts an integer value, not {}!".format(type(value)))
-        elif value <= 0:
-            raise ValueError("Circular bar thickness must be a positive integer, not {}!".format(value))
-        else:
-            self._thickness = value
-
-    @property
-    def cap_style(self):
-        return self._cap_style
-
-    @cap_style.setter
-    def cap_style(self, value: str):
-        if type(value) != str:
-            raise TypeError("Bar line cap argument must be a string, not {}!".format(type(value)))
-        value = value.lower().strip()
-        if value not in _ACCEPTED_BAR_CAPS:
-            raise ValueError("Bar line cap must be included in {}, and {} is not!".format(_ACCEPTED_BAR_CAPS, value))
-        else:
-            self._cap_style = value
-
-    @property
-    def cap_precision(self):
-        return self._cap_precision
-
-    @cap_precision.setter
-    def cap_precision(self, value: int):
-        if type(value) != int:
-            raise TypeError("Circular bar cap precision only accepts an integer value, not {}!".format(type(value)))
-        elif value <= 0:
-            raise ValueError("Circular bar cap precision must be a positive integer, not {}!".format(value))
-        else:
-            self._cap_precision = value
-
-    @property
-    def progress_colour(self):
-        return self._progress_colour
-
-    @progress_colour.setter
-    def progress_colour(self, value: Iterable):
-        if not isinstance(value, Iterable):
-            raise TypeError("Bar progress colour must be iterable (e.g. list, tuple), not {}!".format(type(value)))
-        else:
-            self._progress_colour = value
-
-    @property
-    def background_colour(self):
-        return self._background_colour
-
-    @background_colour.setter
-    def background_colour(self, value: Iterable):
-        if not isinstance(value, Iterable):
-            raise TypeError("Bar background colour must be iterable (e.g. list, tuple), not {}!".format(type(value)))
-        else:
-            self._background_colour = value
-
-    @property
-    def max(self):
-        return self._max_progress
-
-    @max.setter
-    def max(self, value: int):
-        if type(value) != int:
-            raise TypeError("Maximum progress only accepts an integer value, not {}!".format(type(value)))
-        elif value <= self._min_progress:
-            raise ValueError("Maximum progress - {} - must be greater than minimum progress ({})!"
-                             .format(value, self._min_progress))
-        else:
-            self._max_progress = value
-
-    @property
-    def min(self):
-        return self._min_progress
-
-    @min.setter
-    def min(self, value: int):
-        if type(value) != int:
-            raise TypeError("Minimum progress only accepts an integer value, not {}!".format(type(value)))
-        elif value > self._max_progress:
-            raise ValueError("Minimum progress - {} - must be smaller than maximum progress ({})!"
-                             .format(value, self._max_progress))
-        else:
-            self._min_progress = value
-            self._value = value
-
-    @property
-    def value(self):
-        return self._value
-
-    @value.setter
-    def value(self, value: int):
-        if type(value) != int:
+    def _on_value(self, instance, value):
+        if not isinstance(value, int):
             raise TypeError("Progress must be an integer value, not {}!".format(type(value)))
-        elif self._min_progress > value or value > self._max_progress:
-            raise ValueError("Progress must be between minimum ({}) and maximum ({}), not {}!"
-                             .format(self._min_progress, self._max_progress, value))
-        elif value != self._value:
-            self._value = value
-            self._draw()
+        if value < self.min or value > self.max:
+            raise ValueError("Progress must be between minimum ({}) and maximum ({}), not {}!".format(self.min, self.max, value))
+        self._draw()
 
-    @property
-    def widget_size(self):
-        return self._widget_size
+    def _on_max(self, instance, value):
+        if not isinstance(value, int):
+            raise TypeError("Maximum progress only accepts an integer value, not {}!".format(type(value)))
+        if value <= self.min:
+            raise ValueError("Maximum progress ({}) must be greater than minimum progress ({})!".format(value, self.min))
+        if self.value > value:
+            self.value = value
+        self._draw()
 
-    @widget_size.setter
-    def widget_size(self, value: int):
-        if type(value) != int:
-            raise TypeError("Size of this widget must be an integer value, not {}!".format(type(value)))
-        elif value <= 0:
-            raise ValueError("Size of this widget must be a positive integer, not {}!".format(value))
-        else:
-            self._widget_size = value
+    def _on_min(self, instance, value):
+        if not isinstance(value, int):
+            raise TypeError("Minimum progress only accepts an integer value, not {}!".format(type(value)))
+        if value >= self.max:
+            raise ValueError("Minimum progress ({}) must be less than maximum progress ({})!".format(value, self.max))
+        if self.value < value:
+            self.value = value
+        self._draw()
 
-    @property
-    def label(self):
-        return self._text_label
+    def _on_thickness(self, instance, value):
+        if not isinstance(value, int) or value <= 0:
+            raise ValueError("Circular bar thickness must be a positive integer, not {}!".format(value))
+        self._draw()
 
-    @label.setter
-    def label(self, value: Label):
+    def _on_widget_size(self, instance, value):
+        if not isinstance(value, int) or value <= 0:
+            raise ValueError("Widget size must be a positive integer, not {}!".format(value))
+        self._draw()
+
+    def _on_label(self, instance, value):
         if not isinstance(value, Label):
-            raise TypeError("Label must a kivy.graphics.Label, not {}!".format(type(value)))
-        else:
-            self._text_label = value
-            self._default_label_text = value.text
+            raise TypeError("Label must be a kivy.core.text.Label, not {}!".format(type(value)))
+        self._default_label_text = value.text
+        self._draw()
 
     @property
     def value_normalized(self):
@@ -256,41 +163,37 @@ class CircularProgressBar(Widget):
         """
         self.set_normalised_progress(value)
 
-    def _refresh_text(self):
-        """
-        Function used to refresh the text of the progress label.
-
-        Additionally updates the variable tracking the label's texture size
-        """
-        self._text_label.text = self._default_label_text.format(str(int(self.get_normalised_progress() * 100)))
-        self._text_label.refresh()
-        self._label_size = self._text_label.texture.size
-
     def get_normalised_progress(self) -> float:
         """
         Function used to normalise the progress using the MIN/MAX normalisation
 
         :return: Current progress normalised to match the percentage constants
         """
-        return _NORMALISED_MIN + (self._value - self._min_progress) * (_NORMALISED_MAX - _NORMALISED_MIN) \
-            / (self._max_progress - self._min_progress)
+        return _NORMALISED_MIN + (self.value - self.min) * (_NORMALISED_MAX - _NORMALISED_MIN) / (self.max - self.min)
 
-    def set_normalised_progress(self, norm_progress: int):
+    def set_normalised_progress(self, norm_progress: float):
         """
         Function used to set the progress value from a normalised value, using MIN/MAX normalisation
 
         :param norm_progress: Normalised value to update the progress with
         """
-        if type(norm_progress) != float and type(norm_progress) != int:
+        if not isinstance(norm_progress, (float, int)):
             raise TypeError("Normalised progress must be a float or an integer, not {}!".format(type(norm_progress)))
-        elif _NORMALISED_MIN > norm_progress or norm_progress > _NORMALISED_MAX:
-            raise ValueError("Normalised progress must be between the corresponding min ({}) and max ({}), {} is not!"
-                             .format(_NORMALISED_MIN, _NORMALISED_MAX, norm_progress))
-        else:
-            self.value = ceil(self._min_progress + (norm_progress - _NORMALISED_MIN) *
-                              (self._max_progress - self._min_progress) / (_NORMALISED_MAX - _NORMALISED_MIN))
+        if norm_progress < _NORMALISED_MIN or norm_progress > _NORMALISED_MAX:
+            raise ValueError("Normalised progress must be between {} and {}, got {}!".format(_NORMALISED_MIN, _NORMALISED_MAX, norm_progress))
+        self.value = ceil(self.min + (norm_progress - _NORMALISED_MIN) * (self.max - self.min) / (_NORMALISED_MAX - _NORMALISED_MIN))
 
-    def _draw(self):
+    def _refresh_text(self):
+        """
+        Function used to refresh the text of the progress label.
+
+        Additionally updates the variable tracking the label's texture size
+        """
+        self.label.text = self._default_label_text.format(str(int(self.get_normalised_progress() * 100)))
+        self.label.refresh()
+        self._label_size = self.label.texture.size
+
+    def _draw(self, *args):
         """
         Function used to draw the progress bar onto the screen.
 
@@ -305,23 +208,20 @@ class CircularProgressBar(Widget):
         with self.canvas:
             self.canvas.clear()
             self._refresh_text()
-
-            # Draw the background progress line
-            Color(*self.background_colour)
-            Line(circle=(self.pos[0] + self._widget_size / 2, self.pos[1] + self._widget_size / 2,
-                         self._widget_size / 2 - self._thickness), width=self._thickness)
-
-            # Draw the progress line
-            Color(*self.progress_colour)
-            Line(circle=(self.pos[0] + self._widget_size / 2, self.pos[1] + self._widget_size / 2,
-                         self._widget_size / 2 - self._thickness, 0, self.get_normalised_progress() * 360),
-                 width=self._thickness, cap=self._cap_style, cap_precision=self._cap_precision)
-
-            # Center and draw the progress text
+            # Draw background
+            Color(*self.background_color)
+            Line(circle=(self.pos[0] + self.widget_size / 2, self.pos[1] + self.widget_size / 2,
+                         self.widget_size / 2 - self.thickness), width=self.thickness)
+            # Draw progress
+            Color(*self.color)
+            Line(circle=(self.pos[0] + self.widget_size / 2, self.pos[1] + self.widget_size / 2,
+                         self.widget_size / 2 - self.thickness, 0, self.get_normalised_progress() * 360),
+                 width=self.thickness, cap=self.cap_style, cap_precision=self.cap_precision)
+            # Draw label
             Color(1, 1, 1, 1)
-            Rectangle(texture=self._text_label.texture, size=self._label_size,
-                      pos=(self._widget_size / 2 - self._label_size[0] / 2 + self.pos[0],
-                           self._widget_size / 2 - self._label_size[1] / 2 + self.pos[1]))
+            Rectangle(texture=self.label.texture, size=self._label_size,
+                      pos=(self.widget_size / 2 - self._label_size[0] / 2 + self.pos[0],
+                           self.widget_size / 2 - self._label_size[1] / 2 + self.pos[1]))
 
 
 class _Example(App):
