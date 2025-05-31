@@ -90,6 +90,11 @@ public class NfcHelper {
                             response = isoDep.transceive(cmd);
                             Log.e((i + 1) + " sendData_state:", hexToString(response));
                             success = true;
+                            // --- ADD THIS ---
+                            if (progressCallback != null) {
+                                float progress = ((float)(i + 1) / (datas / chunkSize)) * 100f;
+                                progressCallback.callback(progress);
+                            }
                         } catch (Exception e) {
                             attempt++;
                             Log.e("NfcHelper", "Retry " + attempt + " for chunk " + i + ": " + e);
@@ -214,6 +219,11 @@ public class NfcHelper {
                                 response = nfcA.transceive(cmd);
                                 Log.e((i + 1) + " sendData_state:", hexToString(response));
                                 success = true;
+                                // --- ADD THIS ---
+                                if (progressCallback != null) {
+                                    float progress = ((float)(i + 1) / (datas / chunkSize)) * 100f;
+                                    progressCallback.callback(progress);
+                                }
                             } catch (Exception e) {
                                 attempt++;
                                 Log.e("NfcHelper", "Retry " + attempt + " for chunk " + i + ": " + e);
