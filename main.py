@@ -237,7 +237,23 @@ class MainApp(MDApp):
             "F0DA000003F00120"
         ],
     }
-
+    def on_nfc_button_press(self):
+        """
+        Handler for the NFC button press.
+        Generates the bitmap from the current CSV data and saves it.
+        """
+        try:
+            if not hasattr(self, "current_data") or not self.current_data:
+                print("No data loaded to generate bitmap.")
+                return
+    
+            output_path = self.csv_to_bitmap(self.current_data)
+            if output_path:
+                print(f"Bitmap generated and saved to: {output_path}")
+            else:
+                print("Failed to generate bitmap.")
+        except Exception as e:
+            print(f"Error generating bitmap: {e}")
     def on_permissions_result(self, permissions, grant_results):
         """Handle the result of the permission request."""
         for permission, granted in zip(permissions, grant_results):
@@ -608,6 +624,10 @@ class MainApp(MDApp):
 
         # Preprocess the data to handle numeric "Target" values
         data = self.preprocess_data(data)
+    # Check if Range is the first column in the data
+        if data and list(data[0].keys())[0] == "Range":
+            show_range = True
+            print("Range is in column 0, setting show_range = True")
 
         # Define the static column order
         static_headers = ["Target", "Range", "Elv", "Wnd1", "Wnd2", "Lead"]
@@ -1004,8 +1024,10 @@ class MainApp(MDApp):
                     column_widths[header] = max(column_widths[header], len(str(value)))
 
             # Write headers to the image
-            headers = " | ".join(f"{'Tgt' if header == 'Target' else header:<{column_widths[header]}}" for header in
-                                 filtered_data[0].keys())
+            headers = " | ".join(
+                f"{('Tgt' if header == 'Target' else header):<{column_widths[header]}}"
+                for header in filtered_data[0].keys()
+            )
             text_bbox = draw.textbbox((0, 0), headers, font=font)  # Get the bounding box of the headers
             text_width = text_bbox[2] - text_bbox[0]  # Calculate the text width
             x = (display_width - text_width) // 2  # Center the text horizontally
