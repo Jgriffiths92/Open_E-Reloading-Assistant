@@ -29,7 +29,7 @@ import shutil
 from kivymd.uix.dialog import MDDialog
 from circularprogressbar import CircularProgressBar
 from kivy.uix.boxlayout import BoxLayout
-from jnius import PythonJavaClass, java_method
+
 
 # Ensure the soft keyboard pushes the target widget above it
 Window.softinput_mode = "below_target"
@@ -223,21 +223,24 @@ class CustomFileChooserListView(FileChooserListView):
         return sorted(files, key=key, reverse=reverse)
 
 
-class NfcProgressListener(PythonJavaClass):
-    __javainterfaces__ = ['com/openedope/open_edope/NfcProgressListener']
-    __javacontext__ = 'app'
+if is_android():
+    from jnius import PythonJavaClass, java_method
 
-    def __init__(self, app):
-        super().__init__()
-        self.app = app
+    class NfcProgressListener(PythonJavaClass):
+        __javainterfaces__ = ['com/openedope/open_edope/NfcProgressListener']
+        __javacontext__ = 'app'
 
-    @java_method('(I)V')
-    def onProgress(self, percent):
-        # Called from Java with progress (0-100)
-        print(f"NFC Progress: {percent}%")
-        # Schedule on main thread to update UI
-        from kivy.clock import Clock
-        Clock.schedule_once(lambda dt: self.app.update_nfc_progress(percent))
+        def __init__(self, app):
+            super().__init__()
+            self.app = app
+
+        @java_method('(I)V')
+        def onProgress(self, percent):
+            # Called from Java with progress (0-100)
+            print(f"NFC Progress: {percent}%")
+            # Schedule on main thread to update UI
+            from kivy.clock import Clock
+            Clock.schedule_once(lambda dt: self.app.update_nfc_progress(percent))
 
 
 class MainApp(MDApp):
@@ -258,6 +261,19 @@ class MainApp(MDApp):
             "F0DA000003F00120"
         ],
     }
+    
+    def on_nfc_button_press(self, *args):
+        """Handle the NFC button press: generate the bitmap from current data."""
+        print("NFC button pressed!")
+        if not hasattr(self, "current_data") or not self.current_data:
+            print("No data loaded to generate bitmap.")
+            return
+        output_path = self.csv_to_bitmap(self.current_data)
+        if output_path:
+            print(f"Bitmap generated and saved to: {output_path}")
+        else:
+            print("Failed to generate bitmap.")
+    
     def show_nfc_progress_dialog(self, message="Transferring data..."):
         if hasattr(self, "nfc_progress_dialog") and self.nfc_progress_dialog:
             self.nfc_progress_dialog.dismiss()
