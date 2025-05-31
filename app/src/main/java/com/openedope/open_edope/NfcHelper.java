@@ -40,6 +40,16 @@ public class NfcHelper {
     public static void processNfcIntent(Intent intent, int width0, int height0, byte[] image_buffer, String[] epd_init) {
         Log.e("NfcHelper", "processNfcIntent CALLED");
         Log.e("NfcHelper", "image_buffer class in processNfcIntent: " + image_buffer.getClass().getName());
+
+        // Defensive check for epd_init length
+        if (epd_init == null || epd_init.length < 2) {
+            Log.e("NfcHelper", "ERROR: epd_init must have at least 2 elements!");
+            if (progressCallback != null) {
+                progressCallback.callback(-1.0f);
+            }
+            return;
+        }
+
         Parcelable p = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
         if (p == null) {
             Log.e("NfcHelper", "No NFC tag found in intent!");
@@ -318,6 +328,11 @@ public class NfcHelper {
                 }
             }
         }
+
+        // After sending the tail chunk (if tail != 0)
+        if (progressCallback != null) {
+            progressCallback.callback(1.0f);
+        }
     }
 
     public static void processNfcIntentByteBufferAsync(final Intent intent, final int width0, final int height0, final java.nio.ByteBuffer buffer, final String[] epd_init) {
@@ -330,6 +345,7 @@ public class NfcHelper {
     }
 
     public static void processNfcIntentByteBuffer(Intent intent, int width0, int height0, java.nio.ByteBuffer buffer, String[] epd_init) {
+        buffer.position(0); // <-- Add this line
         byte[] image_buffer = new byte[buffer.remaining()];
         buffer.get(image_buffer);
         processNfcIntent(intent, width0, height0, image_buffer, epd_init);
