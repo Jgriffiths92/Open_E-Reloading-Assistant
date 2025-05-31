@@ -275,13 +275,44 @@ public class NfcHelper {
                         }
                     }
 
-                    // Java, after the main chunk loop
+                    // --- Send all full chunks ---
+                    for (int i = 0; i < datas / chunkSize; i++) {
+                        cmd = new byte[5 + chunkSize];
+                        cmd[0] = (byte) 0xF0;
+                        cmd[1] = (byte) 0xD2;
+                        cmd[2] = 0x00; // BW index
+                        cmd[3] = (byte) i;
+                        cmd[4] = (byte) chunkSize;
+                        for (int j = 0; j < chunkSize; j++) {
+                            cmd[j + 5] = image_buffer[j + chunkSize * i];
+                        }
+                        int attempt = 0;
+                        boolean success = false;
+                        while (attempt < maxRetries && !success) {
+                            try {
+                                response = isoDep != null ? isoDep.transceive(cmd) : nfcA.transceive(cmd);
+                                Log.e((i + 1) + " sendData_state:", hexToString(response));
+                                success = true;
+                                // Progress update
+                                if (progressCallback != null) {
+                                    float progress = ((float)(i + 1) / (float)((datas + chunkSize - 1) / chunkSize)) * 100f;
+                                    progressCallback.callback(progress);
+                                }
+                            } catch (Exception e) {
+                                attempt++;
+                                Log.e("NfcHelper", "Retry " + attempt + " for chunk " + i + ": " + e);
+                                if (attempt == maxRetries) throw e;
+                            }
+                        }
+                    }
+
+                    // --- Send tail chunk if needed ---
                     int tail = datas % chunkSize;
                     if (tail != 0) {
                         cmd = new byte[5 + chunkSize];
                         cmd[0] = (byte) 0xF0;
                         cmd[1] = (byte) 0xD2;
-                        cmd[2] = 0x00;
+                        cmd[2] = 0x00; // BW index
                         cmd[3] = (byte) (datas / chunkSize);
                         cmd[4] = (byte) chunkSize;
                         for (int j = 0; j < chunkSize; j++) {
@@ -291,7 +322,28 @@ public class NfcHelper {
                                 cmd[j + 5] = 0; // pad with zeros
                             }
                         }
-                        response = nfcA.transceive(cmd);
+                        int attempt = 0;
+                        boolean success = false;
+                        while (attempt < maxRetries && !success) {
+                            try {
+                                response = isoDep != null ? isoDep.transceive(cmd) : nfcA.transceive(cmd);
+                                Log.e("tail sendData_state:", hexToString(response));
+                                success = true;
+                                // Progress update (100% for tail)
+                                if (progressCallback != null) {
+                                    progressCallback.callback(100f);
+                                }
+                            } catch (Exception e) {
+                                attempt++;
+                                Log.e("NfcHelper", "Retry " + attempt + " for tail chunk: " + e);
+                                if (attempt == maxRetries) throw e;
+                            }
+                        }
+                    } else {
+                        // If no tail, ensure 100% progress at the end
+                        if (progressCallback != null) {
+                            progressCallback.callback(100f);
+                        }
                     }
 
                     // Send refresh command and check response
