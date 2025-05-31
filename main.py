@@ -237,6 +237,20 @@ class MainApp(MDApp):
             "F0DA000003F00120"
         ],
     }
+    def vibrate_device(self, duration_ms=500):
+        if is_android() and autoclass:
+            try:
+                PythonActivity = autoclass('org.kivy.android.PythonActivity')
+                Context = autoclass('android.content.Context')
+                activity = PythonActivity.mActivity
+                vibrator = activity.getSystemService(Context.VIBRATOR_SERVICE)
+                if vibrator:
+                    vibrator.vibrate(duration_ms)
+                    print(f"Vibrated for {duration_ms} ms")
+                else:
+                    print("Vibrator service not available.")
+            except Exception as e:
+                print(f"Error vibrating device: {e}")
 
     def on_permissions_result(self, permissions, grant_results):
         """Handle the result of the permission request."""
@@ -1332,6 +1346,7 @@ class MainApp(MDApp):
                 tag = intent.getParcelableExtra(EXTRA_TAG)
                 if tag:
                     print("NFC tag detected (regardless of action)!")
+                    self.vibrate_device(500)  # Vibrate for 500 ms
                     tag = cast('android.nfc.Tag', tag)  # Properly cast to Tag
                     tech_list = tag.getTechList()
                     print("Tag technologies detected by Android:")
