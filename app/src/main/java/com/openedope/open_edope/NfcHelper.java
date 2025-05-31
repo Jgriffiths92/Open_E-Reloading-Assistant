@@ -372,7 +372,3 @@ public class NfcHelper {
         progressCallback = callback;
     }
 }
-
-public interface PythonCallback {
-    void callback(float progress);
-}
