@@ -27,7 +27,7 @@ from kivy.clock import Clock
 from kivy.uix.filechooser import FileChooserListView
 import shutil
 from kivymd.uix.dialog import MDDialog
-from kivymd.uix.progressbar import MDCircularProgressIndicator
+from circularprogressbar import CircularProgressBar
 from kivy.uix.boxlayout import BoxLayout
 from jnius import PythonJavaClass, java_method
 
@@ -261,9 +261,17 @@ class MainApp(MDApp):
     def show_nfc_progress_dialog(self, message="Transferring data..."):
         if hasattr(self, "nfc_progress_dialog") and self.nfc_progress_dialog:
             self.nfc_progress_dialog.dismiss()
-        box = BoxLayout(orientation="vertical", spacing="12dp", size_hint_y=None, height="120dp")
-        progress = MDCircularProgressIndicator(size_hint=(None, None), size=("48dp", "48dp"), active=True)
-        box.add_widget(progress)
+        box = BoxLayout(orientation="vertical", spacing="12dp", size_hint_y=None, height="180dp")
+        self.nfc_progress_bar = CircularProgressBar(
+            size_hint=(None, None),
+            size=("120dp", "120dp"),
+            max=100,
+            value=0,
+            thickness=15,
+            color=(0.2, 0.6, 1, 1),
+            background_color=(0.9, 0.9, 0.9, 1),
+        )
+        box.add_widget(self.nfc_progress_bar)
         from kivy.uix.label import Label
         box.add_widget(Label(text=message, halign="center"))
         self.nfc_progress_dialog = MDDialog(
@@ -271,9 +279,8 @@ class MainApp(MDApp):
             type="custom",
             content_cls=box,
             auto_dismiss=False,
-    )
+        )
         self.nfc_progress_dialog.open()
-    def on_nfc_button_press(self):
         """
         Handler for the NFC button press.
         Generates the bitmap from the current CSV data and saves it.
@@ -1756,6 +1763,7 @@ class MainApp(MDApp):
                 size_hint=(None, None),
                 size=(dp(120), dp(40)),
                 md_bg_color=(1, 0, 0, 1),  # Red background
+               
                 on_release=lambda x: self.delete_last_row(main_layout)
             )
         )
@@ -1941,11 +1949,8 @@ class MainApp(MDApp):
             self.nfc_progress_dialog = None
         # Call self.hide_nfc_progress_dialog() at the end of your NFC transfer logic
     def update_nfc_progress(self, percent):
-        if hasattr(self, "nfc_progress_dialog") and self.nfc_progress_dialog:
-            # Assume the first child is the BoxLayout, and the first widget is the progress bar
-            box = self.nfc_progress_dialog.content_cls
-            progress_bar = box.children[-1]  # Adjust if needed
-            progress_bar.value = percent
+        if hasattr(self, "nfc_progress_bar") and self.nfc_progress_bar:
+            self.nfc_progress_bar.value = percent
 
     def hide_nfc_button(self):
         """Hide the NFC button if running on Android."""
