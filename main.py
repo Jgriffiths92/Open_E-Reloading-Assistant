@@ -290,6 +290,22 @@ class MainApp(MDApp):
         Clock.schedule_once(lambda dt: self.hide_nfc_progress_dialog(), 2)
         
     def show_nfc_progress_dialog(self, message="Transferring data..."):
+        # Vibrate for 500ms when the dialog opens (Android only)
+        if is_android() and autoclass:
+            try:
+                Context = autoclass('android.content.Context')
+                vibrator = mActivity.getSystemService(Context.VIBRATOR_SERVICE)
+                if vibrator:
+                    # For Android API >= 26, use VibrationEffect
+                    if hasattr(autoclass('android.os.Build$VERSION'), 'SDK_INT') and autoclass('android.os.Build$VERSION').SDK_INT >= 26:
+                        VibrationEffect = autoclass('android.os.VibrationEffect')
+                        effect = VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE)
+                        vibrator.vibrate(effect)
+                    else:
+                        vibrator.vibrate(500)
+            except Exception as e:
+                print(f"Error vibrating device: {e}")
+
         if hasattr(self, "nfc_progress_dialog") and self.nfc_progress_dialog:
             self.nfc_progress_dialog.dismiss()
         from kivy.uix.floatlayout import FloatLayout
@@ -504,10 +520,12 @@ class MainApp(MDApp):
 
         # Request permissions on Android
         if is_android():
-            request_permissions(
-                [Permission.NFC, Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE],
-                self.on_permissions_result
-            )
+            request_permissions([
+                Permission.NFC,
+                Permission.READ_EXTERNAL_STORAGE,
+                Permission.WRITE_EXTERNAL_STORAGE,
+                Permission.VIBRATE,  # <-- Add this line
+            ], self.on_permissions_result)
             if self.initialize_nfc():
                 print("NFC initialized successfully.")
             from android import activity
