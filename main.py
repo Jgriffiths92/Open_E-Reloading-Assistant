@@ -25,7 +25,8 @@ import shutil
 from plyer import notification
 from kivy.clock import Clock
 from kivy.uix.filechooser import FileChooserListView
-import shutil
+from kivymd.uix.progressbar import MDProgressBar
+from jnius import PythonJavaClass, java_method, autoclass
 
 # Ensure the soft keyboard pushes the target widget above it
 Window.softinput_mode = "below_target"
@@ -219,6 +220,22 @@ class CustomFileChooserListView(FileChooserListView):
         return sorted(files, key=key, reverse=reverse)
 
 
+class NfcProgressCallback(PythonJavaClass):
+    __javainterfaces__ = ['org/kivy/android/PythonUtil$PythonCallback']
+    __javacontext__ = 'app'
+
+    @java_method('(F)V')
+    def callback(self, progress):
+        # progress is a float from 0.0 to 1.0
+        percent = int(progress * 100)
+        app = MDApp.get_running_app()
+        # Update the progress dialog
+        app.update_nfc_progress(percent)
+        # Optionally close dialog when done
+        if percent >= 100:
+            app.close_nfc_progress_dialog()
+
+
 class MainApp(MDApp):
     EPD_INIT_MAP = {
         # Good Display 3.7-inch (UC8171, 240x416)
@@ -246,8 +263,7 @@ class MainApp(MDApp):
                 vibrator = activity.getSystemService(Context.VIBRATOR_SERVICE)
                 if vibrator:
                     vibrator.vibrate(duration_ms)
-                    print(f"Vibrated for {duration_ms} ms")
-                else:
+                   
                     print("Vibrator service not available.")
             except Exception as e:
                 print(f"Error vibrating device: {e}")
@@ -286,7 +302,40 @@ class MainApp(MDApp):
 
     dialog = None  # Store the dialog instance
 
+    def show_nfc_progress_dialog(self):
+        if hasattr(self, "nfc_progress_dialog") and self.nfc_progress_dialog:
+            return  # Already showing
+
+        self.nfc_progress_bar = MDProgressBar(value=0, max=100)
+        self.nfc_progress_label = Label(text="Sending via NFC: 0%", halign="center", size_hint_y=None, height=dp(32))
+
+        content = BoxLayout(orientation="vertical", spacing="10dp", size_hint_y=None, height=dp(80))
+        content.add_widget(self.nfc_progress_label)
+        content.add_widget(self.nfc_progress_bar)
+
+        self.nfc_progress_dialog = MDDialog(
+            title="NFC Progress",
+            type="custom",
+            content_cls=content,
+            auto_dismiss=False,
+        )
+        self.nfc_progress_dialog.open()
+
+    def update_nfc_progress(self, percent):
+        if hasattr(self, "nfc_progress_bar"):
+            self.nfc_progress_bar.value = percent
+        if hasattr(self, "nfc_progress_label"):
+            self.nfc_progress_label.text = f"Sending via NFC: {int(percent)}%"
+
+    def close_nfc_progress_dialog(self):
+        if hasattr(self, "nfc_progress_dialog") and self.nfc_progress_dialog:
+            self.nfc_progress_dialog.dismiss()
+            self.nfc_progress_dialog = None
+            
     def send_csv_bitmap_via_nfc(self, intent):
+        self.show_nfc_progress_dialog()
+        NfcHelper = autoclass('com.openedope.open_edope.NfcHelper')
+        NfcHelper.setProgressCallback(NfcProgressCallback())
         # 1. Convert CSV to bitmap
         output_path = self.csv_to_bitmap(self.current_data)
         if not output_path:
@@ -1708,6 +1757,8 @@ class MainApp(MDApp):
 
         # Add the main layout to the table container
         table_container.add_widget(main_layout)
+
+
 
     def add_data_row(self, table_container):
         """Add a new row of data fields directly underneath the existing rows."""

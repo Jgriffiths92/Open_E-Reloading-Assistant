@@ -8,6 +8,8 @@ import android.nfc.tech.IsoDep;
 import android.nfc.tech.NfcA;
 import android.os.Parcelable;
 import android.util.Log;
+import org.kivy.android.PythonUtil;
+import org.kivy.android.PythonActivity;
 
 public class NfcHelper {
 
@@ -32,6 +34,9 @@ public class NfcHelper {
     //         data_DB + start + RST + set_wf + set_resolution + set_border + set_power + write_BWR + update + sleep,
     //         "F0DA000003F00330"
     // };
+
+    // Add a static field for the callback
+    private static org.kivy.android.PythonUtil.PythonCallback progressCallback = null;
 
     public static void processNfcIntent(Intent intent, int width0, int height0, byte[] image_buffer, String[] epd_init) {
         Log.e("NfcHelper", "processNfcIntent CALLED");
@@ -72,8 +77,9 @@ public class NfcHelper {
                 int datas = width0 * height0 / 8;
                 int chunkSize = 250; // Increased chunk size to 250
                 int maxRetries = 3;
+                int totalChunks = datas / chunkSize;
                 // Send BW buffer
-                for (int i = 0; i < datas / chunkSize; i++) {
+                for (int i = 0; i < totalChunks; i++) {
                     cmd = new byte[5 + chunkSize];
                     cmd[0] = (byte) 0xF0;
                     cmd[1] = (byte) 0xD2;
@@ -96,10 +102,16 @@ public class NfcHelper {
                             if (attempt == maxRetries) throw e;
                         }
                     }
+
+                    // Notify progress to Python
+                    if (progressCallback != null) {
+                        float progress = (float) (i + 1) / totalChunks; // 0.0 to 1.0
+                        progressCallback.callback(progress);
+                    }
                 }
 
                 // Send R buffer (inverted)
-                for (int i = 0; i < datas / chunkSize; i++) {
+                for (int i = 0; i < totalChunks; i++) {
                     cmd = new byte[5 + chunkSize];
                     cmd[0] = (byte) 0xF0;
                     cmd[1] = (byte) 0xD2;
@@ -121,6 +133,12 @@ public class NfcHelper {
                             Log.e("NfcHelper", "Retry " + attempt + " for chunk " + i + ": " + e);
                             if (attempt == maxRetries) throw e;
                         }
+                    }
+
+                    // Notify progress to Python
+                    if (progressCallback != null) {
+                        float progress = (float) (i + 1) / totalChunks; // 0.0 to 1.0
+                        progressCallback.callback(progress);
                     }
                 }
 
@@ -196,8 +214,9 @@ public class NfcHelper {
                     }
                     int chunkSize = 250; // Increased chunk size to 250
                     int maxRetries = 3;
+                    int totalChunks = datas / chunkSize;
                     // Send BW buffer
-                    for (int i = 0; i < datas / chunkSize; i++) {
+                    for (int i = 0; i < totalChunks; i++) {
                         cmd = new byte[5 + chunkSize];
                         cmd[0] = (byte) 0xF0;
                         cmd[1] = (byte) 0xD2;
@@ -220,10 +239,16 @@ public class NfcHelper {
                                 if (attempt == maxRetries) throw e;
                             }
                         }
+
+                        // Notify progress to Python
+                        if (progressCallback != null) {
+                            float progress = (float) (i + 1) / totalChunks; // 0.0 to 1.0
+                            progressCallback.callback(progress);
+                        }
                     }
 
                     // Send R buffer (inverted)
-                    for (int i = 0; i < datas / chunkSize; i++) {
+                    for (int i = 0; i < totalChunks; i++) {
                         cmd = new byte[5 + chunkSize];
                         cmd[0] = (byte) 0xF0;
                         cmd[1] = (byte) 0xD2;
@@ -245,6 +270,12 @@ public class NfcHelper {
                                 Log.e("NfcHelper", "Retry " + attempt + " for chunk " + i + ": " + e);
                                 if (attempt == maxRetries) throw e;
                             }
+                        }
+
+                        // Notify progress to Python
+                        if (progressCallback != null) {
+                            float progress = (float) (i + 1) / totalChunks; // 0.0 to 1.0
+                            progressCallback.callback(progress);
                         }
                     }
 
@@ -332,5 +363,10 @@ public class NfcHelper {
             e.printStackTrace();
             return null;
         }
+    }
+
+    // Add a method to set the callback from Python
+    public static void setProgressCallback(org.kivy.android.PythonUtil.PythonCallback callback) {
+        progressCallback = callback;
     }
 }
