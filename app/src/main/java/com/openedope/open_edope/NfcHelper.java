@@ -11,6 +11,8 @@ import android.util.Log;
 
 public class NfcHelper {
 
+    private static PythonCallback progressCallback = null;
+
     // The following static fields and epd_init array are not used anywhere in this file.
     // If you do not reference them from other files, you can safely delete them.
 
@@ -342,5 +344,10 @@ public class NfcHelper {
             e.printStackTrace();
             return null;
         }
+    }
+
+    // Add this setter method to allow Python to register the callback:
+    public static void setProgressCallback(PythonCallback callback) {
+        progressCallback = callback;
     }
 }
