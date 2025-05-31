@@ -26,7 +26,7 @@ from plyer import notification
 from kivy.clock import Clock
 from kivy.uix.filechooser import FileChooserListView
 from kivymd.uix.progressbar import MDProgressBar
-from jnius import PythonJavaClass, java_method, autoclass
+
 
 # Ensure the soft keyboard pushes the target widget above it
 Window.softinput_mode = "below_target"
@@ -35,11 +35,20 @@ try:
     from android import mActivity
     from jnius import autoclass, cast
     from android.permissions import request_permissions, Permission
+    from jnius import PythonJavaClass, java_method
 except ImportError:
     mActivity = None  # Handle cases where the app is not running on Android
     autoclass = None  # Handle cases where pyjnius is not available
     request_permissions = None
     Permission = None
+    # Define dummy classes so code runs on non-Android platforms
+    class PythonJavaClass(object):
+        pass
+    def java_method(signature):
+        def decorator(func):
+            return func
+        return decorator
+
 try:
     from jnius import autoclass, cast
     NfcAdapter = autoclass('android.nfc.NfcAdapter')
@@ -226,10 +235,9 @@ class NfcProgressCallback(PythonJavaClass):
 
     @java_method('(F)V')
     def callback(self, progress):
-        # progress is a float from 0.0 to 1.0
+        # progress is a float (0.0 to 1.0 or -1.0 for failure)
         percent = int(progress * 100)
         app = MDApp.get_running_app()
-        # Update the progress dialog
         app.update_nfc_progress(percent)
         # Optionally close dialog when done
         if percent >= 100:
@@ -1751,7 +1759,7 @@ class MainApp(MDApp):
                 md_bg_color=(1, 0, 0, 1),  # Red background
                 on_release=lambda x: self.delete_last_row(main_layout)
             )
-               )
+                             )
 
         # Create a layout for the "CANCEL" and "ADD" buttons
         action_buttons_layout = BoxLayout(orientation="horizontal", spacing="10dp", size_hint=(1, None), height=dp(50))
