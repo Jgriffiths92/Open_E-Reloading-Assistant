@@ -164,6 +164,7 @@ public class NfcHelper {
             NfcA nfcA = NfcA.get(tag);
             if (nfcA != null) {
                 try {
+                    int datas = width0 * height0 / 8; // <-- ADD THIS LINE
                     Log.e("NfcHelper", "Before connect, isConnected: " + nfcA.isConnected());
                     Log.e("NfcHelper", "Attempting to connect to NFC tag...");
                     nfcA.connect();
