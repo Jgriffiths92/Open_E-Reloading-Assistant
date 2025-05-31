@@ -277,10 +277,16 @@ class MainApp(MDApp):
     def show_nfc_progress_dialog(self, message="Transferring data..."):
         if hasattr(self, "nfc_progress_dialog") and self.nfc_progress_dialog:
             self.nfc_progress_dialog.dismiss()
-        box = BoxLayout(orientation="vertical", spacing="12dp", size_hint_y=None, height="180dp")
+        from kivy.uix.floatlayout import FloatLayout
+        from kivy.uix.label import Label
+
+        # Use FloatLayout to allow centering
+        box = FloatLayout(size_hint_y=None, height="200dp")
+
         self.nfc_progress_bar = CircularProgressBar(
             size_hint=(None, None),
-            size=("120dp", "120dp"),
+            size=(120, 120),
+            pos_hint={"center_x": 0.5, "center_y": 0.6},  # Centered horizontally, a bit above center
             max=100,
             value=0,
             thickness=15,
@@ -288,8 +294,20 @@ class MainApp(MDApp):
             background_color=(0.9, 0.9, 0.9, 1),
         )
         box.add_widget(self.nfc_progress_bar)
-        from kivy.uix.label import Label
-        box.add_widget(Label(text=message, halign="center"))
+
+        # Add the label below the progress bar, also centered
+        label = Label(
+            text=message,
+            size_hint=(None, None),
+            size=(200, 40),
+            pos_hint={"center_x": 0.5, "y": 0.05},
+            halign="center",
+            valign="middle",
+            color=(0, 0, 0, 1),
+        )
+        label.bind(size=label.setter('text_size'))  # Ensure text wraps/centers
+        box.add_widget(label)
+
         self.nfc_progress_dialog = MDDialog(
             title="NFC Transfer",
             type="custom",
