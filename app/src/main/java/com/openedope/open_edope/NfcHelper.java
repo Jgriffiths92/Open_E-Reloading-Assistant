@@ -50,6 +50,15 @@ public class NfcHelper {
             return;
         }
 
+        Log.e("NfcHelper", "image_buffer.length: " + image_buffer.length);
+        int datas = width0 * height0 / 8;
+        Log.e("NfcHelper", "Expected datas: " + datas);
+        if (image_buffer.length < datas) {
+            Log.e("NfcHelper", "ERROR: image_buffer is smaller than expected!");
+            if (progressCallback != null) progressCallback.callback(-1.0f);
+            return;
+        }
+
         Parcelable p = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
         if (p == null) {
             Log.e("NfcHelper", "No NFC tag found in intent!");
