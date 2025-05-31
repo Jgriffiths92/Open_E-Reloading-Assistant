@@ -304,6 +304,7 @@ public class NfcHelper {
         }
     }
 
+    // Overload with listener
     public static void processNfcIntentByteBufferAsync(final Intent intent, final int width0, final int height0, final java.nio.ByteBuffer buffer, final String[] epd_init, final NfcProgressListener listener) {
         new Thread(new Runnable() {
             @Override
@@ -313,13 +314,14 @@ public class NfcHelper {
         }).start();
     }
 
+    // Overload with listener
     public static void processNfcIntentByteBuffer(Intent intent, int width0, int height0, java.nio.ByteBuffer buffer, String[] epd_init, NfcProgressListener listener) {
         byte[] image_buffer = new byte[buffer.remaining()];
         buffer.get(image_buffer);
         processNfcIntent(intent, width0, height0, image_buffer, epd_init, listener);
     }
 
-    // Overload processNfcIntent to accept listener, but keep old version for compatibility
+    // Overload with listener
     public static void processNfcIntent(Intent intent, int width0, int height0, byte[] image_buffer, String[] epd_init, NfcProgressListener listener) {
         Log.e("NfcHelper", "processNfcIntent CALLED (with progress listener)");
         Log.e("NfcHelper", "image_buffer class in processNfcIntent: " + image_buffer.getClass().getName());
