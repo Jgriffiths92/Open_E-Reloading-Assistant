@@ -1426,7 +1426,7 @@ class MainApp(MDApp):
                     print("Tag technologies detected by Android:")
                     for tech in tech_list:
                         print(f" - {tech}")
-                    self.show_nfc_progress_dialog("Transferring data to NFC tag...")
+                    Clock.schedule_once(lambda dt: self.show_nfc_progress_dialog("Transferring data to NFC tag..."))
                     self.send_csv_bitmap_via_nfc(intent)
                     return  # Optionally return here if you don't want to process further
 
