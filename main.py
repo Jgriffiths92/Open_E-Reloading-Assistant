@@ -330,9 +330,11 @@ class MainApp(MDApp):
         if hasattr(self, "nfc_progress_label"):
             if percent < 0:
                 self.nfc_progress_label.text = "Send Failed!"
+                self.vibrate_device(500)  # Vibrate on failure
                 Clock.schedule_once(lambda dt: self.close_nfc_progress_dialog(), 2)
             elif percent >= 100:
                 self.nfc_progress_label.text = "Send Complete!"
+                self.vibrate_device(500)  # Vibrate on success
                 Clock.schedule_once(lambda dt: self.close_nfc_progress_dialog(), 1)
             else:
                 self.nfc_progress_label.text = f"Sending via NFC: {int(percent)}%"
@@ -1749,7 +1751,7 @@ class MainApp(MDApp):
                 md_bg_color=(1, 0, 0, 1),  # Red background
                 on_release=lambda x: self.delete_last_row(main_layout)
             )
-        )
+               )
 
         # Create a layout for the "CANCEL" and "ADD" buttons
         action_buttons_layout = BoxLayout(orientation="horizontal", spacing="10dp", size_hint=(1, None), height=dp(50))
