@@ -84,6 +84,8 @@ class CircularProgressBar(Widget):
     cap_style = ObjectProperty(_DEFAULT_CAP_STYLE)
     cap_precision = NumericProperty(_DEFAULT_PRECISION)
 
+    label_color = ListProperty([1, 0, 0, 1])  # Default to red (matches _DEFAULT_PROGRESS_COLOUR)
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._default_label_text = self.label.text
@@ -218,7 +220,7 @@ class CircularProgressBar(Widget):
                          self.widget_size / 2 - self.thickness, 0, self.get_normalised_progress() * 360),
                  width=self.thickness, cap=self.cap_style, cap_precision=self.cap_precision)
             # Draw label
-            Color(1, 1, 1, 1)
+            Color(*self.label_color)
             Rectangle(texture=self.label.texture, size=self._label_size,
                       pos=(self.widget_size / 2 - self._label_size[0] / 2 + self.pos[0],
                            self.widget_size / 2 - self._label_size[1] / 2 + self.pos[1]))

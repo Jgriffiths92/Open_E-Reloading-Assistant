@@ -286,11 +286,12 @@ class MainApp(MDApp):
         self.nfc_progress_bar = CircularProgressBar(
             size_hint=(None, None),
             size=(120, 120),
-            pos_hint={"center_x": 0.5, "center_y": 0.6},  # Centered horizontally, a bit above center
+            pos_hint={"center_x": 0.5, "center_y": 0.6},
             max=100,
             value=0,
             thickness=15,
             color=(0.2, 0.6, 1, 1),
+            label_color=(0.2, 0.6, 1, 1),  # <-- Add this line
             background_color=(0.9, 0.9, 0.9, 1),
         )
         box.add_widget(self.nfc_progress_bar)
@@ -1985,6 +1986,8 @@ class MainApp(MDApp):
     def update_nfc_progress(self, percent):
         if hasattr(self, "nfc_progress_bar") and self.nfc_progress_bar:
             self.nfc_progress_bar.value = percent
+        if percent >= 100:
+            self.hide_nfc_progress_dialog()
 
     def hide_nfc_button(self):
         """Hide the NFC button if running on Android."""
