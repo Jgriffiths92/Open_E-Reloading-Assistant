@@ -230,7 +230,7 @@ class CustomFileChooserListView(FileChooserListView):
 
 
 class NfcProgressCallback(PythonJavaClass):
-    __javainterfaces__ = ['org/kivy/android/PythonUtil$PythonCallback']
+    __javainterfaces__ = ['com.openedope.open_edope.PythonCallback']
     __javacontext__ = 'app'
 
     @java_method('(F)V')

@@ -1,6 +1,5 @@
 package com.openedope.open_edope;
 
-
 import android.content.Intent;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
@@ -36,7 +35,7 @@ public class NfcHelper {
     // };
 
     // Add a static field for the callback
-    private static org.kivy.android.PythonUtil.PythonCallback progressCallback = null;
+    private static PythonCallback progressCallback = null;
 
     public static void processNfcIntent(Intent intent, int width0, int height0, byte[] image_buffer, String[] epd_init) {
         Log.e("NfcHelper", "processNfcIntent CALLED");
@@ -369,7 +368,11 @@ public class NfcHelper {
     }
 
     // Add a method to set the callback from Python
-    public static void setProgressCallback(org.kivy.android.PythonUtil.PythonCallback callback) {
+    public static void setProgressCallback(PythonCallback callback) {
         progressCallback = callback;
     }
+}
+
+public interface PythonCallback {
+    void callback(float progress);
 }
