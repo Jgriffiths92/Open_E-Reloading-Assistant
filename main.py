@@ -26,6 +26,10 @@ from plyer import notification
 from kivy.clock import Clock
 from kivy.uix.filechooser import FileChooserListView
 import shutil
+from kivymd.uix.dialog import MDDialog
+from kivymd.uix.progressbar import MDCircularProgressIndicator
+from kivy.uix.boxlayout import BoxLayout
+from jnius import PythonJavaClass, java_method
 
 # Ensure the soft keyboard pushes the target widget above it
 Window.softinput_mode = "below_target"
@@ -219,6 +223,23 @@ class CustomFileChooserListView(FileChooserListView):
         return sorted(files, key=key, reverse=reverse)
 
 
+class NfcProgressListener(PythonJavaClass):
+    __javainterfaces__ = ['com/openedope/open_edope/NfcProgressListener']
+    __javacontext__ = 'app'
+
+    def __init__(self, app):
+        super().__init__()
+        self.app = app
+
+    @java_method('(I)V')
+    def onProgress(self, percent):
+        # Called from Java with progress (0-100)
+        print(f"NFC Progress: {percent}%")
+        # Schedule on main thread to update UI
+        from kivy.clock import Clock
+        Clock.schedule_once(lambda dt: self.app.update_nfc_progress(percent))
+
+
 class MainApp(MDApp):
     EPD_INIT_MAP = {
         # Good Display 3.7-inch (UC8171, 240x416)
@@ -237,6 +258,21 @@ class MainApp(MDApp):
             "F0DA000003F00120"
         ],
     }
+    def show_nfc_progress_dialog(self, message="Transferring data..."):
+        if hasattr(self, "nfc_progress_dialog") and self.nfc_progress_dialog:
+            self.nfc_progress_dialog.dismiss()
+        box = BoxLayout(orientation="vertical", spacing="12dp", size_hint_y=None, height="120dp")
+        progress = MDCircularProgressIndicator(size_hint=(None, None), size=("48dp", "48dp"), active=True)
+        box.add_widget(progress)
+        from kivy.uix.label import Label
+        box.add_widget(Label(text=message, halign="center"))
+        self.nfc_progress_dialog = MDDialog(
+            title="NFC Transfer",
+            type="custom",
+            content_cls=box,
+            auto_dismiss=False,
+    )
+        self.nfc_progress_dialog.open()
     def on_nfc_button_press(self):
         """
         Handler for the NFC button press.
@@ -352,7 +388,8 @@ class MainApp(MDApp):
         epd_init_java_array = Array.newInstance(String, len(epd_init))
         for i, s in enumerate(epd_init):
             epd_init_java_array[i] = String(s)
-
+        # Create the progress listener
+        listener = NfcProgressListener(self)
         # Call the ByteBuffer method
         NfcHelper.processNfcIntentByteBufferAsync(intent, width, height, image_buffer_bb, epd_init_java_array)
     def on_pause(self):
@@ -1377,11 +1414,12 @@ class MainApp(MDApp):
                 tag = intent.getParcelableExtra(EXTRA_TAG)
                 if tag:
                     print("NFC tag detected (regardless of action)!")
-                    tag = cast('android.nfc.Tag', tag)  # Properly cast to Tag
+                    tag = cast('android.nfc.Tag', tag)
                     tech_list = tag.getTechList()
                     print("Tag technologies detected by Android:")
                     for tech in tech_list:
                         print(f" - {tech}")
+                    self.show_nfc_progress_dialog("Transferring data to NFC tag...")
                     self.send_csv_bitmap_via_nfc(intent)
                     return  # Optionally return here if you don't want to process further
 
@@ -1725,6 +1763,7 @@ class MainApp(MDApp):
         # Create a layout for the "CANCEL" and "ADD" buttons
         action_buttons_layout = BoxLayout(orientation="horizontal", spacing="10dp", size_hint=(1, None), height=dp(50))
       
+             
         action_buttons_layout.add_widget(
             MDRaisedButton(
                 text="ADD",
@@ -1749,6 +1788,7 @@ class MainApp(MDApp):
         row_fields = {}
         for field_name, field_options in self.available_fields.items():
             if field_options["show"]:  # Only add fields that are enabled
+
                 text_field = MDTextField(
                     hint_text=field_options["hint_text"],
                     multiline=False,
@@ -1894,6 +1934,18 @@ class MainApp(MDApp):
                     print("No valid URI found in the intent.")
             except Exception as e:
                 print(f"Error processing subject content: {e}")
+                
+    def hide_nfc_progress_dialog(self):
+        if hasattr(self, "nfc_progress_dialog") and self.nfc_progress_dialog:
+            self.nfc_progress_dialog.dismiss()
+            self.nfc_progress_dialog = None
+        # Call self.hide_nfc_progress_dialog() at the end of your NFC transfer logic
+    def update_nfc_progress(self, percent):
+        if hasattr(self, "nfc_progress_dialog") and self.nfc_progress_dialog:
+            # Assume the first child is the BoxLayout, and the first widget is the progress bar
+            box = self.nfc_progress_dialog.content_cls
+            progress_bar = box.children[-1]  # Adjust if needed
+            progress_bar.value = percent
 
     def hide_nfc_button(self):
         """Hide the NFC button if running on Android."""
