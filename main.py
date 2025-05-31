@@ -398,7 +398,7 @@ class MainApp(MDApp):
         # Create the progress listener
         listener = NfcProgressListener(self)
         # Call the ByteBuffer method
-        NfcHelper.processNfcIntentByteBufferAsync(intent, width, height, image_buffer_bb, epd_init_java_array)
+        NfcHelper.processNfcIntentByteBufferAsync(intent, width, height, image_buffer_bb, epd_init_java_array, listener)
     def on_pause(self):
         print("on_pause CALLED")
         return True  # Returning True allows the app to be paused
