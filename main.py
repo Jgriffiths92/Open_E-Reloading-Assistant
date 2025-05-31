@@ -630,19 +630,17 @@ class MainApp(MDApp):
             show_range = True
             print("Range is in column 0, setting show_range = True")
 
-        # Define the static column order
+        # --- Use the exact header and row logic as display_table ---
         static_headers = ["Target", "Range", "Elv", "Wnd1", "Wnd2", "Lead"]
-
-        # Filter headers based on the show/hide options
-        headers = ["Elv", "Wnd1"]  # Start with these columns
+        headers = ["Elv", "Wnd1"]
         target_present = any(row.get("Target") for row in data)
         if target_present:
             headers.insert(0, "Target")
         if show_range:
             if not target_present:
-                headers.insert(0, "Range")  # Move Range to position 0 if Target is not displayed
+                headers.insert(0, "Range")
             else:
-                headers.insert(1, "Range")  # Otherwise, after Target
+                headers.insert(1, "Range")
         if show_2_wind_holds:
             headers.append("Wnd2")
         if show_lead:
@@ -653,8 +651,12 @@ class MainApp(MDApp):
             {header: row.get(header, "") for header in headers} for row in data
         ]
 
-        # Calculate the maximum width for each column
-        column_widths = {header: len(header) for header in headers}  # Start with header lengths
+        # Calculate the maximum width for each column, using the displayed header text
+        column_widths = {}
+        for header in headers:
+            display_header = "Tgt" if header == "Target" else "Rng" if header == "Range" else header
+            column_widths[header] = len(display_header)
+
         for row in filtered_data:
             for header in headers:
                 column_widths[header] = max(column_widths[header], len(str(row.get(header, ""))))
@@ -1016,47 +1018,68 @@ class MainApp(MDApp):
             draw.line((10, y, display_width - 10, y), fill="black", width=1)
             y += 20  # Add some spacing after the line
 
-            # Calculate column widths based on the data
-            filtered_data = self.filter_table_data(csv_data)
-            column_widths = {header: len("Tgt" if header == "Target" else header) for header in
-                             filtered_data[0].keys()}  # Start with header lengths
+            # --- Use the exact header and row logic as display_table ---
+            processed_data = self.preprocess_data(csv_data)
+            static_headers = ["Target", "Range", "Elv", "Wnd1", "Wnd2", "Lead"]
+            headers = ["Elv", "Wnd1"]
+            target_present = any(row.get("Target") for row in processed_data)
+            if target_present:
+                headers.insert(0, "Target")
+            if show_range:
+                if not target_present:
+                    headers.insert(0, "Range")
+                else:
+                    headers.insert(1, "Range")
+            if show_2_wind_holds:
+                headers.append("Wnd2")
+            if show_lead:
+                headers.append("Lead")
+
+            filtered_data = [
+                {header: row.get(header, "") for header in headers} for row in processed_data
+            ]
+
+            # Calculate the maximum width for each column, using the displayed header text
+            column_widths = {}
+            for header in headers:
+                display_header = "Tgt" if header == "Target" else "Rng" if header == "Range" else header
+                column_widths[header] = len(display_header)
+
             for row in filtered_data:
-                for header, value in row.items():
-                    column_widths[header] = max(column_widths[header], len(str(value)))
+                for header in headers:
+                    column_widths[header] = max(column_widths[header], len(str(row.get(header, ""))))
 
             # Write headers to the image
-            headers = " | ".join(
-                f"{('Tgt' if header == 'Target' else header):<{column_widths[header]}}"
-                for header in filtered_data[0].keys()
+            headers_text = " | ".join(
+                f"{('Tgt' if header == 'Target' else 'Rng' if header == 'Range' else header):<{column_widths[header]}}"
+                for header in headers
             )
-            text_bbox = draw.textbbox((0, 0), headers, font=font)  # Get the bounding box of the headers
-            text_width = text_bbox[2] - text_bbox[0]  # Calculate the text width
-            x = (display_width - text_width) // 2  # Center the text horizontally
-            draw.text((x, y), headers, fill="black", font=font)
-            y += 20  # Move to the next line
+            text_bbox = draw.textbbox((0, 0), headers_text, font=font)
+            text_width = text_bbox[2] - text_bbox[0]
+            x = (display_width - text_width) // 2
+            draw.text((x, y), headers_text, fill="black", font=font)
+            y += 20
 
             # Write CSV data to the image
             for row in filtered_data:
-                row_text = " | ".join(f"{str(value):<{column_widths[header]}}" for header, value in row.items())
-                text_bbox = draw.textbbox((0, 0), row_text, font=font)  # Get the bounding box of the row text
-                text_width = text_bbox[2] - text_bbox[0]  # Calculate the text width
-                x = (display_width - text_width) // 2  # Center the text horizontally
+                row_text = " | ".join(f"{str(row.get(header, '')):<{column_widths[header]}}" for header in headers)
+                text_bbox = draw.textbbox((0, 0), row_text, font=font)
+                text_width = text_bbox[2] - text_bbox[0]
+                x = (display_width - text_width) // 2
                 draw.text((x, y), row_text, fill="black", font=font)
-                y += 20  # Move to the next line
+                y += 20
 
             # Add the stage notes below the table data
             stage_notes = self.root.ids.home_screen.ids.stage_notes_field.text  # Get the stage notes from the text field
             y += 20  # Add some spacing before the stage notes
             draw.line((10, y, display_width - 10, y), fill="black", width=1)  # Draw a line above the stage notes
             y += 10  # Add some spacing after the line
-            text_bbox = draw.textbbox((0, 0), "Stage Notes:",
-                                      font=font)  # Get the bounding box of the stage notes label
+            text_bbox = draw.textbbox((0, 0), "Stage Notes:", font=font)  # Get the bounding box of the stage notes label
             text_width = text_bbox[2] - text_bbox[0]  # Calculate the text width
             x = (display_width - text_width) // 2  # Center the text horizontally
             draw.text((x, y), "Stage Notes:", fill="black", font=font)
             y += 30  # Add some spacing after the stage notes label
-            draw.line((10, y, display_width - 10, y), fill="black",
-                      width=1)  # Draw a horizontal line under the stage notes label
+            draw.line((10, y, display_width - 10, y), fill="black", width=1)  # Draw a horizontal line under the stage notes label
             y += 20  # Add some spacing after the line
             text_bbox = draw.textbbox((0, 0), stage_notes, font=font)  # Get the bounding box of the stage notes
             text_width = text_bbox[2] - text_bbox[0]  # Calculate the text width
@@ -1075,7 +1098,6 @@ class MainApp(MDApp):
         except Exception as e:
             print(f"Error converting CSV to bitmap: {e}")
             return None
-
     def navigate_to_home(self):
         """Navigate back to the home screen."""
         self.root.ids.screen_manager.current = "home"
