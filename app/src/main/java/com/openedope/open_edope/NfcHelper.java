@@ -172,6 +172,9 @@ public class NfcHelper {
                 }
             } catch (Exception e) {
                 Log.e("NfcHelper", "IsoDep Exception: " + e);
+                if (progressCallback != null) {
+                    progressCallback.callback(-1.0f); // Signal failure
+                }
             } finally {
                 try {
                     isoDep.close();

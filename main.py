@@ -323,9 +323,19 @@ class MainApp(MDApp):
 
     def update_nfc_progress(self, percent):
         if hasattr(self, "nfc_progress_bar"):
-            self.nfc_progress_bar.value = percent
+            if percent < 0:
+                self.nfc_progress_bar.value = 0
+            else:
+                self.nfc_progress_bar.value = percent
         if hasattr(self, "nfc_progress_label"):
-            self.nfc_progress_label.text = f"Sending via NFC: {int(percent)}%"
+            if percent < 0:
+                self.nfc_progress_label.text = "Send Failed!"
+                Clock.schedule_once(lambda dt: self.close_nfc_progress_dialog(), 2)
+            elif percent >= 100:
+                self.nfc_progress_label.text = "Send Complete!"
+                Clock.schedule_once(lambda dt: self.close_nfc_progress_dialog(), 1)
+            else:
+                self.nfc_progress_label.text = f"Sending via NFC: {int(percent)}%"
 
     def close_nfc_progress_dialog(self):
         if hasattr(self, "nfc_progress_dialog") and self.nfc_progress_dialog:
