@@ -74,9 +74,9 @@ class CircularProgressBar(Widget):
 
     max = NumericProperty(100)
     value = NumericProperty(0)
-    thickness = NumericProperty(15)
-    color = ListProperty([0.2, 0.6, 1, 1])
-    background_color = ListProperty([0.9, 0.9, 0.9, 1])
+    thickness = NumericProperty(10)
+    color = ListProperty([1, 0, 0, 1])
+    background_color = ListProperty([0.26, 0.26, 0.26, 1])
 
     def __init__(self, **kwargs):
         super(CircularProgressBar, self).__init__(**kwargs)

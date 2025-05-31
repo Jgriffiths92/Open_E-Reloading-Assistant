@@ -1762,7 +1762,7 @@ class MainApp(MDApp):
                 text="DELETE ROW",
                 size_hint=(None, None),
                 size=(dp(120), dp(40)),
-                md_bg_color=(1, 0, 0, 1),  # Red background
+                md_bg_color=(1, 0, 0,  1),  # Red background
                
                 on_release=lambda x: self.delete_last_row(main_layout)
             )
