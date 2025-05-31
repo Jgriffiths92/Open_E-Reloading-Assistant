@@ -617,7 +617,8 @@ class MainApp(MDApp):
         return processed_data
 
     def display_table(self, data):
-        """Displays the filtered CSV data as text on the Home Screen."""
+        global show_range  # <-- Add this line
+        # Check if data is empty
         if not data:
             print("No data to display.")
             return
