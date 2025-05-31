@@ -1,5 +1,6 @@
 package com.openedope.open_edope;
 
+
 import android.content.Intent;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
@@ -7,8 +8,6 @@ import android.nfc.tech.IsoDep;
 import android.nfc.tech.NfcA;
 import android.os.Parcelable;
 import android.util.Log;
-import org.kivy.android.PythonUtil;
-import org.kivy.android.PythonActivity;
 
 public class NfcHelper {
 
@@ -34,31 +33,9 @@ public class NfcHelper {
     //         "F0DA000003F00330"
     // };
 
-    // Add a static field for the callback
-    private static PythonCallback progressCallback = null;
-
     public static void processNfcIntent(Intent intent, int width0, int height0, byte[] image_buffer, String[] epd_init) {
         Log.e("NfcHelper", "processNfcIntent CALLED");
         Log.e("NfcHelper", "image_buffer class in processNfcIntent: " + image_buffer.getClass().getName());
-
-        // Defensive check for epd_init length
-        if (epd_init == null || epd_init.length < 2) {
-            Log.e("NfcHelper", "ERROR: epd_init must have at least 2 elements!");
-            if (progressCallback != null) {
-                progressCallback.callback(-1.0f);
-            }
-            return;
-        }
-
-        Log.e("NfcHelper", "image_buffer.length: " + image_buffer.length);
-        int datas = width0 * height0 / 8;
-        Log.e("NfcHelper", "Expected datas: " + datas);
-        if (image_buffer.length < datas) {
-            Log.e("NfcHelper", "ERROR: image_buffer is smaller than expected!");
-            if (progressCallback != null) progressCallback.callback(-1.0f);
-            return;
-        }
-
         Parcelable p = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
         if (p == null) {
             Log.e("NfcHelper", "No NFC tag found in intent!");
@@ -95,9 +72,8 @@ public class NfcHelper {
                 int datas = width0 * height0 / 8;
                 int chunkSize = 250; // Increased chunk size to 250
                 int maxRetries = 3;
-                int totalChunks = datas / chunkSize;
                 // Send BW buffer
-                for (int i = 0; i < totalChunks; i++) {
+                for (int i = 0; i < datas / chunkSize; i++) {
                     cmd = new byte[5 + chunkSize];
                     cmd[0] = (byte) 0xF0;
                     cmd[1] = (byte) 0xD2;
@@ -120,16 +96,10 @@ public class NfcHelper {
                             if (attempt == maxRetries) throw e;
                         }
                     }
-
-                    // Notify progress to Python
-                    if (progressCallback != null) {
-                        float progress = (float) (i + 1) / totalChunks; // 0.0 to 1.0
-                        progressCallback.callback(progress);
-                    }
                 }
 
                 // Send R buffer (inverted)
-                for (int i = 0; i < totalChunks; i++) {
+                for (int i = 0; i < datas / chunkSize; i++) {
                     cmd = new byte[5 + chunkSize];
                     cmd[0] = (byte) 0xF0;
                     cmd[1] = (byte) 0xD2;
@@ -151,12 +121,6 @@ public class NfcHelper {
                             Log.e("NfcHelper", "Retry " + attempt + " for chunk " + i + ": " + e);
                             if (attempt == maxRetries) throw e;
                         }
-                    }
-
-                    // Notify progress to Python
-                    if (progressCallback != null) {
-                        float progress = (float) (i + 1) / totalChunks; // 0.0 to 1.0
-                        progressCallback.callback(progress);
                     }
                 }
 
@@ -190,9 +154,6 @@ public class NfcHelper {
                 }
             } catch (Exception e) {
                 Log.e("NfcHelper", "IsoDep Exception: " + e);
-                if (progressCallback != null) {
-                    progressCallback.callback(-1.0f); // Signal failure
-                }
             } finally {
                 try {
                     isoDep.close();
@@ -227,7 +188,6 @@ public class NfcHelper {
                     response = nfcA.transceive(cmd);
                     Log.e("epdinit_state", hexToString(response));
 
-                    int datas = width0 * height0 / 8;
                     if (image_buffer.length != datas) {
                         Log.e("NfcHelper", "WARNING: Image buffer size (" + image_buffer.length +
                               ") does not match expected size (" + datas + ") for " +
@@ -235,9 +195,8 @@ public class NfcHelper {
                     }
                     int chunkSize = 250; // Increased chunk size to 250
                     int maxRetries = 3;
-                    int totalChunks = datas / chunkSize;
                     // Send BW buffer
-                    for (int i = 0; i < totalChunks; i++) {
+                    for (int i = 0; i < datas / chunkSize; i++) {
                         cmd = new byte[5 + chunkSize];
                         cmd[0] = (byte) 0xF0;
                         cmd[1] = (byte) 0xD2;
@@ -260,16 +219,10 @@ public class NfcHelper {
                                 if (attempt == maxRetries) throw e;
                             }
                         }
-
-                        // Notify progress to Python
-                        if (progressCallback != null) {
-                            float progress = (float) (i + 1) / totalChunks; // 0.0 to 1.0
-                            progressCallback.callback(progress);
-                        }
                     }
 
                     // Send R buffer (inverted)
-                    for (int i = 0; i < totalChunks; i++) {
+                    for (int i = 0; i < datas / chunkSize; i++) {
                         cmd = new byte[5 + chunkSize];
                         cmd[0] = (byte) 0xF0;
                         cmd[1] = (byte) 0xD2;
@@ -291,12 +244,6 @@ public class NfcHelper {
                                 Log.e("NfcHelper", "Retry " + attempt + " for chunk " + i + ": " + e);
                                 if (attempt == maxRetries) throw e;
                             }
-                        }
-
-                        // Notify progress to Python
-                        if (progressCallback != null) {
-                            float progress = (float) (i + 1) / totalChunks; // 0.0 to 1.0
-                            progressCallback.callback(progress);
                         }
                     }
 
@@ -337,11 +284,6 @@ public class NfcHelper {
                 }
             }
         }
-
-        // After sending the tail chunk (if tail != 0)
-        if (progressCallback != null) {
-            progressCallback.callback(1.0f);
-        }
     }
 
     public static void processNfcIntentByteBufferAsync(final Intent intent, final int width0, final int height0, final java.nio.ByteBuffer buffer, final String[] epd_init) {
@@ -354,7 +296,6 @@ public class NfcHelper {
     }
 
     public static void processNfcIntentByteBuffer(Intent intent, int width0, int height0, java.nio.ByteBuffer buffer, String[] epd_init) {
-        buffer.position(0); // <-- Add this line
         byte[] image_buffer = new byte[buffer.remaining()];
         buffer.get(image_buffer);
         processNfcIntent(intent, width0, height0, image_buffer, epd_init);
@@ -390,10 +331,5 @@ public class NfcHelper {
             e.printStackTrace();
             return null;
         }
-    }
-
-    // Add a method to set the callback from Python
-    public static void setProgressCallback(PythonCallback callback) {
-        progressCallback = callback;
     }
 }
