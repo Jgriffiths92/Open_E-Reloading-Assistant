@@ -273,7 +273,22 @@ class MainApp(MDApp):
             print(f"Bitmap generated and saved to: {output_path}")
         else:
             print("Failed to generate bitmap.")
-    
+
+    def update_nfc_progress(self, percent):
+        if hasattr(self, "nfc_progress_bar") and self.nfc_progress_bar:
+            self.nfc_progress_bar.value = percent
+        if percent >= 100:
+            if hasattr(self, "nfc_progress_label"):
+                self.nfc_progress_label.text = "Transfer successful!"
+                self.nfc_progress_label.color = (0, 0.6, 0, 1)  # Green color for success
+            Clock.schedule_once(lambda dt: self.hide_nfc_progress_dialog(), 1.5)
+            
+    def on_nfc_transfer_error(self, error_message="Transfer failed!"):
+        if hasattr(self, "nfc_progress_label"):
+            self.nfc_progress_label.text = error_message
+            self.nfc_progress_label.color = (1, 0, 0, 1)  # Red color for error
+        Clock.schedule_once(lambda dt: self.hide_nfc_progress_dialog(), 2)
+        
     def show_nfc_progress_dialog(self, message="Transferring data..."):
         if hasattr(self, "nfc_progress_dialog") and self.nfc_progress_dialog:
             self.nfc_progress_dialog.dismiss()
@@ -297,7 +312,7 @@ class MainApp(MDApp):
         box.add_widget(self.nfc_progress_bar)
 
         # Add the label below the progress bar, also centered
-        label = Label(
+        self.nfc_progress_label = Label(
             text=message,
             size_hint=(None, None),
             size=(200, 40),
@@ -306,8 +321,8 @@ class MainApp(MDApp):
             valign="middle",
             color=(0, 0, 0, 1),
         )
-        label.bind(size=label.setter('text_size'))  # Ensure text wraps/centers
-        box.add_widget(label)
+        self.nfc_progress_label.bind(size=self.nfc_progress_label.setter('text_size'))
+        box.add_widget(self.nfc_progress_label)
 
         self.nfc_progress_dialog = MDDialog(
             title="NFC Transfer",
@@ -1757,12 +1772,13 @@ class MainApp(MDApp):
     def show_manual_data_input(self):
         """Display manual data input fields in the CSV data table location based on filtered display options."""
         home_screen = self.root.ids.home_screen
+       
         table_container = home_screen.ids.table_container
 
         # Clear any existing widgets in the table container
         table_container.clear_widgets()
 
-        # Create a vertical layout to hold the rows and buttons
+               # Create a vertical layout to hold the rows and buttons
         main_layout = BoxLayout(orientation="vertical", spacing="10dp", size_hint=(1, None))
         main_layout.bind(minimum_height=main_layout.setter("height"))  # Adjust height dynamically
 
@@ -1987,7 +2003,10 @@ class MainApp(MDApp):
         if hasattr(self, "nfc_progress_bar") and self.nfc_progress_bar:
             self.nfc_progress_bar.value = percent
         if percent >= 100:
-            self.hide_nfc_progress_dialog()
+            if hasattr(self, "nfc_progress_label"):
+                self.nfc_progress_label.text = "Transfer successful!"
+                self.nfc_progress_label.color = (0, 0.6, 0, 1)  # Green color for success
+            Clock.schedule_once(lambda dt: self.hide_nfc_progress_dialog(), 1.5)
 
     def hide_nfc_button(self):
         """Hide the NFC button if running on Android."""
