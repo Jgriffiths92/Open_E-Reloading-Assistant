@@ -16,6 +16,7 @@ from kivy.graphics import Line, Rectangle, Color
 from kivy.clock import Clock
 from collections.abc import Iterable
 from math import ceil
+from kivy.properties import NumericProperty, ListProperty
 
 # This constant enforces the cap argument to be one of the caps accepted by the kivy.graphics.Line class
 _ACCEPTED_BAR_CAPS = {"round", "none", "square"}
@@ -70,6 +71,12 @@ class CircularProgressBar(Widget):
         1. get_norm_value - alternative name for get_normalised_progress
         2. set_norm_value - alternative name for set_normalised_progress
     """
+
+    max = NumericProperty(100)
+    value = NumericProperty(0)
+    thickness = NumericProperty(15)
+    color = ListProperty([0.2, 0.6, 1, 1])
+    background_color = ListProperty([0.9, 0.9, 0.9, 1])
 
     def __init__(self, **kwargs):
         super(CircularProgressBar, self).__init__(**kwargs)
