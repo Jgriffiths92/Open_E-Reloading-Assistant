@@ -298,18 +298,21 @@ class MainApp(MDApp):
         
     def show_nfc_progress_dialog(self, message="Transferring data..."):
         # Vibrate for 500ms when the dialog opens (Android only)
-        if is_android() and autoclass:
+        if is_android() and mActivity and autoclass:
             try:
                 Context = autoclass('android.content.Context')
                 vibrator = mActivity.getSystemService(Context.VIBRATOR_SERVICE)
                 if vibrator:
-                    # For Android API >= 26, use VibrationEffect
-                    if hasattr(autoclass('android.os.Build$VERSION'), 'SDK_INT') and autoclass('android.os.Build$VERSION').SDK_INT >= 26:
+                    Build_VERSION = autoclass('android.os.Build$VERSION')
+                    sdk_int = Build_VERSION.SDK_INT
+                    if sdk_int >= 26:
                         VibrationEffect = autoclass('android.os.VibrationEffect')
                         effect = VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE)
                         vibrator.vibrate(effect)
                     else:
                         vibrator.vibrate(500)
+                else:
+                    print("Vibrator service not found.")
             except Exception as e:
                 print(f"Error vibrating device: {e}")
 
