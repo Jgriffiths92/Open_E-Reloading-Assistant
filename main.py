@@ -276,13 +276,20 @@ class MainApp(MDApp):
 
     def update_nfc_progress(self, percent):
         if hasattr(self, "nfc_progress_bar") and self.nfc_progress_bar:
-            self.nfc_progress_bar.value = percent
-        if percent >= 100:
-            if hasattr(self, "nfc_progress_label"):
-                self.nfc_progress_label.text = "Transfer successful!"
-                self.nfc_progress_label.color = (0, 0.6, 0, 1)  # Green color for success
-            Clock.schedule_once(lambda dt: self.hide_nfc_progress_dialog(), 1.5)
-            
+            # If percent is 100, delay the update by 3 seconds
+            if percent >= 100:
+                Clock.schedule_once(lambda dt: self._finish_nfc_progress(), 3)
+            else:
+                self.nfc_progress_bar.value = percent
+
+    def _finish_nfc_progress(self):
+        if hasattr(self, "nfc_progress_bar") and self.nfc_progress_bar:
+            self.nfc_progress_bar.value = 100
+        if hasattr(self, "nfc_progress_label"):
+            self.nfc_progress_label.text = "Transfer successful!"
+            self.nfc_progress_label.color = (0, 0.6, 0, 1)
+        Clock.schedule_once(lambda dt: self.hide_nfc_progress_dialog(), 1.5)
+        
     def on_nfc_transfer_error(self, error_message="Transfer failed!"):
         if hasattr(self, "nfc_progress_label"):
             self.nfc_progress_label.text = error_message
@@ -2019,12 +2026,19 @@ class MainApp(MDApp):
         # Call self.hide_nfc_progress_dialog() at the end of your NFC transfer logic
     def update_nfc_progress(self, percent):
         if hasattr(self, "nfc_progress_bar") and self.nfc_progress_bar:
-            self.nfc_progress_bar.value = percent
-        if percent >= 100:
-            if hasattr(self, "nfc_progress_label"):
-                self.nfc_progress_label.text = "Transfer successful!"
-                self.nfc_progress_label.color = (0, 0.6, 0, 1)  # Green color for success
-            Clock.schedule_once(lambda dt: self.hide_nfc_progress_dialog(), 1.5)
+            # If percent is 100, delay the update by 3 seconds
+            if percent >= 100:
+                Clock.schedule_once(lambda dt: self._finish_nfc_progress(), 3)
+            else:
+                self.nfc_progress_bar.value = percent
+
+    def _finish_nfc_progress(self):
+        if hasattr(self, "nfc_progress_bar") and self.nfc_progress_bar:
+            self.nfc_progress_bar.value = 100
+        if hasattr(self, "nfc_progress_label"):
+            self.nfc_progress_label.text = "Transfer successful!"
+            self.nfc_progress_label.color = (0, 0.6, 0, 1)
+        Clock.schedule_once(lambda dt: self.hide_nfc_progress_dialog(), 1.5)
 
     def hide_nfc_button(self):
         """Hide the NFC button if running on Android."""
