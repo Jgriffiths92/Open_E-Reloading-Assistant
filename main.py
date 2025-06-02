@@ -1091,16 +1091,14 @@ class MainApp(MDApp):
             if not self.config_parser.has_section("Settings"):
                 self.config_parser.add_section("Settings")
 
-            # Save the selected display model, orientation, and standalone mode
             self.config_parser.set("Settings", "display_model", self.selected_display)
             self.config_parser.set("Settings", "orientation", self.selected_orientation)
-            self.config_parser.set("Settings", "standalone_mode", str(self.standalone_mode_enabled))  # Save as string
+            self.config_parser.set("Settings", "standalone_mode", str(self.standalone_mode_enabled))
+            # Save show/hide preferences
+            self.config_parser.set("Settings", "show_lead", str(show_lead))
+            self.config_parser.set("Settings", "show_range", str(show_range))
+            self.config_parser.set("Settings", "show_2_wind_holds", str(show_2_wind_holds))
 
-            # Debug: Print the settings being saved
-            print(
-                f"Saving settings: display_model={self.selected_display}, orientation={self.selected_orientation}, standalone_mode={self.standalone_mode_enabled}")
-
-            # Write the settings to the file
             with open(self.config_file, "w") as config_file:
                 self.config_parser.write(config_file)  # Pass the file object to the write() method
             print("Settings saved successfully.")
@@ -1109,18 +1107,22 @@ class MainApp(MDApp):
 
     def load_settings(self):
         """Load the saved settings from the configuration file."""
+        global show_lead, show_range, show_2_wind_holds
         try:
             # Read the configuration file
             self.config_parser.read(self.config_file)
-
-            # Load the display model and orientation
             if self.config_parser.has_option("Settings", "display_model"):
                 self.selected_display = self.config_parser.get("Settings", "display_model")
             if self.config_parser.has_option("Settings", "orientation"):
                 self.selected_orientation = self.config_parser.get("Settings", "orientation")
-
-            # Debug: Print the loaded settings
-            print(f"Loaded settings: display_model={self.selected_display}, orientation={self.selected_orientation}")
+            # Load show/hide preferences
+            if self.config_parser.has_option("Settings", "show_lead"):
+                show_lead = self.config_parser.getboolean("Settings", "show_lead")
+            if self.config_parser.has_option("Settings", "show_range"):
+                show_range = self.config_parser.getboolean("Settings", "show_range")
+            if self.config_parser.has_option("Settings", "show_2_wind_holds"):
+                show_2_wind_holds = self.config_parser.getboolean("Settings", "show_2_wind_holds")
+            print(f"Loaded settings: display_model={self.selected_display}, orientation={self.selected_orientation}, show_lead={show_lead}, show_range={show_range}, show_2_wind_holds={show_2_wind_holds}")
         except Exception as e:
             print(f"Error loading settings: {e}")
 
