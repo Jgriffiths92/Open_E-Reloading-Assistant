@@ -300,6 +300,8 @@ class MainApp(MDApp):
             self.nfc_progress_label.text = error_message
             self.nfc_progress_label.color = (1, 0, 0, 1)  # Red color for error
         Clock.schedule_once(lambda dt: self.hide_nfc_progress_dialog(), 2)
+         # Clear the data table, stage notes, and stage name after success
+        self.clear_table_data()
         
     def show_nfc_progress_dialog(self, message="Transferring data..."):
         # Vibrate for 500ms when the dialog opens (Android only)
