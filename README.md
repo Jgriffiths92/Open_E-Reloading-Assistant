@@ -1,6 +1,6 @@
-A Python Android and desktop app built in python using Kivy to display CSV data exported from AB Quantum or Kestrel Link Ballistics on NFC driven e ink 2.9, 3.7 and 4.2in displays.
-To compile APK file for Android simply open the Kivy_App_To_APK.ipynb in Google colab and run all code snippets
-this project is designed to be compatible with Good Display NFC-Driven 2.7"/ 2.9"/ 3.7"/ 4.2" E-Ink Display Development Kit, NFC-D3-029 https://www.good-display.com/product/561.html
+A Python Android built in python using Kivy to display CSV data exported from AB Quantum or Kestrel Link Ballistics on NFC driven e ink 2.9, 3.7 and 4.2in displays.
+To compile APK file for Android simply open the Kivy_App_To_APK.ipynb in Google colab and run all code snippets.
+This project is designed to be compatible with Good Display NFC-Driven 2.7"/ 2.9"/ 3.7"/ 4.2" E-Ink Display Development Kit, NFC-D3-029 https://www.good-display.com/product/561.html
 and the compatible screens listed are:
 
 Durable 2.9 inch E Ink screen fast refresh, SPI e-paper display, GDEY029T94 https://www.good-display.com/product/389.html
