@@ -31,6 +31,7 @@ from circularprogressbar import CircularProgressBar
 from kivy.uix.boxlayout import BoxLayout
 from kivy.lang import Builder
 from kivy.app import App
+from kivymd.toast import toast
 
 
 # Ensure the soft keyboard pushes the target widget above it
@@ -926,6 +927,12 @@ class MainApp(MDApp):
 
     def on_fab_press(self):
         """Handle the floating action button press."""
+        # Get the stage name from the text field
+        stage_name = self.root.ids.home_screen.ids.stage_name_field.text.strip()
+        if not stage_name:
+            toast("Stage Name required for Save")
+            return  # Do not open the save dialog
+
         if not self.dialog:
             # Get the list of folders in the assets/CSV directory
             csv_directory = self.ensure_csv_directory()
@@ -1045,7 +1052,7 @@ class MainApp(MDApp):
                             os.makedirs(self.selected_save_folder)  # Create the folder if it doesn't exist
                         file_path = os.path.join(self.selected_save_folder, file_name)
                     else:
-                        print("No folder selected or created. Cannot save data.")
+                        toast("No folder selected or created. Cannot save data.")
                         return
 
                     # Write the data to the CSV file
@@ -1072,6 +1079,7 @@ class MainApp(MDApp):
                             writer.writerow([stage_notes])
 
                         print(f"Data saved to: {file_path}")
+                        toast(f"Data saved")
 
                         # Refresh the FileChooserListView
                         saved_cards_screen = self.root.ids.screen_manager.get_screen("saved_cards")
@@ -1079,6 +1087,7 @@ class MainApp(MDApp):
                         print("File and folder list refreshed.")
                 except Exception as e:
                     print(f"Error saving data to CSV: {e}")
+                    toast(f"Error saving data: {e}")
             else:
                 print("Private storage path is not available.")
         else:
@@ -1746,6 +1755,7 @@ class MainApp(MDApp):
     def copy_assets_to_internal_storage(self):
         """Copy the assets/CSV folder to the app's private storage directory."""
         private_storage_path = self.get_private_storage_path()
+       
         if private_storage_path:
             try:
                 csv_internal_path = os.path.join(private_storage_path, "CSV")
@@ -1818,9 +1828,11 @@ class MainApp(MDApp):
                 if os.path.isdir(abs_path):
                     shutil.rmtree(abs_path)  # Recursively delete folder and contents
                     print(f"Deleted folder: {abs_path}")
+                    toast("Folder deleted successfully.")
                 else:
                     os.remove(abs_path)
                     print(f"Deleted file: {abs_path}")
+                    toast("File deleted successfully.")
 
                 # Refresh the swipe-to-delete file list
                 self.populate_swipe_file_list()
@@ -2003,6 +2015,7 @@ SwipeFileItem:
                 # Validate the data (optional)
                 if not manual_data["Target"]:
                     print("Target is required.")
+                    toast("Target is required.")
                     return
 
                 # Add the data to the current data
@@ -2282,11 +2295,6 @@ def pack_image_column_major(img):
                     byte |= (1 << (7 - bit))
             packed.append(byte)
     return bytes(packed)
-
-print("EPD_INIT_MAP[3.7] length:", len(MainApp.EPD_INIT_MAP["Good Display 3.7-inch"][0]))
-for i, c in enumerate(MainApp.EPD_INIT_MAP["Good Display 3.7-inch"][0]):
-    if not c.isalnum():
-        print(f"Non-alphanumeric character at position {i}: {repr(c)}")
 
 if __name__ == "__main__":
     MainApp().run()
