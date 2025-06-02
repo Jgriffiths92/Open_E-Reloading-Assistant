@@ -307,15 +307,19 @@ class MainApp(MDApp):
             try:
                 Context = autoclass('android.content.Context')
                 vibrator = mActivity.getSystemService(Context.VIBRATOR_SERVICE)
+                print("Vibrator service:", vibrator)
                 if vibrator:
                     Build_VERSION = autoclass('android.os.Build$VERSION')
                     sdk_int = Build_VERSION.SDK_INT
+                    print("SDK version:", sdk_int)
                     if sdk_int >= 26:
                         VibrationEffect = autoclass('android.os.VibrationEffect')
                         effect = VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE)
                         vibrator.vibrate(effect)
+                        print("Vibrating with VibrationEffect")
                     else:
                         vibrator.vibrate(500)
+                        print("Vibrating with legacy API")
                 else:
                     print("Vibrator service not found.")
             except Exception as e:
