@@ -29,6 +29,8 @@ import shutil
 from kivymd.uix.dialog import MDDialog
 from circularprogressbar import CircularProgressBar
 from kivy.uix.boxlayout import BoxLayout
+from kivy.lang import Builder
+from kivy.app import App
 
 
 # Ensure the soft keyboard pushes the target widget above it
@@ -151,11 +153,10 @@ class HomeScreen(Screen):
 
 class SavedCardsScreen(Screen):
     def on_enter(self):
-        """Refresh the FileChooserListView when the screen is entered."""
         try:
-            filechooser = self.ids.filechooser
-            filechooser._update_files()  # Refresh the file and folder list
             print("File and folder list refreshed on screen enter.")
+            # Populate the swipeable file list
+            App.get_running_app().populate_swipe_file_list()
         except Exception as e:
             print(f"Error refreshing file and folder list: {e}")
 
@@ -172,10 +173,11 @@ class SavedCardsScreen(Screen):
 
     def open_sort_menu(self, caller):
         from kivymd.uix.menu import MDDropdownMenu
+        app = App.get_running_app()
         menu_items = [
-            {"text": "Name", "on_release": lambda x="name": self.sort_filechooser(x)},
-            {"text": "Date", "on_release": lambda x="date": self.sort_filechooser(x)},
-            {"text": "Type", "on_release": lambda x="type": self.sort_filechooser(x)},
+            {"text": "Name", "on_release": lambda x="name": app.populate_swipe_file_list(sort_by="name")},
+            {"text": "Date", "on_release": lambda x="date": app.populate_swipe_file_list(sort_by="date")},
+            {"text": "Type", "on_release": lambda x="type": app.populate_swipe_file_list(sort_by="type")},
         ]
         self.sort_menu = MDDropdownMenu(
             caller=caller,
@@ -244,6 +246,7 @@ if is_android():
 
 
 class MainApp(MDApp):
+    search_text = ""
     EPD_INIT_MAP = {
         # Good Display 3.7-inch (UC8171, 240x416)
         "Good Display 3.7-inch": [
@@ -261,7 +264,9 @@ class MainApp(MDApp):
             "F0DA000003F00120"
         ],
     }
-    
+    def get_basename(self, path):
+        import os
+        return os.path.basename(path)
     def on_nfc_button_press(self, *args):
         """Handle the NFC button press: generate the bitmap from current data."""
         print("NFC button pressed!")
@@ -545,7 +550,6 @@ class MainApp(MDApp):
         self.root = Builder.load_file("layout.kv")  # Load the root widget from the KV file
         saved_cards_screen = self.root.ids.screen_manager.get_screen("saved_cards")
         csv_directory = self.ensure_csv_directory()
-        saved_cards_screen.ids.filechooser.rootpath = csv_directory
 
         # Handle the intent if the app was opened via an intent
         if is_android():
@@ -629,11 +633,12 @@ class MainApp(MDApp):
 
     def on_file_selected(self, selection):
         """Handle the file or folder selected in the FileChooserListView."""
-        if self.standalone_mode_enabled:
-            # If standalone mode is enabled
-            print("Standalone mode is enabled.")
         if selection:
             selected_path = selection[0]
+            if os.path.isdir(selected_path):
+                # If it's a folder, show its contents
+                self.populate_swipe_file_list(selected_path)
+                return
             # Extract the file name and set it to the stage_name_field
             file_name = os.path.basename(selected_path)
             self.root.ids.home_screen.ids.stage_name_field.text = os.path.splitext(file_name)[0]
@@ -667,8 +672,6 @@ class MainApp(MDApp):
 
                     # Reset the FileChooserListView to its rootpath
                     saved_cards_screen = self.root.ids.screen_manager.get_screen("saved_cards")
-                    filechooser = saved_cards_screen.ids.filechooser
-                    filechooser.path = filechooser.rootpath  # Reset to rootpath
 
                     # Navigate back to the Home Screen
                     self.root.ids.screen_manager.current = "home"  # Reference the Home Screen by its name in layout.kv
@@ -721,7 +724,7 @@ class MainApp(MDApp):
             # Check if the "Target" column contains a number
             try:
                 float(target_value)
-                is_number = True
+                is_number = float(target_value) > 40
             except (ValueError, TypeError):
                 is_number = False
 
@@ -739,7 +742,7 @@ class MainApp(MDApp):
         return processed_data
 
     def display_table(self, data):
-        global show_range  # <-- Add this line
+        global show_range
         # Check if data is empty
         if not data:
             print("No data to display.")
@@ -747,6 +750,17 @@ class MainApp(MDApp):
 
         # Preprocess the data to handle numeric "Target" values
         data = self.preprocess_data(data)
+
+        # --- Filter out rows where all values after "Target" are "---" ---
+        if data:
+            header = data[0]
+            filtered_data = [header]
+            for row in data[1:]:
+                values_after_target = [v for k, v in row.items() if k != "Target"]
+                if not all(str(v).strip() == "---" for v in values_after_target):
+                    filtered_data.append(row)
+            data = filtered_data
+
     # Check if Range is the first column in the data
         if data and list(data[0].keys())[0] == "Range":
             show_range = True
@@ -993,8 +1007,15 @@ class MainApp(MDApp):
         self.dialog.open()
 
     def save_data(self, new_event_name=None):
-        """Save the current data to a CSV file in the private storage directory, creating it if it doesn't exist."""
         if hasattr(self, "current_data") and self.current_data:
+            # Filter out rows where all values after "Target" are "---"
+            header = self.current_data[0]
+            filtered_data = [header]
+            for row in self.current_data[1:]:
+                values_after_target = [v for k, v in row.items() if k != "Target"]
+                if not all(str(v).strip() == "---" for v in values_after_target):
+                    filtered_data.append(row)
+            self.current_data = filtered_data
             # Determine the private storage path
             storage_path = self.get_private_storage_path()
             if storage_path:
@@ -1048,7 +1069,6 @@ class MainApp(MDApp):
 
                         # Refresh the FileChooserListView
                         saved_cards_screen = self.root.ids.screen_manager.get_screen("saved_cards")
-                        filechooser = saved_cards_screen.ids.filechooser
                         filechooser._update_files()  # Refresh the file and folder list
                         print("File and folder list refreshed.")
                 except Exception as e:
@@ -1142,6 +1162,17 @@ class MainApp(MDApp):
 
             # --- Use the exact header and row logic as display_table ---
             processed_data = self.preprocess_data(csv_data)
+
+            # Filter out rows where all values after "Target" are "---"
+            if processed_data:
+                header = processed_data[0]
+                filtered_data = [header]
+                for row in processed_data[1:]:
+                    values_after_target = [v for k, v in row.items() if k != "Target"]
+                    if not all(str(v).strip() == "---" for v in values_after_target):
+                        filtered_data.append(row)
+                processed_data = filtered_data
+
             static_headers = ["Target", "Range", "Elv", "Wnd1", "Wnd2", "Lead"]
             headers = ["Elv", "Wnd1"]
             target_present = any(row.get("Target") for row in processed_data)
@@ -1226,17 +1257,9 @@ class MainApp(MDApp):
 
     # search functionality below
     def on_search_entered(self, search_text):
-        """Filter the FileChooserListView based on the search input."""
-        try:
-            filechooser = self.root.ids.saved_cards_screen.ids.filechooser
-            if search_text:
-                # Update the filter to match files containing the search text
-                filechooser.filters = [lambda folder, filename: search_text.lower() in filename.lower()]
-            else:
-                # Reset the filter to show all files
-                filechooser.filters = []
-        except Exception as e:
-            print(f"Error in search functionality: {e}")
+        """Filter the swipe-to-delete file list based on the search input."""
+        self.search_text = search_text.strip().lower() if search_text else ""
+        self.populate_swipe_file_list()
 
     def limit_stage_notes(self, text_field):
         """Limit the stage notes to 2 lines."""
@@ -1764,38 +1787,88 @@ class MainApp(MDApp):
         else:
             print("Private storage path is not available.")
             return None
-
+    
     def delete_file_or_folder(self, path):
         """Delete the selected file or folder and refresh the file list."""
         try:
             base_dir = os.path.abspath(self.get_private_storage_path())
-            assets_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "assets", "CSV"))
-            path = os.path.abspath(path)
+            abs_path = os.path.abspath(path)
             saved_cards_screen = self.root.ids.screen_manager.get_screen("saved_cards")
-            filechooser = saved_cards_screen.ids.filechooser
 
             # If deleting a folder or a non-csv file, always go to assets/CSV first
-            if not path.lower().endswith(".csv"):
+            if not abs_path.lower().endswith(".csv"):
                 csv_root = self.ensure_csv_directory()
-                filechooser.path = csv_root
+                self.populate_swipe_file_list()
 
-            if os.path.exists(path):
-                if os.path.isdir(path):
-                    shutil.rmtree(path)  # Recursively delete folder and contents
-                    print(f"Deleted folder: {path}")
+            if os.path.exists(abs_path):
+                if os.path.isdir(abs_path):
+                    shutil.rmtree(abs_path)  # Recursively delete folder and contents
+                    print(f"Deleted folder: {abs_path}")
                 else:
-                    os.remove(path)
-                    print(f"Deleted file: {path}")
+                    os.remove(abs_path)
+                    print(f"Deleted file: {abs_path}")
 
-                filechooser._update_files()  # Refresh the file and folder list
+                # Refresh the swipe-to-delete file list
+                self.populate_swipe_file_list()
                 print("File and folder list refreshed.")
 
                 self.clear_table_data()
                 self.root.ids.screen_manager.current = "saved_cards"
             else:
-                print(f"Path does not exist: {path}")
+                print(f"Path does not exist: {abs_path}")
         except Exception as e:
             print(f"Error deleting file or folder: {e}")
+
+    def populate_swipe_file_list(self, target_dir=None, sort_by="name", reverse=False):
+        saved_cards_screen = self.root.ids.screen_manager.get_screen("saved_cards")
+        swipe_file_list = saved_cards_screen.ids.swipe_file_list
+        swipe_file_list.clear_widgets()
+
+        if target_dir is None:
+            target_dir = self.ensure_csv_directory()
+
+        # Add parent directory entry if not at root
+        root_dir = self.ensure_csv_directory()
+        if os.path.abspath(target_dir) != os.path.abspath(root_dir):
+            parent_dir = os.path.abspath(os.path.join(target_dir, ".."))
+            item = Builder.load_string(f'''
+SwipeFileItem:
+    file_path: r"{parent_dir}"
+    icon: "arrow-left"
+    file_size: ""
+    display_name: "Back"
+''')
+            swipe_file_list.add_widget(item)
+
+        entries = []
+        for fname in os.listdir(target_dir):
+            if fname.startswith('.'):
+                continue  # Skip hidden files/folders
+            # --- Filter by search_text ---
+            if self.search_text and self.search_text not in fname.lower():
+                continue
+            fpath = os.path.abspath(os.path.join(target_dir, fname))
+            is_dir = os.path.isdir(fpath)
+            size = "" if is_dir else str(os.path.getsize(fpath))
+            icon = "folder" if is_dir else "file"
+            entries.append((fpath, icon, size, fname))
+
+        # Sorting logic
+        if sort_by == "name":
+            entries.sort(key=lambda x: (x[1] != "folder", x[3].lower()), reverse=reverse)
+        elif sort_by == "date":
+            entries.sort(key=lambda x: (x[1] != "folder", os.path.getmtime(x[0])), reverse=reverse)
+        elif sort_by == "type":
+            entries.sort(key=lambda x: (x[1] != "folder", os.path.splitext(x[3])[1].lower(), x[3].lower()), reverse=reverse)
+
+        for fpath, icon, size, fname in entries:
+            item = Builder.load_string(f'''
+SwipeFileItem:
+    file_path: r"{fpath}"
+    icon: "{icon}"
+    file_size: "{size}"
+''')
+            swipe_file_list.add_widget(item)
 
     def show_manual_data_input(self):
         """Display manual data input fields in the CSV data table location based on filtered display options."""

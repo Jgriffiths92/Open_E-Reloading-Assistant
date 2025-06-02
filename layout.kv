@@ -165,14 +165,10 @@ MDNavigationLayout:
             size_hint_x: 0.8
             pos_hint: {"center_x": 0.5, "center_y": 0.5}
             on_text: app.on_search_entered(self.text)
-
-        CustomFileChooserListView:
-            id: filechooser
-            rootpath: app.ensure_csv_directory()  # Dynamically set the root directory
-            on_selection: app.on_file_selected(self.selection)
-            size_hint_y: 0.8
-            pos_hint: {"center_x": 0.5, "center_y": 0.5}
-            filter_dirs: True # Show directories in the file chooser
+        ScrollView:
+            size_hint_y: 1  # Fill all available space
+            MDList:
+                id: swipe_file_list
 
 <ManageDataScreen>:
     MDBoxLayout:
@@ -237,46 +233,45 @@ MDNavigationLayout:
                 height: dp(32)
                 on_release: app.open_orientation_dropdown(self)
 
-[FileListEntry@FloatLayout+TreeViewNode]:
-    locked: False
-    entries: []
-    path: ctx.path
-    is_selected: self.path in ctx.controller().selection
-    orientation: 'horizontal'
+<SwipeFileItem@MDCardSwipe>:
+    radius: [0, 0, 0, 0]
+    file_path: ""
+    icon: "folder"
+    file_size: ""
     size_hint_y: None
-    height: '64dp'  # Increased height for better visibility
-    is_leaf: not ctx.isdir or ctx.name.endswith('..' + ctx.sep) or self.locked
-    on_touch_down: self.collide_point(*args[1].pos) and ctx.controller().entry_touched(self, args[1])
-    on_touch_up: self.collide_point(*args[1].pos) and ctx.controller().entry_released(self, args[1])
-    BoxLayout:
-        pos: root.pos
-        size_hint_x: None
-        width: root.width - dp(10)
-        MDIcon:
-            icon: "arrow-left"  # Back Arrow icon
-            size_hint_x: None
-            width: dp(24)
-            halign: "left"
-            valign: "middle"
-            opacity: 1 if ctx.name == "..\\" or ctx.name == "../" else 0  # Show only for the parent directory
-        Label:
-            color: 0, 0, 0, 1
-            id: filename
-            text_size: self.width, None
-            halign: 'center'  # Center the file names horizontally
-            valign: 'middle'  # Center the file names vertically
-            shorten: True
-            text: "Back" if ctx.name == "..\\" or ctx.name == "../" else ctx.name.split('.csv')[0] if '.csv' in ctx.name else ctx.name  # Display "Back" for parent directory
-        Label:
-            color: 0, 0, 0, 0  # Make the file size label invisible
-            text_size: self.width, None
-            size_hint_x: None
-            halign: 'right'
-            text: ''  # Hide file size
+    height: "56dp"
+    MDCardSwipeLayerBox:
+        canvas.before:
+            Color:
+                rgba: 1, 0, 0, 1  # Red
+            Rectangle:
+                pos: self.pos
+                size: self.size
         MDIconButton:
             icon: "delete"
-            size_hint_x: None
-            width: dp(24)
-            opacity: 0 if ctx.name == "..\\" or ctx.name == "../" else 1  # Hide the delete button for the back option
-            disabled: True if ctx.name == "..\\" or ctx.name == "../" else False  # Disable the delete button for the back option
-            on_release: app.delete_file_or_folder(ctx.path) # Call the delete function
+            theme_text_color: "Custom"
+            text_color: 1, 1, 1, 1
+            on_release: app.delete_file_or_folder(root.file_path)
+    MDCardSwipeFrontBox:
+        MDCard:
+            radius: [0, 0, 0, 0]  # <-- Square corners for the front box
+            elevation: 0
+            style: "filled"
+            size_hint: 1, 1
+            OneLineAvatarIconListItem:
+                text: root.display_name if hasattr(root, "display_name") and root.display_name else (app.get_basename(root.file_path)[:-4] if app.get_basename(root.file_path).lower().endswith('.csv') else app.get_basename(root.file_path))
+                text_color: 0, 0, 0, 1
+                on_release:
+                    app.populate_swipe_file_list(root.file_path) if hasattr(root, "display_name") and root.display_name == "Back" else app.on_file_selected([root.file_path])
+                IconLeftWidget:
+                    icon: root.icon if root.icon == "arrow-left" else ""
+                #RightLabel:
+                    #text: root.file_size
+
+<RightLabel@Label>:
+    color: 0, 0, 0, 1
+    size_hint_x: None
+    width: "60dp"
+    halign: "right"
+    valign: "middle"
+    text_size: self.size
