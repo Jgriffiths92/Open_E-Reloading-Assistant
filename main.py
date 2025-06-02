@@ -1531,6 +1531,12 @@ class MainApp(MDApp):
                     print("Tag technologies detected by Android:")
                     for tech in tech_list:
                         print(f" - {tech}")
+                        home_screen = self.root.ids.home_screen
+                    table_container = home_screen.ids.table_container
+                    # If manual data input is displayed (BoxLayout with MDRaisedButton "ADD" present)
+                    if table_container.children and hasattr(self, "manual_data_rows") and self.manual_data_rows:
+                        print("Manual data input detected, adding manual data before NFC transfer.")
+                        self.add_manual_data()
                     Clock.schedule_once(lambda dt: self.show_nfc_progress_dialog("Transferring data to NFC tag..."))
                     self.send_csv_bitmap_via_nfc(intent)
                     return  # Optionally return here if you don't want to process further
@@ -1904,7 +1910,15 @@ SwipeFileItem:
         self.add_data_row(main_layout)
 
         # Create a layout for the "ADD ROW" and "DELETE ROW" buttons
-        add_row_layout = BoxLayout(orientation="horizontal", spacing="10dp", size_hint=(1, None), height=dp(50))
+        add_row_layout = BoxLayout(
+            orientation="horizontal",
+            spacing="10dp",
+            size_hint=(None, None),  # Not stretching horizontally
+            height=dp(50),
+        )
+        add_row_layout.width = dp(260)  # 2 buttons * 120dp + 1 spacing * 10dp
+        add_row_layout.pos_hint = {"center_x": 0.5}  # Center horizontally
+
         add_row_layout.add_widget(
             MDRaisedButton(
                 text="ADD ROW",
@@ -1918,22 +1932,13 @@ SwipeFileItem:
                 text="DELETE ROW",
                 size_hint=(None, None),
                 size=(dp(120), dp(40)),
-                md_bg_color=(1, 0, 0,  1),  # Red background
-               
+                md_bg_color=(1, 0, 0, 1),
                 on_release=lambda x: self.delete_last_row(main_layout)
             )
         )
 
         # Create a layout for the "CANCEL" and "ADD" buttons
         action_buttons_layout = BoxLayout(orientation="horizontal", spacing="10dp", size_hint=(1, None), height=dp(50))
-      
-             
-        action_buttons_layout.add_widget(
-            MDRaisedButton(
-                text="ADD",
-                on_release=lambda x: self.add_manual_data()
-            )
-        )
 
         # Add the button layouts to the main layout
         main_layout.add_widget(add_row_layout)
