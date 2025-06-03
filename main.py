@@ -193,7 +193,47 @@ class SavedCardsScreen(Screen):
 
 class ManageDataScreen(Screen):
     delete_option_label = StringProperty("Delete Folders After")  # Default text
+    def on_enter(self):
+        app = App.get_running_app()
+        if not getattr(app, "manage_data_dialog_shown", False):
+            self.show_manage_data_dialog()
 
+    def show_manage_data_dialog(self):
+        app = App.get_running_app()
+        def close_dialog(*args):
+            dialog.dismiss()
+            app.root.ids.screen_manager.current = "home"  # Go to Home screen
+
+        def ok_and_never_show_again(*args):
+            dialog.dismiss()
+            app.manage_data_dialog_shown = True
+            app.save_settings()
+
+        dialog = MDDialog(
+            title="Manage Data",
+            type="custom",
+            content_cls=Label(
+            text="Here you can manage and delete your saved data cards and folders.\nUse With Caution: deleted data cannot be recovered.",
+            halign="center",
+            valign="middle",
+            color=(0, 0, 0, 1),
+            size_hint_y=None,
+            height="100dp",
+            ),
+            buttons=[
+            MDFlatButton(
+                text="BACK",
+                on_release=close_dialog
+            ),
+            MDFlatButton(
+                text="OK",
+                on_release=ok_and_never_show_again,
+                theme_text_color="Custom",          # <-- Add this line
+                text_color=(0, 0.4, 1, 1)           # Blue color for OK button
+            ),
+            ],
+        )
+        dialog.open()
     def open_delete_option_menu(self, caller):
         options = [
             {"text": "After 1 week", "on_release": lambda: self.set_delete_option("week")},
@@ -1199,6 +1239,7 @@ class MainApp(MDApp):
             self.config_parser.set("Settings", "sort_type", getattr(self, "sort_type", "date"))
             self.config_parser.set("Settings", "sort_order", getattr(self, "sort_order", "asc"))
             self.config_parser.set("Settings", "delete_folders_after", getattr(self, "delete_folders_after", "never"))
+            self.config_parser.set("Settings", "manage_data_dialog_shown", str(getattr(self, "manage_data_dialog_shown", False)))
             with open(self.config_file, "w") as config_file:
                 self.config_parser.write(config_file)
             print("Settings saved successfully.")
@@ -1731,6 +1772,7 @@ class MainApp(MDApp):
                                             byte = input_stream.read()
                                         input_stream.close()
                                         content_bytes = bytes(buffer.toByteArray())
+                                       
                                         try:
                                             content = content_bytes.decode("utf-8")
                                         except UnicodeDecodeError:
