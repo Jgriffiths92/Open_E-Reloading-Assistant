@@ -430,7 +430,9 @@ class MainApp(MDApp):
         from PIL import Image
         with Image.open(output_path) as img:
             img = img.convert("1", dither=Image.FLOYDSTEINBERG)
-            img = img.rotate(-90, expand=True)
+            if self.selected_orientation == "Portrait":
+                img = img.rotate(-90, expand=True)
+            # else: do not rotate for landscape
             image_buffer = pack_image_column_major(img)
 
         # 3. Get bitmap dimensions
@@ -1115,10 +1117,8 @@ class MainApp(MDApp):
             print(f"Error saving settings: {e}")
 
     def load_settings(self):
-        """Load the saved settings from the configuration file."""
         global show_lead, show_range, show_2_wind_holds
         try:
-            # Read the configuration file
             self.config_parser.read(self.config_file)
             if self.config_parser.has_option("Settings", "display_model"):
                 self.selected_display = self.config_parser.get("Settings", "display_model")
@@ -1131,7 +1131,16 @@ class MainApp(MDApp):
                 show_range = self.config_parser.getboolean("Settings", "show_range")
             if self.config_parser.has_option("Settings", "show_2_wind_holds"):
                 show_2_wind_holds = self.config_parser.getboolean("Settings", "show_2_wind_holds")
-            print(f"Loaded settings: display_model={self.selected_display}, orientation={self.selected_orientation}, show_lead={show_lead}, show_range={show_range}, show_2_wind_holds={show_2_wind_holds}")
+            # Set native_resolution and selected_resolution based on loaded display/orientation
+            display_resolutions = {
+                "Good Display 3.7-inch": (240, 416),
+                "Good Display 4.2-inch": (300, 400),
+                "Good Display 2.9-inch": (128, 296),
+            }
+            self.native_resolution = display_resolutions.get(self.selected_display, (240, 416))
+            self.selected_resolution = self.native_resolution  # Always portrait
+            print(f"Loaded settings: display_model={self.selected_display}, orientation={self.selected_orientation}, ...")
+            print(f"Loaded native_resolution: {self.native_resolution}, selected_resolution: {self.selected_resolution}")
         except Exception as e:
             print(f"Error loading settings: {e}")
 
@@ -1150,18 +1159,14 @@ class MainApp(MDApp):
             # Default resolution if no display is selected
             display_width, display_height = 240, 416
 
-            # Adjust for orientation based on final resolution
-            if self.selected_orientation == "Landscape":
-                display_width, display_height = max(display_width, display_height), min(display_width, display_height)
-            else:
-                display_width, display_height = min(display_width, display_height), max(display_width, display_height)
-
+           
             # Load the font file (ensure the font file is in the correct path)
             font_path = os.path.join(os.path.dirname(__file__), "assets", "fonts", "RobotoMono-Regular.ttf")
             font = ImageFont.truetype(font_path, 12)  # Load the font file
 
-            # Create a blank white image
-            image = Image.new("RGB", (display_width, display_height), "white")
+            # 1. Always draw at portrait base size
+            base_width, base_height = 240, 416
+            image = Image.new("RGB", (base_width, base_height), "white")
             draw = ImageDraw.Draw(image)
 
             # Add the stage name at the top
@@ -1169,12 +1174,12 @@ class MainApp(MDApp):
             y = 10  # Starting vertical position
             text_bbox = draw.textbbox((0, 0), stage_name, font=font)  # Get the bounding box of the text
             text_width = text_bbox[2] - text_bbox[0]  # Calculate the text width
-            x = (display_width - text_width) // 2  # Center the text horizontally
+            x = (base_width - text_width) // 2  # Center the text horizontally
             draw.text((x, y), stage_name, fill="black", font=font)
             y += 20  # Add some spacing after the stage name
 
             # Draw a horizontal line under the stage name
-            draw.line((10, y, display_width - 10, y), fill="black", width=1)
+            draw.line((10, y, base_width - 10, y), fill="black", width=1)
             y += 20  # Add some spacing after the line
 
             # --- Use the exact header and row logic as display_table ---
@@ -1226,7 +1231,7 @@ class MainApp(MDApp):
             )
             text_bbox = draw.textbbox((0, 0), headers_text, font=font)
             text_width = text_bbox[2] - text_bbox[0]
-            x = (display_width - text_width) // 2
+            x = (base_width - text_width) // 2
             draw.text((x, y), headers_text, fill="black", font=font)
             y += 20
 
@@ -1235,29 +1240,36 @@ class MainApp(MDApp):
                 row_text = " | ".join(f"{str(row.get(header, '')):<{column_widths[header]}}" for header in headers)
                 text_bbox = draw.textbbox((0, 0), row_text, font=font)
                 text_width = text_bbox[2] - text_bbox[0]
-                x = (display_width - text_width) // 2
+                x = (base_width - text_width) // 2
                 draw.text((x, y), row_text, fill="black", font=font)
                 y += 20
 
             # Add the stage notes below the table data
             stage_notes = self.root.ids.home_screen.ids.stage_notes_field.text  # Get the stage notes from the text field
             y += 20  # Add some spacing before the stage notes
-            draw.line((10, y, display_width - 10, y), fill="black", width=1)  # Draw a line above the stage notes
+            draw.line((10, y, base_width - 10, y), fill="black", width=1)  # Draw a line above the stage notes
             y += 10  # Add some spacing after the line
             text_bbox = draw.textbbox((0, 0), "Stage Notes:", font=font)  # Get the bounding box of the stage notes label
             text_width = text_bbox[2] - text_bbox[0]  # Calculate the text width
-            x = (display_width - text_width) // 2  # Center the text horizontally
+            x = (base_width - text_width) // 2  # Center the text horizontally
             draw.text((x, y), "Stage Notes:", fill="black", font=font)
             y += 30  # Add some spacing after the stage notes label
-            draw.line((10, y, display_width - 10, y), fill="black", width=1)  # Draw a horizontal line under the stage notes label
+            draw.line((10, y, base_width - 10, y), fill="black", width=1)  # Draw a horizontal line under the stage notes label
             y += 20  # Add some spacing after the line
             text_bbox = draw.textbbox((0, 0), stage_notes, font=font)  # Get the bounding box of the stage notes
             text_width = text_bbox[2] - text_bbox[0]  # Calculate the text width
-            x = (display_width - text_width) // 2  # Center the text horizontally
+            x = (base_width - text_width) // 2  # Center the text horizontally
             draw.text((x, y), stage_notes, fill="black", font=font)
 
-            # Resize the image to fit within the display resolution while keeping the aspect ratio
-            image.thumbnail(self.selected_resolution, Image.LANCZOS)
+            # 2. Determine the final output size based on orientation and selected display
+            portrait_resolution = self.selected_resolution  # e.g., (240, 416) for 3.7"
+            if self.selected_orientation == "Landscape":
+                final_resolution = (portrait_resolution[1], portrait_resolution[0])  # e.g., (416, 240)
+            else:
+                final_resolution = portrait_resolution  # e.g., (240, 416)
+
+            # 3. Resize to the final resolution (this will stretch/squash if needed)
+            image = image.resize(final_resolution, Image.LANCZOS)
 
             # Save the resized image as a bitmap
             bw_image = image.convert("1")  # Convert to 1-bit pixels
@@ -1289,14 +1301,14 @@ class MainApp(MDApp):
 
     def open_display_dropdown(self, button):
         """Open the dropdown menu for selecting a display model."""
-        # Define the available display models with their resolutions
+        # Define the available display models with their resolutions (always portrait)
         display_models = [
             {"text": "Good Display 3.7-inch", "resolution": (240, 416),
              "on_release": lambda: self.set_display_model("Good Display 3.7-inch", (240, 416))},
             {"text": "Good Display 4.2-inch", "resolution": (300, 400),
-             "on_release": lambda: self.set_display_model("Good Display 4.2-inch", (400, 300))},
+             "on_release": lambda: self.set_display_model("Good Display 4.2-inch", (300, 400))},
             {"text": "Good Display 2.9-inch", "resolution": (128, 296),
-             "on_release": lambda: self.set_display_model("Good Display 2.9-inch", (296, 128))},
+             "on_release": lambda: self.set_display_model("Good Display 2.9-inch", (128, 296))},
         ]
 
         # Create the dropdown menu if it doesn't exist
@@ -1313,22 +1325,12 @@ class MainApp(MDApp):
         self.display_menu.open()
 
     def set_display_model(self, model, resolution):
-        """Set the selected display model and update the button text."""
-        # Check the selected orientation
-        if self.selected_orientation == "Landscape":
-            final_resolution = resolution  # Use the resolution as-is for Landscape
-        else:
-            final_resolution = (resolution[1], resolution[0])  # Invert the resolution for Portrait
-
         self.selected_display = model
-        self.selected_resolution = final_resolution  # Store the final resolution
+        self.native_resolution = resolution  # Always portrait, e.g., (128, 296)
+        self.selected_resolution = resolution  # Always portrait
         self.root.ids.settings_screen.ids.display_dropdown_button.text = f"{model}"
-        print(f"Selected display model: {model} with resolution {final_resolution}")
-
-        # Save the updated settings
+        print(f"Selected display model: {model} with native resolution {self.selected_resolution}")
         self.save_settings()
-
-        # Close the dropdown menu
         if self.display_menu:
             self.display_menu.dismiss()
 
@@ -1351,15 +1353,19 @@ class MainApp(MDApp):
         self.orientation_menu.open()
 
     def set_orientation(self, orientation):
-        """Set the selected orientation and update the button text."""
-        self.selected_orientation = orientation  # Store the selected orientation
+        self.selected_orientation = orientation
         self.root.ids.settings_screen.ids.orientation_dropdown_button.text = orientation
         print(f"Selected orientation: {orientation}")
-
-        # Save the updated settings
+        # Always keep selected_resolution as portrait
+        display_resolutions = {
+            "Good Display 3.7-inch": (240, 416),
+            "Good Display 4.2-inch": (300, 400),
+            "Good Display 2.9-inch": (128, 296),
+        }
+        if not hasattr(self, "native_resolution") or self.native_resolution is None:
+            self.native_resolution = display_resolutions.get(self.selected_display, (240, 416))
+        self.selected_resolution = self.native_resolution  # Always portrait
         self.save_settings()
-
-        # Close the dropdown menu
         if self.orientation_menu:
             self.orientation_menu.dismiss()
 
@@ -1736,7 +1742,6 @@ class MainApp(MDApp):
                 with asset_manager.open(f"CSV/{file_name}") as asset_file:
                     content = asset_file.read().decode("utf-8")
                     print(f"Content of {file_name}:\n{content}")
-                    return content
             except Exception as e:
                 print(f"Error reading CSV from assets: {e}")
                 return None
@@ -1748,6 +1753,7 @@ class MainApp(MDApp):
                     content = file.read()
                     print(f"Content of {file_name}:\n{content}")
                     return content
+
             except Exception as e:
                 print(f"Error reading CSV file: {e}")
                 return None
