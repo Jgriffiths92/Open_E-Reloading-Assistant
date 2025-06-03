@@ -156,8 +156,10 @@ class SavedCardsScreen(Screen):
     def on_enter(self):
         try:
             print("File and folder list refreshed on screen enter.")
-            # Populate the swipeable file list
-            App.get_running_app().populate_swipe_file_list()
+            app = App.get_running_app()
+            # Use the loaded sort_type and sort_order from settings
+            reverse = app.sort_order == "desc"
+            app.populate_swipe_file_list(sort_by=app.sort_type, reverse=reverse)
         except Exception as e:
             print(f"Error refreshing file and folder list: {e}")
 
@@ -197,9 +199,11 @@ class SettingsScreen(Screen):
 
 
 class CustomFileChooserListView(FileChooserListView):
+    sort_type = "date"  # Default sort by date
+    sort_order = "asc"  # Or "desc" if you want newest first
+
     def _sort_files(self, files):
-        # files: list of (filename, fullpath) tuples
-        sort_type = getattr(self, 'sort_type', 'name')
+        sort_type = getattr(self, 'sort_type', 'date')
         reverse = getattr(self, 'sort_order', 'asc') == 'desc'
 
         def get_date(item):
@@ -1101,7 +1105,6 @@ class MainApp(MDApp):
             # Add a section for settings if it doesn't exist
             if not self.config_parser.has_section("Settings"):
                 self.config_parser.add_section("Settings")
-
             self.config_parser.set("Settings", "display_model", self.selected_display)
             self.config_parser.set("Settings", "orientation", self.selected_orientation)
             self.config_parser.set("Settings", "standalone_mode", str(self.standalone_mode_enabled))
@@ -1109,9 +1112,11 @@ class MainApp(MDApp):
             self.config_parser.set("Settings", "show_lead", str(show_lead))
             self.config_parser.set("Settings", "show_range", str(show_range))
             self.config_parser.set("Settings", "show_2_wind_holds", str(show_2_wind_holds))
-
+            # Save sort settings
+            self.config_parser.set("Settings", "sort_type", getattr(self, "sort_type", "date"))
+            self.config_parser.set("Settings", "sort_order", getattr(self, "sort_order", "asc"))
             with open(self.config_file, "w") as config_file:
-                self.config_parser.write(config_file)  # Pass the file object to the write() method
+                self.config_parser.write(config_file)
             print("Settings saved successfully.")
         except Exception as e:
             print(f"Error saving settings: {e}")
@@ -1143,6 +1148,10 @@ class MainApp(MDApp):
             print(f"Loaded native_resolution: {self.native_resolution}, selected_resolution: {self.selected_resolution}")
         except Exception as e:
             print(f"Error loading settings: {e}")
+        # Load sort settings
+        self.sort_type = self.config_parser.get("Settings", "sort_type", fallback="date")
+        self.sort_order = self.config_parser.get("Settings", "sort_order", fallback="asc")
+        print(f"Loaded sort_type: {self.sort_type}, sort_order: {self.sort_order}")
 
     def csv_to_bitmap(self, csv_data, output_path=None):
         """Convert CSV data to a bitmap image, resize it to fit the display resolution while keeping the aspect ratio, and save it."""
@@ -1851,7 +1860,7 @@ class MainApp(MDApp):
         except Exception as e:
             print(f"Error deleting file or folder: {e}")
 
-    def populate_swipe_file_list(self, target_dir=None, sort_by="name", reverse=False):
+    def populate_swipe_file_list(self, target_dir=None, sort_by=None, reverse=None):
         saved_cards_screen = self.root.ids.screen_manager.get_screen("saved_cards")
         swipe_file_list = saved_cards_screen.ids.swipe_file_list
         swipe_file_list.clear_widgets()
