@@ -11,16 +11,16 @@ MDNavigationLayout:
         id: screen_manager
         HomeScreen:
             id: home_screen
-            name: "home"  # Name used to navigate to this screen
+            name: "home"
         SavedCardsScreen:
             id: saved_cards_screen
-            name: "saved_cards"  # Name used to navigate to this screen
+            name: "saved_cards"
         ManageDataScreen:
             id: manage_data_screen
-            name: "manage_data"  # Name used to navigate to this screen
+            name: "manage_data"
         SettingsScreen:
             id: settings_screen
-            name: "settings"  # Name used to navigate to this screen
+            name: "settings"
 
     MDNavigationDrawer:
         id: drawer
@@ -73,7 +73,6 @@ MDNavigationLayout:
             right_action_items: [["dots-vertical", lambda x: app.on_dots_press(x)]]
             md_bg_color: 0.678, 0.0, 0.969, 1
 
-        # Stage Name Text Field
         MDTextField:
             id: stage_name_field
             hint_text: "Stage Name"
@@ -85,20 +84,17 @@ MDNavigationLayout:
             pos_hint: {"center_x": 0.5, "center_y": 0.5}
             on_text_validate: app.on_stage_name_entered(self.text)
 
-        # Table container for displaying the CSV data
         BoxLayout:
-            id: table_container  # Placeholder for the table
+            id: table_container
             orientation: "vertical"
             size_hint: 1, 1
 
-        # Layout for Stage Notes and Buttons
         BoxLayout:
             orientation: "vertical"
             size_hint: 1, None
-            height: dp(160)  # Adjust height to fit both the text field and buttons
+            height: dp(160)
             padding: "10dp"
 
-            # Stage Notes Text Field
             MDTextField:
                 id: stage_notes_field
                 hint_text: "Stage Notes (e.g., shoot to move/hit to move)"
@@ -106,46 +102,45 @@ MDNavigationLayout:
                 multiline: True
                 halign: "center"
                 size_hint_y: None
-                height: dp(96)  # Limit height to 2 lines (48dp per line)
+                height: dp(96)
                 size_hint_x: 0.8
                 pos_hint: {"center_x": 0.5}
-                on_text: app.limit_stage_notes(self)  # Call a method to enforce the line limit
+                on_text: app.limit_stage_notes(self)
                 on_text_validate: app.on_stage_notes_entered(self.text)
 
-            # Layout for the NFC, Save, and Broom buttons
             AnchorLayout:
-                anchor_x: "right"  # Align horizontally to the right
-                anchor_y: "bottom"  # Align vertically to the bottom
+                anchor_x: "right"
+                anchor_y: "bottom"
                 size_hint: 1, None
-                height: dp(64)  # Adjust height as needed
-                padding: [0, 0, "40dp", "20dp"]  # Add padding (left, top, right, bottom)
+                height: dp(64)
+                padding: [0, 0, "40dp", "20dp"]
 
                 BoxLayout:
                     orientation: "horizontal"
                     size_hint: None, None
-                    height: dp(64)  # Adjust height as needed
-                    width: dp(150)  # Adjust width as needed
-                    spacing: "10dp"  # Add spacing between the buttons
+                    height: dp(64)
+                    width: dp(150)
+                    spacing: "10dp"
 
                     MDFloatingActionButton:
                         id: nfc_button
                         icon: "nfc"
                         md_bg_color: 0.0, 0.5, 0.8, 1
                         size_hint: None, None
-                        size: dp(56), dp(56)  # Standard FAB size
+                        size: dp(56), dp(56)
                         on_release: app.on_nfc_button_press()
 
                     MDFloatingActionButton:
                         icon: "content-save"
                         md_bg_color: 0.0, 0.969, 0.565, 1
                         size_hint: None, None
-                        size: dp(56), dp(56)  # Standard FAB size
+                        size: dp(56), dp(56)
                         on_release: app.on_fab_press()
 
                     MDFloatingActionButton:
                         icon: "broom"
                         size_hint: (None, None)
-                        size: dp(56), dp(56)  # Standard FAB size
+                        size: dp(56), dp(56)
                         md_bg_color: 0.91, 0.74, 0.09, 1
                         on_release: app.clear_table_data()
 
@@ -166,21 +161,59 @@ MDNavigationLayout:
             pos_hint: {"center_x": 0.5, "center_y": 0.5}
             on_text: app.on_search_entered(self.text)
         ScrollView:
-            size_hint_y: 1  # Fill all available space
+            size_hint_y: 1
             MDList:
                 id: swipe_file_list
 
 <ManageDataScreen>:
-    MDBoxLayout:
-        orientation: "vertical"
-        MDTopAppBar:
-            title: "Manage Data"
-            left_action_items: [["menu", lambda x: app.root.ids.drawer.set_state("open")]]
-            right_action_items: [["dots-vertical", lambda x: app.on_dots_press(x)]]
-            md_bg_color: 0.678, 0.0, 0.969, 1
-        MDLabel:
-            text: "Manage Data Screen"
-            halign: "center"
+    AnchorLayout:
+        anchor_x: "center"
+        anchor_y: "top"
+        MDBoxLayout:
+            orientation: "vertical"
+            size_hint_y: None
+            height: self.minimum_height
+
+            MDTopAppBar:
+                title: "Manage Data"
+                left_action_items: [["menu", lambda x: app.root.ids.drawer.set_state("open")]]
+                right_action_items: [["dots-vertical", lambda x: app.on_dots_press(x)]]
+                md_bg_color: 0.678, 0.0, 0.969, 1
+            BoxLayout:
+                orientation: "vertical"
+                size_hint_y: None
+                height: self.minimum_height
+                padding: "10dp" 
+                spacing: "10dp"
+                pos_hint: {"center_x": 0.5}
+
+                Widget:
+                    size_hint_y: None
+                    height: dp(16)  # Adjust this value for more/less gap
+                MDLabel:
+                    text: "Delete Saved Cards After"
+                    halign: "center"
+                MDFlatButton:
+                    id: delete_option_button
+                    text: app.delete_option_label
+                    pos_hint: {"center_x": 0.5}
+                    size_hint_y: None
+                    height: dp(32)
+                    on_release: root.open_delete_option_menu(self)
+                MDLabel:
+                    text: "Delete All Saved Data Card Files"
+                    halign: "center"
+                Widget:
+                    size_hint_y: None
+                    height: dp(10)  # Adjust this value for more/less gap
+                MDRaisedButton:
+                    text: "Delete ALL Data Card Files"
+                    pos_hint: {"center_x": 0.5}
+                    size_hint_y: None
+                    height: dp(32)
+                    md_bg_color: 1, 0, 0, 1  # Red background for warning
+                    text_color: 1, 1, 1, 1
+                    on_release: root.delete_all_csv_files()
 
 <SettingsScreen>:
     AnchorLayout:
@@ -191,47 +224,51 @@ MDNavigationLayout:
             size_hint_y: None
             height: self.minimum_height
 
-        MDTopAppBar:
-            title: "Settings"
-            left_action_items: [["arrow-left", lambda x: app.navigate_to_home()]]
-            right_action_items: [["dots-vertical", lambda x: app.on_dots_press(x)]]
-            md_bg_color: 0.678, 0.0, 0.969, 1
-        BoxLayout:
-            orientation: "vertical"
-            size_hint_x: 0.8
-            size_hint_y: None
-            height: self.minimum_height
-            padding: "10dp", "100dp", "10dp", "10dp"  # Increased top padding to 40dp
-            spacing: "4dp"  # Reduce spacing between widgets
-            pos_hint: {"center_x": 0.5}
-
-            MDLabel:
-                text: "Select Display Size:"
-                halign: "center"
+            MDTopAppBar:
+                title: "Settings"
+                left_action_items: [["arrow-left", lambda x: app.navigate_to_home()]]
+                right_action_items: [["dots-vertical", lambda x: app.on_dots_press(x)]]
+                md_bg_color: 0.678, 0.0, 0.969, 1
+            BoxLayout:
+                orientation: "vertical"
+                size_hint_x: 0.8
                 size_hint_y: None
-                height: self.texture_size[1] + dp(4)
-
-            MDFlatButton:
-                id: display_dropdown_button
-                text: "Select Display"
+                height: self.minimum_height
+                padding: "10dp"
+                spacing: "10dp"
                 pos_hint: {"center_x": 0.5}
-                size_hint_y: None
-                height: dp(32)
-                on_release: app.open_display_dropdown(self)
 
-            MDLabel:
-                text: "Select Orientation:"
-                halign: "center"
-                size_hint_y: None
-                height: self.texture_size[1] + dp(4)
+                Widget:
+                    size_hint_y: None
+                    height: dp(16)  # Adjust this value for more/less gap
 
-            MDFlatButton:
-                id: orientation_dropdown_button
-                text: "Select Orientation"
-                pos_hint: {"center_x": 0.5}
-                size_hint_y: None
-                height: dp(32)
-                on_release: app.open_orientation_dropdown(self)
+                MDLabel:
+                    text: "Select Display Size:"
+                    halign: "center"
+                    size_hint_y: None
+                    height: self.texture_size[1] + dp(4)
+
+                MDFlatButton:
+                    id: display_dropdown_button
+                    text: "Select Display"
+                    pos_hint: {"center_x": 0.5}
+                    size_hint_y: None
+                    height: dp(32)
+                    on_release: app.open_display_dropdown(self)
+
+                MDLabel:
+                    text: "Select Orientation:"
+                    halign: "center"
+                    size_hint_y: None
+                    height: self.texture_size[1] + dp(4)
+
+                MDFlatButton:
+                    id: orientation_dropdown_button
+                    text: "Select Orientation"
+                    pos_hint: {"center_x": 0.5}
+                    size_hint_y: None
+                    height: dp(32)
+                    on_release: app.open_orientation_dropdown(self)
 
 <SwipeFileItem@MDCardSwipe>:
     radius: [0, 0, 0, 0]
@@ -243,7 +280,7 @@ MDNavigationLayout:
     MDCardSwipeLayerBox:
         canvas.before:
             Color:
-                rgba: 1, 0, 0, 1  # Red
+                rgba: 1, 0, 0, 1
             Rectangle:
                 pos: self.pos
                 size: self.size
@@ -254,7 +291,7 @@ MDNavigationLayout:
             on_release: app.delete_file_or_folder(root.file_path)
     MDCardSwipeFrontBox:
         MDCard:
-            radius: [0, 0, 0, 0]  # <-- Square corners for the front box
+            radius: [0, 0, 0, 0]
             elevation: 0
             style: "filled"
             size_hint: 1, 1
@@ -265,8 +302,6 @@ MDNavigationLayout:
                     app.populate_swipe_file_list(root.file_path) if hasattr(root, "display_name") and root.display_name == "Back" else app.on_file_selected([root.file_path])
                 IconLeftWidget:
                     icon: root.icon if root.icon == "arrow-left" else ""
-                #RightLabel:
-                    #text: root.file_size
 
 <RightLabel@Label>:
     color: 0, 0, 0, 1

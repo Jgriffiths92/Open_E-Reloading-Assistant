@@ -32,6 +32,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.lang import Builder
 from kivy.app import App
 from kivymd.toast import toast
+from kivy.properties import StringProperty
 
 
 # Ensure the soft keyboard pushes the target widget above it
@@ -191,7 +192,70 @@ class SavedCardsScreen(Screen):
 
 
 class ManageDataScreen(Screen):
-    pass
+    delete_option_label = StringProperty("Delete Folders After")  # Default text
+
+    def open_delete_option_menu(self, caller):
+        options = [
+            {"text": "After 1 week", "on_release": lambda: self.set_delete_option("week")},
+            {"text": "After 1 month", "on_release": lambda: self.set_delete_option("month")},
+            {"text": "After 1 year", "on_release": lambda: self.set_delete_option("year")},
+            {"text": "Never", "on_release": lambda: self.set_delete_option("never")},
+        ]
+        self.delete_menu = MDDropdownMenu(caller=caller, items=options)
+        self.delete_menu.open()
+
+    def set_delete_option(self, option):
+        app = App.get_running_app()
+        labels = {
+            "week": "After 1 week",
+            "month": "After 1 month",
+            "year": "After 1 year",
+            "never": "Never",
+        }
+        app.delete_folders_after = option
+        app.delete_option_label = labels.get(option, "Delete Folders After")
+        app.save_settings()
+        if hasattr(self, "delete_menu"):
+            self.delete_menu.dismiss()
+        app.delete_old_folders()
+
+    def delete_all_csv_files(self):
+        from kivymd.uix.dialog import MDDialog
+        from kivymd.uix.button import MDFlatButton
+
+        def confirm_delete(*args):
+            app = App.get_running_app()
+            csv_dir = app.ensure_csv_directory()
+            try:
+                for item in os.listdir(csv_dir):
+                    item_path = os.path.join(csv_dir, item)
+                    if os.path.isdir(item_path):
+                        shutil.rmtree(item_path)
+                    else:
+                        os.remove(item_path)
+                print("All files and folders in assets/CSV deleted.")
+                toast("All Data Card  files and folders deleted.")
+            except Exception as e:
+                print(f"Error deleting CSV files: {e}")
+                toast(f"Error deleting files: {e}")
+            dialog.dismiss()
+
+        dialog = MDDialog(
+            title="Confirm Delete",
+            text="Are you sure you want to delete ALL Events and Data Cards in? This cannot be undone.",
+            buttons=[
+                MDFlatButton(
+                    text="CANCEL",
+                    on_release=lambda x: dialog.dismiss()
+                ),
+                MDFlatButton(
+                    text="DELETE",
+                    text_color=(1, 0, 0, 1),
+                    on_release=confirm_delete
+                ),
+            ],
+        )
+        dialog.open()
 
 
 class SettingsScreen(Screen):
@@ -252,6 +316,7 @@ if is_android():
 
 class MainApp(MDApp):
     search_text = ""
+    delete_option_label = StringProperty("Delete Folders After")  # Default text
     EPD_INIT_MAP = {
         # Good Display 3.7-inch (UC8171, 240x416)
         "Good Display 3.7-inch": [
@@ -314,21 +379,15 @@ class MainApp(MDApp):
             try:
                 Context = autoclass('android.content.Context')
                 vibrator = mActivity.getSystemService(Context.VIBRATOR_SERVICE)
-                print("Vibrator service:", vibrator)
-                if vibrator:
-                    Build_VERSION = autoclass('android.os.Build$VERSION')
-                    sdk_int = Build_VERSION.SDK_INT
-                    print("SDK version:", sdk_int)
-                    if sdk_int >= 26:
-                        VibrationEffect = autoclass('android.os.VibrationEffect')
-                        effect = VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE)
-                        vibrator.vibrate(effect)
-                        print("Vibrating with VibrationEffect")
-                    else:
-                        vibrator.vibrate(500)
-                        print("Vibrating with legacy API")
-                else:
-                    print("Vibrator service not found.")
+                # Try to use VibrationEffect if available, otherwise use legacy API
+                try:
+                    VibrationEffect = autoclass('android.os.VibrationEffect')
+                    effect = VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE)
+                    vibrator.vibrate(effect)
+                    print("Vibrating with VibrationEffect")
+                except Exception:
+                    vibrator.vibrate(500)
+                    print("Vibrating with legacy API")
             except Exception as e:
                 print(f"Error vibrating device: {e}")
 
@@ -536,7 +595,31 @@ class MainApp(MDApp):
                 print("Requested BAL exemption.")
             except Exception as e:
                 print(f"Error requesting BAL exemption: {e}")
+    def delete_old_folders(self):
+        """Delete folders in assets/CSV older than the selected threshold."""
+        thresholds = {
+            "week": 7 * 24 * 3600,
+            "month": 30 * 24 * 3600,
+            "year": 365 * 24 * 3600,
+            "never": None,
+        }
+        option = getattr(self, "delete_folders_after", "never").lower()
+        threshold = thresholds.get(option)
+        if threshold is None:
+            return  # Never delete
 
+        csv_dir = self.ensure_csv_directory()
+        now = time.time()
+        for folder in os.listdir(csv_dir):
+            folder_path = os.path.join(csv_dir, folder)
+            if os.path.isdir(folder_path):
+                mtime = os.path.getmtime(folder_path)
+                if now - mtime > threshold:
+                    try:
+                        shutil.rmtree(folder_path)
+                        print(f"Deleted old folder: {folder_path}")
+                    except Exception as e:
+                        print(f"Error deleting folder {folder_path}: {e}")
     def build(self):
 
         """Build the app's UI and initialize settings."""
@@ -1115,6 +1198,7 @@ class MainApp(MDApp):
             # Save sort settings
             self.config_parser.set("Settings", "sort_type", getattr(self, "sort_type", "date"))
             self.config_parser.set("Settings", "sort_order", getattr(self, "sort_order", "asc"))
+            self.config_parser.set("Settings", "delete_folders_after", getattr(self, "delete_folders_after", "never"))
             with open(self.config_file, "w") as config_file:
                 self.config_parser.write(config_file)
             print("Settings saved successfully.")
@@ -1148,6 +1232,14 @@ class MainApp(MDApp):
             print(f"Loaded native_resolution: {self.native_resolution}, selected_resolution: {self.selected_resolution}")
         except Exception as e:
             print(f"Error loading settings: {e}")
+        self.delete_folders_after = self.config_parser.get("Settings", "delete_folders_after", fallback="never")
+        labels = {
+            "week": "After 1 week",
+            "month": "After 1 month",
+            "year": "After 1 year",
+            "never": "Never",
+        }
+        self.delete_option_label = labels.get(self.delete_folders_after, "Delete Folders After")
         # Load sort settings
         self.sort_type = self.config_parser.get("Settings", "sort_type", fallback="date")
         self.sort_order = self.config_parser.get("Settings", "sort_order", fallback="asc")
@@ -1682,10 +1774,6 @@ class MainApp(MDApp):
                     cursor.moveToFirst()
                     file_path = cursor.getString(column_index)
                     cursor.close()
-                    print(f"Content scheme URI resolved to path: {file_path}")
-                    return file_path
-                else:
-                    print("Cursor is None. Could not resolve content URI.")
                     return None
             else:
                 print(f"Unsupported URI scheme: {scheme}")
