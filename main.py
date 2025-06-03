@@ -1136,12 +1136,14 @@ class MainApp(MDApp):
                         text="CANCEL",
                         on_release=lambda x: self.dialog.dismiss()
                     ),
-                    MDRaisedButton(
+                    MDFlatButton(
                         text="SAVE",
                         on_release=lambda x: (
                             self.save_data(new_event_name=text_input.text.strip() if text_input.text.strip() else None),
                             self.dialog.dismiss()  # Automatically close the dialog after saving
-                        )
+                        ),
+                        theme_text_color="Custom",          # Make the text color custom
+                        text_color=(0, 0.4, 1, 1)           # Blue color for SAVE button
                     ),
                 ],
             )
