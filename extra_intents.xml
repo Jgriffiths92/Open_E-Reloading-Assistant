@@ -1,18 +1,4 @@
 <intent-filter>
-    <!-- Handle text file sharing -->
-    <action android:name="android.intent.action.SEND" />
-    <action android:name="android.intent.action.SEND_MULTIPLE" />
-    <category android:name="android.intent.category.DEFAULT" />
-    <data android:mimeType="*/*" />
-</intent-filter>
-<intent-filter>
-    <!-- Handle viewing files -->
-    <action android:name="android.intent.action.VIEW" />
-    <category android:name="android.intent.category.DEFAULT" />
-    <category android:name="android.intent.category.BROWSABLE" />
-    <data android:mimeType="*/*" />
-</intent-filter>
-<intent-filter>
     <!-- Handle NFC intents -->
     <action android:name="android.nfc.action.NDEF_DISCOVERED" />
     <category android:name="android.intent.category.DEFAULT" />

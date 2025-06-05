@@ -621,8 +621,6 @@ class MainApp(MDApp):
 
         # Check for SEND, VIEW, or any NFC action
         if action in [
-            "android.intent.action.SEND",
-            "android.intent.action.VIEW",
             "android.nfc.action.TAG_DISCOVERED",
             "android.nfc.action.NDEF_DISCOVERED",
             "android.nfc.action.TECH_DISCOVERED",
@@ -1537,9 +1535,8 @@ class MainApp(MDApp):
 
     def on_new_intent(self, intent):
         print("on_new_intent called")
-        """Handle new intents, including shared data and NFC tags."""
+        """Handle NFC tags."""
         if is_android() and autoclass:
-            try:
                 # Get the action from the intent
                 action = intent.getAction()
                 print(f"Intent action: {action}")
@@ -1611,147 +1608,6 @@ class MainApp(MDApp):
 
                     self.send_csv_bitmap_via_nfc(intent)
                     return  # Optionally return here if you don't want to process further
-
-                # Handle shared data (SEND/VIEW)
-                if action in ["android.intent.action.SEND", "android.intent.action.VIEW"]:
-                    extras = intent.getExtras()
-                    if extras and extras.containsKey("android.intent.extra.TEXT"):
-                        # Handle shared text
-                        shared_text = extras.getString("android.intent.extra.TEXT")
-                        print(f"Received shared text: {shared_text}")
-                        self.process_received_text(shared_text)
-                    elif extras and extras.containsKey("android.intent.extra.STREAM"):
-                        # Handle shared file
-                        stream_uri = extras.getParcelable("android.intent.extra.STREAM")
-                        print(f"Received stream URI: {stream_uri}")
-
-                        # If the stream_uri is a string path, open it directly
-                        if isinstance(stream_uri, str) and stream_uri.startswith("/"):
-                            print(f"Received file path: {stream_uri}")
-                            self.process_received_csv(stream_uri)
-                        else:
-                            Uri = autoclass('android.net.Uri')
-                            try:
-                                stream_uri = cast('android.net.Uri', stream_uri)
-                            except Exception:
-                                stream_uri = Uri.parse(str(stream_uri))
-
-                            content_resolver = mActivity.getContentResolver()
-                            file_path = self.resolve_uri_to_path(content_resolver, stream_uri)
-
-                            if file_path:
-                                self.process_received_csv(file_path)
-                            else:
-                                try:
-                                    input_stream = content_resolver.openInputStream(stream_uri)
-                                   
-                                    if input_stream:
-                                        ByteArrayOutputStream = autoclass('java.io.ByteArrayOutputStream')
-                                        buffer = ByteArrayOutputStream()
-                                        byte = input_stream.read()
-                                        while byte != -1:
-                                            buffer.write(byte)
-                                            byte = input_stream.read()
-                                        input_stream.close()
-                                        content_bytes = bytes(buffer.toByteArray())
-                                       
-                                        try:
-                                            content = content_bytes.decode("utf-8")
-                                        except UnicodeDecodeError:
-                                            print("UTF-8 decode failed, trying latin-1...")
-                                            content = content_bytes.decode("latin-1")
-                                        print(f"File contents (from InputStream):\n{content}")
-                                        self.process_received_csv(content)
-                                    else:
-                                        print("InputStream is None. Cannot read the file.")
-                                except Exception as e:
-                                    print(f"Error reading from InputStream: {e}")
-                else:
-                    print("No valid data found in the intent.")
-            except Exception as e:
-                print(f"Error handling new intent: {e}")
-
-    def resolve_uri_to_path(self, content_resolver, uri):
-        """Resolve a content URI to a file path."""
-        try:
-            if uri is None:
-                print("Error: URI is None. Cannot resolve path.")
-                return None
-
-            # Cast the Parcelable to a Uri
-            Uri = autoclass('android.net.Uri')
-            if not isinstance(uri, Uri):
-                uri = Uri.parse(str(uri))  # Ensure it's a Uri object
-
-            print(f"Resolving URI: {uri}")
-
-
-
-            # Check if the URI has a valid scheme
-            scheme = uri.getScheme()
-            if scheme == "file":
-                return uri.getPath()
-            elif scheme == "content":
-                # Query the content resolver for the file path
-                projection = [autoclass("android.provider.MediaStore$MediaColumns").DATA]
-                cursor = content_resolver.query(uri, projection, None, None, None)
-               
-               
-                if cursor is not None:
-                    column_index = cursor.getColumnIndexOrThrow(projection[0])
-                    cursor.moveToFirst()
-                    file_path = cursor.getString(column_index)
-                    cursor.close()
-                    return file_path
-            else:
-                print(f"Unsupported URI scheme: {scheme}")
-                return None
-        except Exception as e:
-            print(f"Error resolving URI to path: {e}")
-            return None
-
-    def process_received_csv(self, file_path_or_uri):
-        """Process the received CSV file or CSV text."""
-        import io
-        try:
-            # If it's CSV text (not a path or URI), parse directly
-            if (
-                    "\n" in file_path_or_uri or "\r" in file_path_or_uri
-            ) and not file_path_or_uri.startswith("/") and not file_path_or_uri.startswith("content://"):
-                # Looks like CSV text, not a path or URI
-                csv_file = io.StringIO(file_path_or_uri)
-                data = self.read_csv_to_dict(csv_file)
-            else:
-                # Fix for Android: prepend storage root if needed
-                if file_path_or_uri.startswith("/Documents/"):
-                    storage_root = "/storage/emulated/0"
-                    abs_path = storage_root + file_path_or_uri
-                    print(f"Trying absolute path: {abs_path}")
-                    file_path_or_uri = abs_path
-
-                if file_path_or_uri.startswith("/"):  # If it's a file path
-                    with open(file_path_or_uri, mode="r", encoding="utf-8") as csv_file:
-                        data = self.read_csv_to_dict(csv_file)
-                else:  # If it's a content URI
-                    content_resolver = mActivity.getContentResolver()
-                    input_stream = content_resolver.openInputStream(file_path_or_uri)
-                    content = input_stream.read().decode("utf-8")
-                    csv_file = io.StringIO(content)
-                    data = self.read_csv_to_dict(csv_file)
-
-            self.current_data = data  # Store the data for filtering or other operations
-
-            # Preprocess the data
-            processed_data = self.preprocess_data(data)
-
-            # Display the data as a table on the Home Screen
-            self.display_table(processed_data)
-
-            # Navigate to the Home Screen
-            self.root.ids.screen_manager.current = "home"
-            print(f"Processed received CSV: {file_path_or_uri}")
-        except Exception as e:
-            print(f"Error processing received CSV: {e}")
 
     def read_csv_from_assets(self, file_name):
         """Read a CSV file from the assets/CSV folder."""
@@ -2080,58 +1936,6 @@ SwipeFileItem:
         except Exception as e:
             print(f"Error copying directory locally: {e}")
 
-    def process_subject_content(self, subject_content):
-        """Process the subject content received in the intent."""
-        print(f"Processing subject content: {subject_content}")
-
-        if subject_content == "Range Card":
-            try:
-                PythonActivity = autoclass('org.kivy.android.PythonActivity')
-                intent = PythonActivity.mActivity.getIntent()
-
-                # Try to get the URI from the intent's data
-                stream_uri = intent.getData()
-                if stream_uri is None:
-                    # Fallback to extras if getData() doesn't work
-                    extras = intent.getExtras()
-                    if extras and extras.containsKey("android.intent.extra.STREAM"):
-                        stream_uri = extras.getParcelable("android.intent.extra.STREAM")
-
-                if stream_uri:
-                    print(f"Received stream URI: {stream_uri}")
-
-                    # Cast the Parcelable to a Uri
-                    Uri = autoclass('android.net.Uri')
-                    if not isinstance(stream_uri, Uri):
-                        stream_uri = Uri.parse(str(stream_uri))  # Ensure it's a Uri object
-
-                    # Resolve the URI to a file path or input stream
-                    content_resolver = mActivity.getContentResolver()
-                    file_path = self.resolve_uri_to_path(content_resolver, stream_uri)
-
-                    if file_path:
-                        # Read and print the file contents
-                        print(f"Resolved file path: {file_path}")
-                        with open(file_path, "r", encoding="utf-8") as file:
-                            content = file.read()
-                            print(f"Contents of the file:\n{content}")
-                    else:
-                        # Fallback: Read directly from the InputStream
-                        try:
-                            input_stream = content_resolver.openInputStream(stream_uri)
-                            if input_stream:
-                                content = input_stream.read().decode("utf-8")
-                                print(f"File contents (from InputStream):\n{content}")
-                                self.process_received_text(content)
-                            else:
-                                print("InputStream is None. Cannot read the file.")
-                        except Exception as e:
-                            print(f"Error reading from InputStream: {e}")
-                else:
-                    print("No valid URI found in the intent.")
-            except Exception as e:
-                print(f"Error processing subject content: {e}")
-                
     def hide_nfc_progress_dialog(self):
         if hasattr(self, "nfc_progress_dialog") and self.nfc_progress_dialog:
             self.nfc_progress_dialog.dismiss()
@@ -2175,56 +1979,6 @@ SwipeFileItem:
                 print(file.read())
 
 
-def handle_received_file(intent):
-    """Handle a file received via Intent.EXTRA_STREAM."""
-    if is_android() and autoclass:
-        try:
-            # Import necessary Android classes
-            Uri = autoclass('android.net.Uri')
-            ContentResolver = autoclass('android.content.ContentResolver')
-
-            # Check if the intent contains EXTRA_STREAM
-            if intent.hasExtra(Intent.EXTRA_STREAM):
-                # Get the Parcelable URI
-                stream_uri = intent.getParcelableExtra(Intent.EXTRA_STREAM)
-                print(f"Received Parcelable URI: {stream_uri}")
-
-                # Cast the Parcelable to a Uri
-                if not isinstance(stream_uri, Uri):
-                    stream_uri = Uri.parse(str(stream_uri))  # Ensure it's a Uri object
-
-                # Resolve the URI to a file path or read from InputStream
-                content_resolver = mActivity.getContentResolver()
-                file_path = MainApp().resolve_uri_to_path(content_resolver, stream_uri)
-
-                if file_path:
-                    # File path resolved, read the file
-
-                    print(f"Resolved file path: {file_path}")
-                    with open(file_path, "r", encoding="utf-8") as file:
-                        content = file.read()
-                        print(f"File contents:\n{content}")
-                else:
-                    # Fallback: Read directly from the InputStream
-                    try:
-                        input_stream = content_resolver.openInputStream(stream_uri)
-                        if input_stream:
-                            content = input_stream.read().decode("utf-8")
-                            print(f"File contents (from InputStream):\n{content}")
-                            self.process_received_text(content)
-                        else:
-                            print("InputStream is None. Cannot read the file.")
-
-                    except Exception as e:
-                        print(f"Error reading from InputStream: {e}")
-            else:
-                print("No EXTRA_STREAM found in the intent.")
-        except Exception as e:
-            print(f"Error handling received file: {e}")
-    else:
-        print("This functionality is only available on Android.")
-
-
 def start_foreground_service(self):
     """Start a foreground service with a persistent notification."""
     if is_android():
@@ -2241,45 +1995,6 @@ def start_foreground_service(self):
     else:
         print("Foreground service is only available on Android.")
 
-
-def process_received_file(self, file_path):
-    """Process the received file."""
-    try:
-        print(f"Processing received file: {file_path}")
-        if file_path.endswith(".csv"):
-            # Read and process the CSV file
-            with open(file_path, "r", encoding="utf-8") as csv_file:
-                data = self.read_csv_to_dict(csv_file)
-                self.current_data = data
-                self.display_table(data)
-                print("CSV file processed successfully.")
-        else:
-            print("Unsupported file type.")
-    except Exception as e:
-        print(f"Error processing received file: {e}")
-
-
-def process_received_text(self, text_data):
-    """Process the received text data."""
-    try:
-        # Split the data into lines
-        lines = text_data.strip().split("\n")
-        # Extract the headers from the second line (after the metadata)
-        headers = lines[1].split(",")
-        # Parse the rows into dictionaries
-        data = []
-        for line in lines[2:]:  # Skip the first two lines (metadata and headers)
-            row = line.split(",")
-            data.append({headers[i]: row[i] for i in range(len(headers))})
-
-        # Store the data for filtering or other operations
-        self.current_data = data
-
-        # Display the data in the table
-        self.display_table(data)
-        print("Text data processed and displayed successfully.")
-    except Exception as e:
-        print(f"Error processing text data: {e}")
 
 s = MainApp.EPD_INIT_MAP["Good Display 3.7-inch"][0]
 print("Length:", len(s))
