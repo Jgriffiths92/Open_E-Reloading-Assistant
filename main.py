@@ -1697,7 +1697,15 @@ class MainApp(MDApp):
                         home_screen = self.root.ids.home_screen
                     table_container = home_screen.ids.table_container
                     # If manual data input is displayed (BoxLayout with MDRaisedButton "ADD" present)
-                    if table_container.children and hasattr(self, "manual_data_rows") and self.manual_data_rows:
+                    if (
+                        table_container.children
+                        and hasattr(self, "manual_data_rows")
+                        and self.manual_data_rows
+                        and any(
+                            any(field.text.strip() for field in row_fields.values())
+                            for row_fields in self.manual_data_rows
+                        )
+                    ):
                         print("Manual data input detected, adding manual data before NFC transfer.")
                         self.add_manual_data()
                     Clock.schedule_once(lambda dt: self.show_nfc_progress_dialog("Transferring data to NFC tag..."))
