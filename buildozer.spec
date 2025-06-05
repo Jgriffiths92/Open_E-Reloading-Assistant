@@ -178,7 +178,7 @@ android.extra_manifest_xml = ./extra_manifest.xml
 
 # (list) List of Java files to add to the android project (can be java or a
 # directory containing the files)
-android.add_src = app/src/main/java/com/openedope/open_e-reloading-assistant
+android.add_src = app/src/main/java/com/openedope/open_e_reloading_assistant
 
 # (list) Android AAR archives to add
 #android.add_aars =
