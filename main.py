@@ -170,7 +170,7 @@ class SavedCardsScreen(Screen):
             filechooser.sort_type = sort_by
             filechooser.sort_order = 'desc' if reverse else 'asc'
             filechooser.sort_dirs_first = True
-            filechooser._update_files()
+            self.populate_swipe_file_list()
             print(f"Sorted by {sort_by}, reverse={reverse}")
         except Exception as e:
             print(f"Error accessing filechooser: {e}")
@@ -1214,7 +1214,7 @@ class MainApp(MDApp):
 
                         # Refresh the FileChooserListView
                         saved_cards_screen = self.root.ids.screen_manager.get_screen("saved_cards")
-                        filechooser._update_files()  # Refresh the file and folder list
+                        self.populate_swipe_file_list()  # Refresh the file and folder list
                         print("File and folder list refreshed.")
                 except Exception as e:
                     print(f"Error saving data to CSV: {e}")
