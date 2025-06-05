@@ -83,16 +83,19 @@ MDNavigationLayout:
             size_hint_x: 0.8
             pos_hint: {"center_x": 0.5, "center_y": 0.5}
             on_text_validate: app.on_cartridge_name_entered(self.text)
-
-        BoxLayout:
-            id: table_container
-            orientation: "vertical"
-            size_hint: 1, 1
+        ScrollView:
+            size_hint_y: 1
+            do_scroll_x: False
+            do_scroll_y: True
+            BoxLayout:
+                id: table_container
+                orientation: "vertical"
+                size_hint: 1, 1
 
         BoxLayout:
             orientation: "vertical"
             size_hint: 1, None
-            height: dp(160)
+            height: dp(100)
             padding: "10dp"
 
             MDTextField:
