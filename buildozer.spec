@@ -4,7 +4,7 @@
 title = Open E-Reloading-Assistant
 
 # (str) Package name
-package.name = open_e-reloading-assistant 
+package.name = open_e_reloading_assistant 
 
 # (str) Package domain (needed for android/ios packaging)
 package.domain = com.openedope
