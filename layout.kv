@@ -90,11 +90,12 @@ MDNavigationLayout:
             BoxLayout:
                 id: table_container
                 orientation: "vertical"
-                size_hint: 1, 1
+                size_hint_y: None
+                height: self.minimum_height
         BoxLayout:
             orientation: "vertical"
-            size_hint: 1, None
-            height: dp(100)
+            size_hint_y: None
+            height: dp(120)  # Set to fit your notes field and buttons
             padding: "10dp"
 
             MDTextField:

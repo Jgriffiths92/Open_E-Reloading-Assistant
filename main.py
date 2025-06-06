@@ -1789,26 +1789,28 @@ SwipeFileItem:
         table_container = home_screen.ids.table_container
         table_container.clear_widgets()
 
-        # Add "Projectile" to reloading data fields
+        # Define fields
         reloading_fields = {
             "Projectile": {"hint_text": "Projectile", "show": True},
             "Powder": {"hint_text": "Powder", "show": True},
             "Charge": {"hint_text": "Charge (gr)", "show": True},
             "Primer": {"hint_text": "Primer", "show": True},
             "Brass": {"hint_text": "Brass", "show": True},
-            "Headspace": {"hint_text": "Headspace (in)", "show": True},  # <-- Add this line
-            "Ogive": {"hint_text": "Ogive (in)", "show": True},  # <-- Add this line
+            "Headspace": {"hint_text": "Headspace (in)", "show": True},
+            "Ogive": {"hint_text": "Ogive (in)", "show": True},
             "OAL": {"hint_text": "OAL (in)", "show": True},
             "Velocity": {"hint_text": "Velocity (fps)", "show": True},
         }
         self.available_fields = reloading_fields
 
-        # Add the first row of input fields
-        self.add_data_row(table_container)
-
-        # Add buttons for adding/deleting rows as before...
+        # Create a main layout for all manual data rows and buttons
         main_layout = BoxLayout(orientation="vertical", spacing="10dp", size_hint=(1, None))
         main_layout.bind(minimum_height=main_layout.setter("height"))
+
+        # Add the first row of input fields to main_layout
+        self.add_data_row(main_layout)
+
+        # Add buttons for adding/deleting rows as before...
         add_row_layout = BoxLayout(
             orientation="horizontal",
             spacing="10dp",
@@ -1818,33 +1820,23 @@ SwipeFileItem:
         add_row_layout.width = dp(260)
         add_row_layout.pos_hint = {"center_x": 0.5}
         main_layout.add_widget(add_row_layout)
+
+        # Add main_layout to the scrollable table_container
         table_container.add_widget(main_layout)
 
-    def add_data_row(self, table_container):
+    def add_data_row(self, parent_layout):
         """Add a new row of data fields as a vertical column, centered."""
-        home_screen = self.root.ids.home_screen
-        cartridge_name_field = home_screen.ids.cartridge_name_field
-
-        row_layout = BoxLayout(
-            orientation="vertical",
-            spacing="10dp",
-            size_hint_x=None,
-            width=cartridge_name_field.width,
-            size_hint_y=None,
-            height=dp(50) * len(self.available_fields),
-            pos_hint={"center_x": 0.5}
-        )
-
         row_fields = {}
         for field_name, field_options in self.available_fields.items():
             if field_options["show"]:
                 text_field = MDTextField(
                     hint_text=field_options["hint_text"],
                     multiline=False,
-                    size_hint_x=1
+                    size_hint_x=0.8,
+                    pos_hint={"center_x": 0.5},
                 )
                 row_fields[field_name] = text_field
-                row_layout.add_widget(text_field)
+                parent_layout.add_widget(text_field)  # <-- Add directly to parent_layout
 
         if not hasattr(self, "manual_data_rows"):
             self.manual_data_rows = []
@@ -1852,18 +1844,11 @@ SwipeFileItem:
 
         # Insert above the button layout
         button_index = 0
-        for i, child in enumerate(reversed(table_container.children)):
+        for i, child in enumerate(reversed(parent_layout.children)):
             if isinstance(child, BoxLayout) and any(
                     isinstance(widget, MDRaisedButton) or isinstance(widget, MDFlatButton) for widget in child.children):
-                button_index = len(table_container.children) - i
+                button_index = len(parent_layout.children) - i
                 break
-
-        table_container.add_widget(row_layout, index=button_index)
-
-        # Bind width for dynamic resizing
-        def update_width(instance, value):
-            row_layout.width = value
-        cartridge_name_field.bind(width=update_width)
 
     def add_manual_data(self):
         """Add the manually entered reloading data to the current data and display it."""
