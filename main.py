@@ -338,7 +338,7 @@ if is_android():
     from jnius import PythonJavaClass, java_method
 
     class NfcProgressListener(PythonJavaClass):
-        __javainterfaces__ = ['com/openedope/open_edope/NfcProgressListener']
+        __javainterfaces__ = ['com/openedope/open_reloading_assistant/NfcProgressListener']
         __javacontext__ = 'app'
 
         def __init__(self, app):
@@ -593,7 +593,7 @@ class MainApp(MDApp):
         expected_size = width * height // 8
         if len(image_buffer) != expected_size:
             print(f"WARNING: Image buffer size ({len(image_buffer)}) does not match expected size ({expected_size}) for {width}x{height} display.")
-        NfcHelper = autoclass('com.openedope.open_edope.NfcHelper')
+        NfcHelper = autoclass('com.openedope.open_e_reloading_assistant.NfcHelper')
         ByteBuffer = autoclass('java.nio.ByteBuffer')
         image_buffer_bb = ByteBuffer.wrap(bytes(image_buffer))
 
