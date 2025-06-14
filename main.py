@@ -1198,7 +1198,7 @@ class MainApp(MDApp):
 
             # Load the font file (ensure the font file is in the correct path)
             font_path = os.path.join(os.path.dirname(__file__), "assets", "fonts", "RobotoMono-Regular.ttf")
-            font = ImageFont.truetype(font_path, 12)  # Load the font file
+            font = ImageFont.truetype(font_path, 20)  # Load the font file
 
             # 1. Always draw at portrait base size
             base_width, base_height = 240, 416
