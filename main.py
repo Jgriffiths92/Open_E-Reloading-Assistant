@@ -338,7 +338,7 @@ if is_android():
     from jnius import PythonJavaClass, java_method
 
     class NfcProgressListener(PythonJavaClass):
-        __javainterfaces__ = ['com/openedope/open_reloading_assistant/NfcProgressListener']
+        __javainterfaces__ = ['com/openedope/open_e_reloading_assistant/NfcProgressListener']
         __javacontext__ = 'app'
 
         def __init__(self, app):
